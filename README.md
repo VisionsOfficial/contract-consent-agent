@@ -128,10 +128,6 @@ What is the purpose of the components and what are their relationships?_
 
 ## Dynamic Behaviour
 
-The sequence diagram shows how the component communicates with other components.
-
-TODO
-
 This statechart shows the internal state changes of the component.
 
 ```mermaid
@@ -147,9 +143,36 @@ stateDiagram-v2
   ConditionalConsent --> AutomaticConsent: Conditions Met
   AutomaticConsent --> ManualConsent: Authorization Level Changed to "conditional"
   ConditionalConsent --> AutomaticConsent: Authorization Level Changed to "always"
+```
+***
+The sequence diagram shows how the component communicates with other components.
+```mermaid
+---
+title: Verification of consent preferences to automate consent grant
+---
+
+sequenceDiagram
+  participant i as Individual
+  participant pdi as Personal Data Intermediary
+  participant ccna as Consent Negotiating Agent
+  
+  i->>pdi: Request data sharing from <br>Data Provider to Data Consumer
+  pdi->>ccna: Send Consent
+  ccna->>ccna: Verify authorization level on <br>the user consent preferences
+  alt Authorization Level "always"
+    ccna-->>pdi: Consent granted automatically
+  else Authorization Level "never"
+    ccna-->>i: Request manual consent grant
+  else Authorization Level "conditional"
+    ccna->>ccna: Check conditions
+    alt Conditions Met
+      ccna-->>pdi: Consent granted automatically
+    else Conditions Not Met
+      ccna-->>i: Request manual consent grant
+    end
+  end
 
 ```
-
 
 ## Configuration and deployment settings
 
