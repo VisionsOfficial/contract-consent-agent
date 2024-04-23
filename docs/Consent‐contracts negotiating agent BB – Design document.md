@@ -1,4 +1,4 @@
-# Consent / Contract Negotiating Agent
+# Consent/contracts negotiating agent BB – Design Document
 
 The Consent/Contracts Negotiating Agent streamlines the process for individuals to set consent preferences regarding data usage, automates responses to consent requests from managers, and matches individuals with relevant services based on their consent profiles. Additionally, it assists organizations in negotiating and managing contractual agreements for data sharing within the dataspace ecosystem.
 
