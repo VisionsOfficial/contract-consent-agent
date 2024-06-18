@@ -1,3 +1,3 @@
 # Consent/contracts negotiating agent BB
 
-See the documentation [here](docs/).
+See the design document [here](docs/design-document.md).
