@@ -511,6 +511,17 @@ The algorithms need to respond to the next needed requirements:
 
 To do so we need to manage profiles that correspond to a participant. The recommendation will use Atlas Search.
 
+### Profile Algorithms Execution
+This algorithm will create and manage the profiles
+
+[See input/output example]()
+
+### Recommendation / Policies Algorithms Execution
+This algorithm will handle the recommendations by sending a query to Altas Search and saving the results.
+An incrementation in the database will manage the policies.
+
+[See input/output example]()
+
 ## Change Stream
 
 The change stream is a MongoDB functionality that allows listening to events from collections (insert, update, delete, …). This way we can manage to process the algorithm when contracts are created to create new profiles and keep them up to date.
@@ -521,6 +532,67 @@ The change stream is a MongoDB functionality that allows listening to events fro
 2. **Signature of ecosystem contract for the policies and preferences of the ecosystem:** create a new profile or update the policies preferences and recommendations.
 3. **Revocation of ecosystem contract:** update profile recommendations.
 
+### Change Stream Handling
+
+The agent will handle the change stream event.
+
+```javascript
+const { MongoClient } = require('mongodb');
+
+async function watchCollection(dbUrl, dbName, collectionName, onChange) {
+  const client = new MongoClient(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true });
+
+  try {
+    await client.connect();
+    console.log('Connected to MongoDB');
+    const db = client.db(dbName);
+    const collection = db.collection(collectionName);
+
+    const changeStream = collection.watch();
+
+    changeStream.on('change', (change) => {
+      console.log('Change detected:', change);
+      onChange(change);
+    });
+
+    console.log(`Watching collection: ${collectionName}`);
+  } catch (err) {
+    console.error(err);
+  }
+}
+```
+
+### Example of a signature applied to DSUC contract Workflow
+```mermaid
+sequenceDiagram
+    actor External
+    participant CM as Contract-manager
+    participant DB as Database
+    box rgb(33,66,99) Contract-Agent 
+      participant CS as Change stream
+      participant PA as Profile algorithm
+      participant R as Recommendation
+      participant AS as Atlas Search
+    end
+
+    External->>CM: sign dsuo contract
+    CM->>DB: update document
+    DB->>CS: event
+    CS->>PA: Execute
+    PA->>PA: check if profile exists
+    PA->>DB: query
+    DB-->>PA: Profil
+    alt
+        PA->>PA: profile doesn't exists
+        PA->>CM: Create profile
+    end
+    CS->>R: Execute
+    R->>AS: Query
+    AS-->>R: Results
+    R->>DB: Update document
+    CM->>AS: Query
+    AS-->>DB: Update document
+```
 
 ## Configuration and deployment settings
 ### Logging and Operations
