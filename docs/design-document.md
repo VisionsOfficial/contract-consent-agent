@@ -269,6 +269,19 @@ sequenceDiagram
 
 ```
 
+#### Consent Agent: Technical components and specifications of the Consent Agent.
+...
+
+#### API Endpoints
+...
+
+#### Setting Up the Library
+...
+
+#### API Integration
+...
+
+
 #### Streamlining Negotiation Process
 
 ```mermaid
@@ -285,7 +298,24 @@ sequenceDiagram
 
 ```
 
-#### Contract Agent: Technical components and specifications of the contract agent.
+#### Recommendations of Data Exchanges
+```mermaid
+sequenceDiagram
+  participant org as Organization
+  participant ca as Contract Agent
+  participant cat as Catalog Integration
+  
+  org->>ca: Request recommendations for data exchanges/services
+  ca->>cat: Access contract profiles from catalog
+  cat-->>ca: Contract profiles retrieved
+  ca->>ca: Analyze ODRL policies and values in contract profiles
+  ca->>cat: Request data exchanges/services recommendations based on contract profiles
+  cat-->>ca: Data exchanges/services recommendations
+  ca-->>org: Provide recommendations based on contract profiles
+
+```
+
+#### Contract Agent: Technical components and specifications of the Contract Agent.
 ```mermaid
 graph TD
     subgraph ContractManager["Contract - Manager"]
@@ -428,22 +458,69 @@ classDiagram
     Recommendations "1" -- "*" Policies
 ```
 
-#### Recommendations of Data Exchanges
-```mermaid
-sequenceDiagram
-  participant org as Organization
-  participant ca as Contract Agent
-  participant cat as Catalog Integration
-  
-  org->>ca: Request recommendations for data exchanges/services
-  ca->>cat: Access contract profiles from catalog
-  cat-->>ca: Contract profiles retrieved
-  ca->>ca: Analyze ODRL policies and values in contract profiles
-  ca->>cat: Request data exchanges/services recommendations based on contract profiles
-  cat-->>ca: Data exchanges/services recommendations
-  ca-->>org: Provide recommendations based on contract profiles
+## Search Module for Contrat and Consent Agents
 
+### Objective
+
+Provide an interface to search documents in the selected search engine (Atlas Search) in order to highlight suggestions or specific elements that might be found within the documents (ex: suggesting an ecosystem contract for a user, retrieving policies associated with a user).
+
+### Main Features
+
+- **API for document suggestion queries, precise document searches, or searches for sub-elements such as policies.**
+- **Accept search parameters (filters, scoring, etc.).**
+- **Execute queries on the search engine and return the results.**
+- **Set up search profiles if necessary:**
+  - Define search profiles for the relevant documents based on the required return format.
+- **Set up the search API:**
+  - Implement a search interface (API) allowing the search for documents and sub-elements based on specific criteria.
+
+### Atlas Search Example
+
+```json
+[
+  {
+    "$search": {
+      "index": "contracts",
+      "moreLikeThis": {
+        "like": [
+          {
+            "serviceOfferings.policies.description": "MUST use data for a specified time period"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "$limit": 5
+  },
+  {
+    "$project": {
+      "serviceOfferings": 1,
+      "score": { "$meta": "searchScore" }
+    }
+  }
+]
 ```
+
+## Algorithms
+
+The algorithms need to respond to the next needed requirements:
+
+- **MUST facilitate automatic matching and recommendation processes based on consent profiles and organizations' data-sharing agreements.**
+- **SHOULD be able to process both bilateral and data space use case data sharing agreements.**
+
+To do so we need to manage profiles that correspond to a participant. The recommendation will use Atlas Search.
+
+## Change Stream
+
+The change stream is a MongoDB functionality that allows listening to events from collections (insert, update, delete, …). This way we can manage to process the algorithm when contracts are created to create new profiles and keep them up to date.
+
+3 potential events can be listened to:
+
+1. **Creation or signature of bilateral:** create a new profile or update the profile policies preferences.
+2. **Signature of ecosystem contract for the policies and preferences of the ecosystem:** create a new profile or update the policies preferences and recommendations.
+3. **Revocation of ecosystem contract:** update profile recommendations.
+
 
 ## Configuration and deployment settings
 ### Logging and Operations
