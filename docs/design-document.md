@@ -285,6 +285,149 @@ sequenceDiagram
 
 ```
 
+#### Contract Agent: Technical components and specifications of the contract agent.
+```mermaid
+graph TD
+    subgraph ContractManager["Contract - Manager"]
+        subgraph ContractAgent["Contract Agent"]
+            Algorithms["Algorithms<br/>(Profile management,<br/>recommendation logic,<br/>policies management)"]
+            API
+            Algorithms <--> API
+        end
+    end
+    
+    MongoDB[(contract-manager<br/>mongodb)]
+    AtlasSearch[(Atlas Search)]
+    
+    MongoDB <--> ContractManager
+    AtlasSearch --> |recommendations<br/>& policies| ContractManager
+```
+
+#### API Endpoints
+
+The agent provides API endpoints through the contract manager to give access to the algorithm’s output and to give access to the configuration options.
+
+Get Recommendations
+
+GET /recommendations/:profileId
+
+Output example:
+```json
+{
+  "recommendations": [
+    "6675866105d813cd97de8171"
+  ]
+}
+```
+
+Get Policies
+
+GET /policies/:profileId
+
+Output example:
+```json
+{
+  "policies": [
+    "6675867c2ef5d0e40b021e6b"
+  ]
+}
+```
+
+Profile Configurations
+
+GET /profile/:id/configurations
+
+POST /profile/configurations
+
+PUT /profile/:id/configurations
+
+DELETE /profile/:id/configurations
+
+Output example:
+```json
+{
+  "configurations": {
+    "allowRecommendations": true,
+    "allowPolicies": true
+  }
+}
+```
+
+#### Setting Up the Library
+
+To initialize the library, first install it within your project:
+
+pnpm install contract-agent
+
+Here is one possible way to initialize the library:
+
+```javascript
+import { initializeAgent } from 'contract-agent';
+const express = require('express');
+const mongoose = require('mongoose');
+
+const app = express();
+await mongoose.connect(url, { retryWrites: true });
+const contractAgent = initializeAgent(mongoose);
+```
+
+```javascript
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});
+```
+
+#### API Integration
+
+The library is expected to return a router used by the contract manager. You would integrate it into your API setup like this:
+
+```javascript
+import { initializeAgent } from 'contract-agent';
+const express = require('express');
+const mongoose = require('mongoose');
+
+const app = express();
+await mongoose.connect(url, { retryWrites: true });
+const contractAgent = initializeAgent(mongoose);
+
+app.use("/", contractAgent.router);
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});
+```
+
+#### Contract Agent Models
+
+```mermaid
+classDiagram
+    class Policies {
+        +policy: string
+        +frequency: int
+    }
+    
+    class Recommendations {
+        +policies: [Policies]
+        +ecosystemContracts: [string]
+    }
+    
+    class profiles {
+        +_id: ObjectId
+        +url: string
+        +recommendations: [Recommendations]
+        +configurations: configurations
+    }
+    
+    class Configurations {
+        +allowRecommendation: boolean
+        +allowPolicies: boolean
+    }
+
+    profiles "1" -- "1" Configurations
+    profiles "1" -- "*" Recommendations
+    Recommendations "1" -- "*" Policies
+```
+
 #### Recommendations of Data Exchanges
 ```mermaid
 sequenceDiagram
