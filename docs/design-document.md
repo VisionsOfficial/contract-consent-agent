@@ -275,11 +275,18 @@ sequenceDiagram
 #### API Endpoints
 ...
 
-#### Setting Up the Library
-...
+#### Library Setups Example
+<details>
+<summary>See details</summary>
+Todo
+</details>
 
-#### API Integration
-...
+#### API Integration Example
+<details>
+<summary>See details</summary>
+Todo
+</details>
+
 
 
 #### Streamlining Negotiation Process
@@ -382,10 +389,11 @@ Output example:
   }
 }
 ```
+#### Library Setups Example
+<details>
+<summary>See details</summary>
 
-#### Setting Up the Library
-
-To initialize the library, first install it within your project:
+Installation it within the project:
 
 pnpm install contract-agent
 
@@ -406,9 +414,11 @@ app.listen(3000, () => {
   console.log('Server is running on port 3000');
 });
 ```
+</details>
 
-#### API Integration
-
+#### API Integration Example
+<details>
+<summary>See details</summary>
 The library is expected to return a router used by the contract manager. You would integrate it into your API setup like this:
 
 ```javascript
@@ -426,6 +436,7 @@ app.listen(3000, () => {
   console.log('Server is running on port 3000');
 });
 ```
+</details>
 
 #### Contract Agent Models
 
@@ -514,13 +525,19 @@ To do so we need to manage profiles that correspond to a participant. The recomm
 ### Profile Algorithms Execution
 This algorithm will create and manage the profiles
 
-[See input/output example]()
+<details>
+  <summary>See input/output example</summary>
+  Todo
+</details>
 
 ### Recommendation / Policies Algorithms Execution
 This algorithm will handle the recommendations by sending a query to Altas Search and saving the results.
 An incrementation in the database will manage the policies.
 
-[See input/output example]()
+<details>
+  <summary>See input/output example</summary>
+  Todo
+</details>
 
 ## Change Stream
 
