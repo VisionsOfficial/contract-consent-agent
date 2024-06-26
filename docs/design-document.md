@@ -270,22 +270,153 @@ sequenceDiagram
 ```
 
 #### Consent Agent: Technical components and specifications of the Consent Agent.
-...
+
+```mermaid
+graph TD
+    subgraph ConsentManager["Consent - Manager"]
+        subgraph ConsentAgent["Consent Agent"]
+            Algorithms["Algorithms<br/>(Consent preferences,<br/>consent matching,<br/>negotiation agent,<br/>Data exchanges recommendations)"]
+            API
+            Algorithms <--> API
+        end
+    end
+    
+    MongoDB[(consent-manager<br/>mongodb)]
+    AtlasSearch[(Atlas Search)]
+    
+    MongoDB <--> ConsentManager
+    AtlasSearch --> |consent<br/>& Data exchanges| ConsentManager
+```
 
 #### API Endpoints
-...
+The agent provides API endpoints through the consent manager to give access to the algorithm’s output and to give access to the preferences options.
 
-#### Library Setups Example
-<details>
-<summary>See details</summary>
-Todo
-</details>
+Get Recommendations
 
-#### API Integration Example
-<details>
-<summary>See details</summary>
-Todo
-</details>
+GET /recommendations/:profileId/consent
+
+Output example:
+```json
+{
+  "consentRecommendations": [
+    "6675866105d813cd97de8171"
+  ]
+}
+```
+
+Get Recommendations
+
+GET /recommendations/:profileId/dataexchanges
+
+Output example:
+```json
+{
+  "dataExchangesRecommendations": [
+    "6675866105d813cd97de8171"
+  ]
+}
+```
+
+Consent preferences
+
+GET /preferences/:id
+
+POST /preferences
+
+PUT /preferences/:id
+
+DELETE /preferences/:id
+
+Output example:
+
+```json
+{
+  "id": "667bc534e22d10c930808556",
+  "asDataProvider": {
+    "id": "667bc534e22d10c930808556",
+    "authorizationLevel": "always",
+    "conditions": [
+      {
+        "time": {
+          "dayOfWeek": [
+            "0"
+          ],
+          "startTime": "2024-03-27T14:08:19.986Z",
+          "endTime": "2025-03-27T14:08:19.986Z"
+        },
+        "location": {
+          "countryCode": "US"
+        }
+      }
+    ]
+  },
+  "asServiceProvider": {
+    "id": "667bc534e22d10c930808556",
+    "authorizationLevel":  "always",
+    "conditions":  [
+      {
+        "time":  {
+          "dayOfWeek":  [
+            "0"
+          ],
+          "startTime":  "2024-03-27T14:08:19.986Z",
+          "endTime":  "2025-03-27T14:08:19.986Z"
+        },
+        "location":  {
+          "countryCode":  "US"
+        }
+      }
+    ]
+  },
+  "configurations": {
+    "allowRecommendations": true,
+    "allowPolicies": true
+  }
+}
+```
+
+
+#### Setting Up the Library
+
+To initialize the library, first install it within your project:
+
+pnpm install contract-agent
+
+Here is one possible way to initialize the library:
+
+```javascript
+import { initializeAgent } from 'consent-agent';
+const express = require('express');
+const mongoose = require('mongoose');
+
+const app = express();
+await mongoose.connect(url, { retryWrites: true });
+const contractAgent = initializeAgent(mongoose);
+```
+
+```javascript
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});
+```
+#### API Integration
+The library is expected to return a router used by the contract manager. You would integrate it into your API setup like this:
+
+```javascript
+import { initializeAgent } from 'consent-agent';
+const express = require('express');
+const mongoose = require('mongoose');
+
+const app = express();
+await mongoose.connect(url, { retryWrites: true });
+const consentAgent = initializeAgent(mongoose);
+
+app.use("/", consentAgent.router);
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});
+```
 
 
 
@@ -422,7 +553,7 @@ app.listen(3000, () => {
 The library is expected to return a router used by the contract manager. You would integrate it into your API setup like this:
 
 ```javascript
-import { initializeAgent } from 'contract-agent';
+import { initializeConsentAgent, initializeContractAgent } from 'recommendation-agent';
 const express = require('express');
 const mongoose = require('mongoose');
 
