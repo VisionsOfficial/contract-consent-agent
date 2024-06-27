@@ -511,7 +511,7 @@ pnpm install contract-agent
 #### Initialization Example
 
 ```javascript
-import { initializeConsentAgent } from 'recommendation-agent';
+import { initializeConsentAgent } from 'contract-consent-agent';
 const express = require('express');
 const mongoose = require('mongoose');
 
@@ -530,7 +530,7 @@ app.listen(3000, () => {
 The library is expected to return a router used by the consent manager. You would integrate it into your API setup like this:
 
 ```javascript
-import { initializeConsentAgent } from 'recommendation-agent';
+import { initializeConsentAgent } from 'contract-consent-agent';
 const express = require('express');
 const mongoose = require('mongoose');
 
@@ -538,7 +538,7 @@ const app = express();
 await mongoose.connect(url, { retryWrites: true });
 const consentAgent = initializeConsentAgent(mongoose);
 
-app.use("/", consentAgent.router);
+app.use("/", authMiddleware, consentAgent.router);
 
 app.listen(3000, () => {
   console.log('Server is running on port 3000');
