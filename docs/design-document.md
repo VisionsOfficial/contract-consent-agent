@@ -43,9 +43,6 @@ Interaction with other building blocks are essential to ensuring the functionali
 - [Contract](https://github.com/Prometheus-X-association/contract-manager)
 - [Catalogue](https://github.com/Prometheus-X-association/catalog-api)
 
-#### Other Building Blocks
-
-~
 
 ### Integrations via Connector
 
@@ -500,9 +497,11 @@ Profile Configurations
 >```
 > </details>
 
-### Library Setup
+### Library Setup - Example
 
-To initialize the library, first install it within your project:
+Setting up the agent would look something like the following:
+
+> Although this is still at a specification level and can change, having an example setup helps to visualise the implication for setup in the other building blocks.
 
 ``` bash
 pnpm install contract-agent
@@ -518,16 +517,16 @@ const mongoose = require('mongoose');
 const app = express();
 await mongoose.connect(url, { retryWrites: true });
 const consentAgent = initializeConsentAgent(mongoose);
-```
 
-```javascript
+// ...other app code...
+
 app.listen(3000, () => {
   console.log('Server is running on port 3000');
 });
 ```
 
 #### API Integration Example
-The library is expected to return a router used by the consent manager. You would integrate it into your API setup like this:
+The library is expected to return a router used by the consent manager. Here is what it could look like
 
 ```javascript
 import { initializeConsentAgent } from 'contract-consent-agent';
@@ -538,14 +537,14 @@ const app = express();
 await mongoose.connect(url, { retryWrites: true });
 const consentAgent = initializeConsentAgent(mongoose);
 
+// ...other app code...
+
 app.use("/", authMiddleware, consentAgent.router);
 
 app.listen(3000, () => {
   console.log('Server is running on port 3000');
 });
 ```
-
-***
 
 ## Search Module for Contrat and Consent Agents
 
@@ -593,7 +592,7 @@ Provide an interface to search documents in the selected search engine (Atlas Se
 
 ## Algorithms
 
-The algorithms need to respond to the previous described requirements. To do so we will use Atlas search and his functionality to empower the recommendations and the matching.
+The algorithms need to respond to the previous described requirements. To do so we will use Atlas search and its functionality to empower the recommendations and the matching.
 
 ### Profile Algorithms Execution
 This algorithm will create and manage the Contract profiles
@@ -1183,7 +1182,7 @@ async function watchCollection(dbUrl, dbName, collectionName, onChange) {
 }
 ```
 
-### Example of a signature applied to DSUC contract Workflow
+### Example of a signature applied to a use case contract Workflow
 ```mermaid
 sequenceDiagram
     actor External
@@ -1239,12 +1238,6 @@ sequenceDiagram
         R->>AS: Query
         AS-->>R: Results
         R->>DB: Update document
-    end
-    alt
-        CS->>PA: Execute
-        PA->>AS: Query
-        AS-->>PA: Results
-        PA->>DB: Update document
     end
 ```
 
