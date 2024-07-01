@@ -1268,3 +1268,32 @@ Integration tests will focus on validating the interaction between different com
 ### UI test
 
 UI tests will be defined for any user interfaces or administrative dashboards provided by the Consent/Contracts Negotiating Agent. Testing frameworks like Cypress will be used to automate UI interactions and validate the usability and functionality of the user interface. UI tests will cover scenarios such as consent preference settings, contract profile management, and error handling.
+
+## Partnerships & Roles
+
+### Visions
+
+- Source code of the contract agent
+- Source code of the consent agent
+- Integration documentation of the agent in the contract-manager
+- Integration documentation of the agent in the consent-manager
+- Definition of the indexation for the search engines
+- OpenAPI specification (integrated in the contract/consent managers)
+- Provide first implementation solution through VisionsTrust services
+
+### IMC
+
+- Ensure alignment with consent management development in Gaia-x and IDSA
+- Specification design review
+
+### NomadLabs
+
+- Provide decentralized data governance expertise
+
+## Usage in the Dataspace
+
+The Consent/Contracts Agent significantly enhances the management of data usage and sharing agreements within the dataspace ecosystem. By automating consent and contract negotiations, it ensures compliance with predefined policies and conditions, streamlining the process for both individuals and organizations.
+
+For individuals, the agent provides an intuitive interface to manage consent preferences, facilitating personalized service recommendations and enabling data exchanges that align with their consent profiles. Organizations benefit from the agent’s ability to streamline negotiations, applying consistent contractual agreements through the use of ODRL policies and values to identify relevant partners and datasets.
+
+Through integration with the dataspace ecosystem, the agent guarantees compatibility with ecosystem conditions and regulatory requirements. This integration not only improves data governance but also promotes collaboration and innovation within the dataspace by enabling efficient and secure data exchanges.
