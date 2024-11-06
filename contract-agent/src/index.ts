@@ -1,0 +1,2 @@
+const lib = {};
+export { lib };
