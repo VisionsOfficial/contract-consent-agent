@@ -1,12 +1,12 @@
 import { Collection, Db } from 'mongodb';
 import { DataProvider } from './DataProvider';
 import { FilterOperator, SearchCriteria, FilterCondition } from './types';
-import { Profile } from 'Profile';
+import { Profile } from './Profile';
 
 export class MongoDBProvider implements DataProvider {
   private collection: Collection;
 
-  constructor(db: Db, collectionName: string = 'profiles') {
+  constructor(db: Db, collectionName: string = 'Profiles') {
     this.collection = db.collection(collectionName);
   }
 
@@ -44,6 +44,15 @@ export class MongoDBProvider implements DataProvider {
                 : [condition.value],
             },
           };
+        case FilterOperator.REGEX:
+          return {
+            ...query,
+            [condition.field]: {
+              $in: Array.isArray(condition.value)
+                ? condition.value.map((val) => new RegExp(val, 'i'))
+                : [new RegExp(condition.value, 'i')],
+            },
+          };
         default:
           throw new Error(`Unsupported operator: ${condition.operator}`);
       }
@@ -52,6 +61,15 @@ export class MongoDBProvider implements DataProvider {
 
   async findSimilarProfiles(criteria: SearchCriteria): Promise<Profile[]> {
     const query = this.convertConditionToMongoQuery(criteria.conditions);
+
+    console.log(query);
+    /*
+    const query = {
+      'recommendations.policies.policy': {
+        $in: [/Must/i, /autre chunk/i],
+      },
+    };
+    */
 
     const results = await this.collection
       .find(query)

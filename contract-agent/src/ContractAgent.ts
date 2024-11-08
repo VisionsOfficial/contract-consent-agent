@@ -1,6 +1,6 @@
-import { Profile } from 'Profile';
+import { Profile } from './Profile';
 import { DataProvider } from './DataProvider';
-import { FilterOperator, ProfilePolicy, SearchCriteria } from 'types';
+import { FilterOperator, ProfilePolicy, SearchCriteria } from './types';
 import { UserExperience } from './UserExperience';
 import { Contract } from './Contract';
 
@@ -15,8 +15,16 @@ export class ContractAgent extends UserExperience {
     super(ContractAgent.dataProvider);
   }
 
+  static retrieveService(refresh: boolean = false): ContractAgent {
+    if (!ContractAgent.instance || refresh) {
+      const instance = new ContractAgent();
+      ContractAgent.instance = instance;
+    }
+    return ContractAgent.instance;
+  }
+
   protected buildSearchCriteria(contract: Contract): SearchCriteria {
-    const dataCategories = contract.serviceOfferings
+    const policies = contract.serviceOfferings
       .map((offering: { policies: any[] }) => {
         return offering.policies.map((policy) => policy.description);
       })
@@ -29,10 +37,10 @@ export class ContractAgent extends UserExperience {
     return {
       conditions: [
         {
-          field: 'dataCategories',
-          operator: FilterOperator.IN,
-          value: dataCategories,
-        },
+          field: 'recommendations.policies.policy',
+          operator: FilterOperator.REGEX,
+          value: policies,
+        } /*
         {
           field: 'services',
           operator: FilterOperator.IN,
@@ -49,7 +57,7 @@ export class ContractAgent extends UserExperience {
           field: 'configurations.allowRecommendation',
           operator: FilterOperator.EQUALS,
           value: true,
-        },
+        },*/,
       ],
       threshold: 0.7,
       limit: 100,
@@ -59,12 +67,12 @@ export class ContractAgent extends UserExperience {
   static setDataProvider(dataProvider: DataProvider) {
     ContractAgent.dataProvider = dataProvider;
   }
-  static retrieveService(refresh: boolean = false): ContractAgent {
-    if (!ContractAgent.instance || refresh) {
-      const instance = new ContractAgent();
-      ContractAgent.instance = instance;
-    }
-    return ContractAgent.instance;
+
+  async findSimilarProfiles(
+    sourceEntity: any,
+    threshold: number = 0.7,
+  ): Promise<Profile[]> {
+    return super.findSimilarProfiles(sourceEntity, threshold);
   }
 
   protected compareEntities(sourceEntity: any, targetEntity: any): number {

@@ -13,6 +13,7 @@ const commonRules = {
       ignoredNodes: ['SwitchCase > BlockStatement'],
     },
   ],
+  'no-console': 'off',
   'no-tabs': 'error',
   'object-curly-spacing': ['error', 'always'],
   'arrow-parens': ['error', 'always'],
@@ -71,7 +72,7 @@ export default [
     },
   },
   {
-    files: ['**/*.spec.ts'],
+    files: ['**/*.spec.ts', '**/*.seed.ts'],
     languageOptions: {
       globals: {
         ...globals.mocha,

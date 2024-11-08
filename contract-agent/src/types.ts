@@ -1,5 +1,3 @@
-import { Profile } from './Profile';
-
 export interface ProfilePolicy {
   policy: string;
   frequency: number;

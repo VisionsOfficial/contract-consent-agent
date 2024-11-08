@@ -14,9 +14,12 @@ export abstract class UserExperience {
 
     const profiles =
       await this.dataProvider.findSimilarProfiles(searchCriteria);
+    return profiles;
+    /*
     return profiles.map((profile) =>
       this.enrichProfileWithRecommendations(profile, sourceEntity),
     );
+    */
   }
 
   private enrichProfileWithRecommendations(
