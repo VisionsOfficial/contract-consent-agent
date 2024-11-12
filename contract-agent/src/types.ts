@@ -36,4 +36,5 @@ export enum FilterOperator {
   GT = 'GT',
   LT = 'LT',
   CONTAINS = 'CONTAINS',
+  REGEX = 'REGEX',
 }

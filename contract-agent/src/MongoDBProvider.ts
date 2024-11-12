@@ -1,13 +1,37 @@
-import { Collection, Db } from 'mongodb';
+import { Collection, Db, ChangeStreamDocument } from 'mongodb';
 import { DataProvider } from './DataProvider';
 import { FilterOperator, SearchCriteria, FilterCondition } from './types';
 import { Profile } from './Profile';
 
-export class MongoDBProvider implements DataProvider {
+export class MongoDBProvider extends DataProvider {
   private collection: Collection;
 
   constructor(db: Db, collectionName: string = 'Profiles') {
+    super();
     this.collection = db.collection(collectionName);
+    this.setupChangeStream();
+  }
+
+  private setupChangeStream(): void {
+    const changeStream = this.collection.watch();
+    changeStream.on('change', (change: ChangeStreamDocument) => {
+      switch (change.operationType) {
+        case 'insert':
+          this.notifyDataChange('dataInserted', change.fullDocument);
+          break;
+        case 'update':
+          this.notifyDataChange('dataUpdated', {
+            documentKey: change.documentKey,
+            updateDescription: change.updateDescription,
+          });
+          break;
+        case 'delete':
+          this.notifyDataChange('dataDeleted', change.documentKey);
+          break;
+        default:
+          throw new Error(`Unhandled change type: ${change.operationType}`);
+      }
+    });
   }
 
   private convertConditionToMongoQuery(
@@ -61,21 +85,10 @@ export class MongoDBProvider implements DataProvider {
 
   async findSimilarProfiles(criteria: SearchCriteria): Promise<Profile[]> {
     const query = this.convertConditionToMongoQuery(criteria.conditions);
-
-    console.log(query);
-    /*
-    const query = {
-      'recommendations.policies.policy': {
-        $in: [/Must/i, /autre chunk/i],
-      },
-    };
-    */
-
     const results = await this.collection
       .find(query)
       .limit(criteria.limit || 100)
       .toArray();
-
     return results.map(
       (result) =>
         new Profile(

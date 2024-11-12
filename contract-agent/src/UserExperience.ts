@@ -1,64 +1,37 @@
 import { Profile } from './Profile';
 import { DataProvider } from './DataProvider';
-import { SearchCriteria, ProfilePolicy } from './types';
+import {
+  SearchCriteria,
+  ProfilePolicy,
+  ProfileRecommendation,
+  ProfileMatching,
+} from './types';
 
 export abstract class UserExperience {
-  constructor(protected dataProvider: DataProvider) {}
+  protected dataProviders: DataProvider[] = [];
+  constructor() {}
 
-  protected async findSimilarProfiles(
-    sourceEntity: any,
-    threshold: number = 0.7,
-  ): Promise<Profile[]> {
-    const searchCriteria = this.buildSearchCriteria(sourceEntity);
-    searchCriteria.threshold = threshold;
-
-    const profiles =
-      await this.dataProvider.findSimilarProfiles(searchCriteria);
-    return profiles;
-    /*
-    return profiles.map((profile) =>
-      this.enrichProfileWithRecommendations(profile, sourceEntity),
-    );
-    */
+  addDataProviders(dataProviders: DataProvider[]) {
+    if (!dataProviders || dataProviders.length === 0) {
+      throw new Error('Data Providers array cannot be empty');
+    }
+    this.dataProviders.push(...dataProviders);
   }
 
-  private enrichProfileWithRecommendations(
-    profile: Profile,
-    sourceEntity: any,
-  ): Profile {
-    const similarityScore = this.calculateSimilarity(sourceEntity, profile);
-    const relevantPolicies = this.extractRelevantPolicies(profile);
-
-    return new Profile(
-      profile.url,
-      profile.configurations,
-      [
-        {
-          policies: relevantPolicies,
-          ecosystemContracts: [],
-        },
-      ],
-      [
-        {
-          policies: [],
-          ecosystemContracts: [],
-        },
-      ],
-    );
+  // Provide recommendations for ecosystem contracts and policies that align with potential participant needs.
+  // These recommendations are based on the participant's usage history or suggestions pushed by the system.
+  getRecommendations(profile: Profile): ProfileRecommendation[] {
+    return profile.recommendations;
   }
 
-  protected async calculateRecommendations(
-    sourceEntity: any,
-    profiles: Profile[],
-  ): Promise<Profile[]> {
-    return profiles;
+  // Check compatibility criteria between entities and the participant's profile to ensure a precise match.
+  getMatchings(profile: Profile): ProfileMatching[] {
+    return profile.matching;
   }
 
+  // Method to enrich the user profile by adding system-generated recommendations
+  protected abstract enrichProfileWithSystemRecommendations(): Profile;
+
+  // Search criteria
   protected abstract buildSearchCriteria(sourceEntity: any): SearchCriteria;
-
-  protected abstract calculateSimilarity(source: any, target: Profile): number;
-
-  protected abstract extractRelevantPolicies(entity: any): ProfilePolicy[];
-
-  abstract process(sourceEntity: any, options?: any): Promise<Profile[]>;
 }
