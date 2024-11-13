@@ -1,11 +1,10 @@
 import { DataProvider } from './DataProvider';
 import { Profile } from './Profile';
 import { ProfilePolicy, SearchCriteria } from './types';
-import { UserExperience } from './Agent';
+import { Agent } from './Agent';
 
-export class ConsentAgent extends UserExperience {
+export class ConsentAgent extends Agent {
   private static instance: ConsentAgent;
-  private static dataProvider: DataProvider | null;
 
   private constructor() {
     super();
@@ -24,6 +23,28 @@ export class ConsentAgent extends UserExperience {
   }
 
   protected enrichProfileWithSystemRecommendations(): Profile {
+    throw new Error('Method not implemented.');
+  }
+
+  protected handleDataInserted(data: {
+    fullDocument: any;
+    source: string;
+  }): void {
+    throw new Error('Method not implemented.');
+  }
+
+  protected handleDataUpdated(data: {
+    documentKey: any;
+    updateDescription: any;
+    source: string;
+  }): void {
+    throw new Error('Method not implemented.');
+  }
+
+  protected handleDataDeleted(data: {
+    documentKey: any;
+    source: string;
+  }): void {
     throw new Error('Method not implemented.');
   }
 }

@@ -17,16 +17,23 @@ export class MongoDBProvider extends DataProvider {
     changeStream.on('change', (change: ChangeStreamDocument) => {
       switch (change.operationType) {
         case 'insert':
-          this.notifyDataChange('dataInserted', change.fullDocument);
+          this.notifyDataChange('dataInserted', {
+            fullDocument: change.fullDocument,
+            source: this.dataSource,
+          });
           break;
         case 'update':
           this.notifyDataChange('dataUpdated', {
             documentKey: change.documentKey,
             updateDescription: change.updateDescription,
+            source: this.dataSource,
           });
           break;
         case 'delete':
-          this.notifyDataChange('dataDeleted', change.documentKey);
+          this.notifyDataChange('dataDeleted', {
+            documentKey: change.documentKey,
+            source: this.dataSource,
+          });
           break;
         default:
           throw new Error(`Unhandled change type: ${change.operationType}`);

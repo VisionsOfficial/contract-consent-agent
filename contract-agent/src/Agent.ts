@@ -13,11 +13,35 @@ export interface AgentConfig {
   dataSources: string[];
 }
 
-export abstract class UserExperience {
+export abstract class Agent {
   protected config?: AgentConfig;
   protected dataProviders: DataProvider[] = [];
 
   constructor() {}
+
+  protected setupProviderEventHandlers(): void {
+    this.dataProviders.forEach((provider) => {
+      provider.on('dataInserted', this.handleDataInserted.bind(this));
+      provider.on('dataUpdated', this.handleDataUpdated.bind(this));
+      provider.on('dataDeleted', this.handleDataDeleted.bind(this));
+    });
+  }
+
+  protected abstract handleDataInserted(data: {
+    fullDocument: any;
+    source: string;
+  }): void;
+
+  protected abstract handleDataUpdated(data: {
+    documentKey: any;
+    updateDescription: any;
+    source: string;
+  }): void;
+
+  protected abstract handleDataDeleted(data: {
+    documentKey: any;
+    source: string;
+  }): void;
 
   addDataProviders(dataProviders: DataProvider[]) {
     if (!dataProviders || dataProviders.length === 0) {

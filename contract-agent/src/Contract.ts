@@ -23,11 +23,11 @@ export interface ServiceOffering {
   participant: string;
   serviceOffering: string;
   policies: Policy[];
-  _id: string;
+  _id?: string;
 }
 
 export class Contract {
-  _id: string;
+  _id?: string;
   createdAt: Date;
   updatedAt: Date;
   ecosystem: string;
@@ -40,7 +40,6 @@ export class Contract {
   status: string;
 
   constructor(
-    _id: string,
     createdAt: string,
     updatedAt: string,
     ecosystem: string,
@@ -51,6 +50,7 @@ export class Contract {
     rolesAndObligations: any[],
     serviceOfferings: ServiceOffering[],
     status: string,
+    _id?: string,
   ) {
     this._id = _id;
     this.createdAt = new Date(createdAt);
