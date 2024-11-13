@@ -6,9 +6,9 @@ import { Profile } from './Profile';
 export class MongoDBProvider extends DataProvider {
   private collection: Collection;
 
-  constructor(db: Db, collectionName: string = 'Profiles') {
-    super();
-    this.collection = db.collection(collectionName);
+  constructor(db: Db, dataSource: string) {
+    super(dataSource);
+    this.collection = db.collection(this.dataSource);
     this.setupChangeStream();
   }
 

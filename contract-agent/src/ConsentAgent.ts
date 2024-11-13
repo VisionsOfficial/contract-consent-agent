@@ -1,7 +1,7 @@
 import { DataProvider } from './DataProvider';
 import { Profile } from './Profile';
 import { ProfilePolicy, SearchCriteria } from './types';
-import { UserExperience } from './UserExperience';
+import { UserExperience } from './Agent';
 
 export class ConsentAgent extends UserExperience {
   private static instance: ConsentAgent;

@@ -1,15 +1,18 @@
 import { Profile } from './Profile';
 import { DataProvider } from './DataProvider';
 import { FilterOperator, ProfilePolicy, SearchCriteria } from './types';
-import { UserExperience } from './UserExperience';
+import { UserExperience } from './Agent';
 import { Contract } from './Contract';
+import { Logger } from 'Logger';
 
 export class ContractAgent extends UserExperience {
+  private static instance: ContractAgent;
+
   private constructor() {
     super();
+    this.loadDefaultConfiguration();
+    this.addDefaultProviders();
   }
-
-  private static instance: ContractAgent;
 
   static retrieveService(refresh: boolean = false): ContractAgent {
     if (!ContractAgent.instance || refresh) {
@@ -47,6 +50,11 @@ export class ContractAgent extends UserExperience {
     criteria: SearchCriteria,
   ): Promise<Profile[]> {
     const allProfiles: Profile[] = [];
+    if (this.config) {
+      Logger.info(
+        `Using data sources: ${JSON.stringify(this.config.dataSources, null, 2)}`,
+      );
+    }
     for (const provider of this.dataProviders) {
       const profiles = await provider.findSimilarProfiles(criteria);
       allProfiles.push(...profiles);
