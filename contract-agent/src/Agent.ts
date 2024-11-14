@@ -7,6 +7,7 @@ import {
   ProfilePolicy,
   ProfileRecommendation,
   ProfileMatching,
+  Provider,
 } from './types';
 
 export interface AgentConfig {
@@ -15,12 +16,12 @@ export interface AgentConfig {
 
 export abstract class Agent {
   protected config?: AgentConfig;
-  protected dataProviders: DataProvider[] = [];
+  protected dataProviders: Provider[] = [];
 
   constructor() {}
 
   protected setupProviderEventHandlers(): void {
-    this.dataProviders.forEach((provider) => {
+    this.dataProviders.forEach(({ provider }) => {
       provider.on('dataInserted', this.handleDataInserted.bind(this));
       provider.on('dataUpdated', this.handleDataUpdated.bind(this));
       provider.on('dataDeleted', this.handleDataDeleted.bind(this));
@@ -43,7 +44,7 @@ export abstract class Agent {
     source: string;
   }): void;
 
-  addDataProviders(dataProviders: DataProvider[]) {
+  addDataProviders(dataProviders: Provider[]) {
     if (!dataProviders || dataProviders.length === 0) {
       throw new Error('Data Providers array cannot be empty');
     }
@@ -56,7 +57,8 @@ export abstract class Agent {
         const providerType = DataProvider.childType;
         if (typeof providerType === 'function') {
           try {
-            this.addDataProviders([new providerType(source)]);
+            const provider = new providerType(source);
+            this.addDataProviders([{ source, provider }]);
           } catch (error) {
             Logger.error(
               `Failed to add data provider for source: ${source}: ${(error as Error).message}`,
@@ -97,9 +99,18 @@ export abstract class Agent {
     return profile.matching;
   }
 
+  //
+  protected abstract updateMatchingForProfile(
+    profile: Profile,
+    data: unknown,
+  ): void;
+  //
+  protected abstract updateRecommendationForProfile(
+    profile: Profile,
+    data: unknown,
+  ): void;
   // Method to enrich the user profile by adding system-generated recommendations
   protected abstract enrichProfileWithSystemRecommendations(): Profile;
-
   // Search criteria
   protected abstract buildSearchCriteria(sourceEntity: any): SearchCriteria;
 }

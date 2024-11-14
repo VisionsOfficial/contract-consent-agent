@@ -41,9 +41,7 @@ export class MongoDBProvider extends DataProvider {
     });
   }
 
-  private convertConditionToMongoQuery(
-    conditions: FilterCondition[],
-  ): Record<string, any> {
+  protected makeQuery(conditions: FilterCondition[]): Record<string, any> {
     return conditions.reduce((query, condition) => {
       switch (condition.operator) {
         case FilterOperator.IN:
@@ -90,8 +88,8 @@ export class MongoDBProvider extends DataProvider {
     }, {});
   }
 
-  async findSimilarProfiles(criteria: SearchCriteria): Promise<Profile[]> {
-    const query = this.convertConditionToMongoQuery(criteria.conditions);
+  async findProfiles(criteria: SearchCriteria): Promise<Profile[]> {
+    const query = this.makeQuery(criteria.conditions);
     const results = await this.collection
       .find(query)
       .limit(criteria.limit || 100)

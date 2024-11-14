@@ -1,6 +1,11 @@
 import { Profile } from './Profile';
 import { DataProvider } from './DataProvider';
-import { FilterOperator, ProfilePolicy, SearchCriteria } from './types';
+import {
+  FilterCondition,
+  FilterOperator,
+  ProfilePolicy,
+  SearchCriteria,
+} from './types';
 import { Agent } from './Agent';
 import { Contract } from './Contract';
 import { Logger } from 'Logger';
@@ -56,31 +61,50 @@ export class ContractAgent extends Agent {
         `Using data sources: ${JSON.stringify(this.config.dataSources, null, 2)}`,
       );
     }
-    for (const provider of this.dataProviders) {
-      const profiles = await provider.findSimilarProfiles(criteria);
+    for (const dataProvider of this.dataProviders) {
+      const { provider, source } = dataProvider;
+      const profiles = await provider.findProfiles(criteria);
       allProfiles.push(...profiles);
     }
     return allProfiles;
   }
 
-  private updateProfileFromContractChange(contract: Contract): void {
-    contract.members.forEach((member) => {
-      this.updateProfile(member.participant, contract);
-    });
-    /*
-    contract.revokedMembers.forEach((member) => {
-      this.updateProfile(member.participant, contract);
-    });
-    */
-    contract.serviceOfferings.forEach((offering) => {
-      this.updateProfile(offering.participant, contract);
-    });
-    // not sure
-    this.updateProfile(contract.orchestrator, contract);
+  private async updateProfileFromContractChange(
+    contract: Contract,
+  ): Promise<void> {
+    for (const member of contract.members) {
+      await this.updateProfile(member.participant, contract);
+    }
+    for (const offering of contract.serviceOfferings) {
+      await this.updateProfile(offering.participant, contract);
+    }
+    await this.updateProfile(contract.orchestrator, contract);
   }
 
-  private updateProfile(participantId: string, contract: Contract): void {
-    // todo:
+  private async updateProfile(
+    participantId: string,
+    contract: Contract,
+  ): Promise<void> {
+    const profileProvider = this.dataProviders.find(
+      (dataProvider) => dataProvider.source === 'Profile',
+    );
+    if (profileProvider) {
+      const conditions: FilterCondition = {
+        field: 'url',
+        operator: FilterOperator.EQUALS,
+        value: participantId,
+      };
+      const criteria: SearchCriteria = {
+        conditions: [conditions],
+        threshold: 0,
+      };
+      const profiles = await profileProvider.provider.findProfiles(criteria);
+      const profile = profiles[0];
+      this.updateMatchingForProfile(profile, contract);
+      this.updateRecommendationForProfile(profile, contract);
+    } else {
+      throw new Error('Profile DataProvider not found');
+    }
   }
 
   protected handleDataInserted(data: {
@@ -122,6 +146,81 @@ export class ContractAgent extends Agent {
         break;
       default:
         Logger.info(`Unhandled data deletion for source: ${data.source}`);
+    }
+  }
+
+  protected updateMatchingForProfile(profile: Profile, data: unknown): void {
+    const contract: Contract = data as Contract;
+
+    const otherParticipantsServices = contract.serviceOfferings.filter(
+      (service) => service.participant !== profile.url,
+    );
+
+    if (!otherParticipantsServices.length) return;
+
+    const newMatching = {
+      policies: otherParticipantsServices.flatMap((service) =>
+        service.policies.map((policy) => ({
+          policy: policy.description,
+          frequency: 1,
+        })),
+      ),
+      ecosystemContracts: [contract._id],
+    };
+
+    const existingMatchingIndex = profile.matching.findIndex((m) =>
+      m.ecosystemContracts.includes(contract._id),
+    );
+
+    if (existingMatchingIndex !== -1) {
+      profile.matching[existingMatchingIndex] = newMatching;
+    } else {
+      profile.matching.push(newMatching);
+    }
+  }
+
+  protected updateRecommendationForProfile(
+    profile: Profile,
+    data: unknown,
+  ): void {
+    const contract: Contract = data as Contract;
+
+    const allPolicies = new Set<string>();
+    contract.serviceOfferings.forEach((service) => {
+      service.policies.forEach((policy) => {
+        allPolicies.add(policy.description);
+      });
+    });
+
+    const newRecommendation = {
+      policies: Array.from(allPolicies).map((policy) => ({
+        policy: policy,
+        frequency: 1,
+      })),
+      ecosystemContracts: [contract._id],
+    };
+
+    const existingRecommendationIndex = profile.recommendations.findIndex((r) =>
+      r.ecosystemContracts.includes(contract._id),
+    );
+
+    if (existingRecommendationIndex !== -1) {
+      newRecommendation.policies.forEach((newPolicy) => {
+        const existingPolicyIndex = profile.recommendations[
+          existingRecommendationIndex
+        ].policies.findIndex((p) => p.policy === newPolicy.policy);
+
+        if (existingPolicyIndex !== -1) {
+          newPolicy.frequency =
+            profile.recommendations[existingRecommendationIndex].policies[
+              existingPolicyIndex
+            ].frequency + 1;
+        }
+      });
+
+      profile.recommendations[existingRecommendationIndex] = newRecommendation;
+    } else {
+      profile.recommendations.push(newRecommendation);
     }
   }
 }

@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { Profile } from './Profile';
-import { SearchCriteria } from './types';
+import { FilterCondition, SearchCriteria } from './types';
 
 type ChildType = { new (...args: any[]): DataProvider };
 
@@ -23,7 +23,11 @@ export abstract class DataProvider extends EventEmitter {
     return new DataProvider.childType();
   }
 
-  abstract findSimilarProfiles(criteria: SearchCriteria): Promise<Profile[]>;
+  protected abstract makeQuery(
+    conditions: FilterCondition[],
+  ): Record<string, any>;
+  //
+  abstract findProfiles(criteria: SearchCriteria): Promise<Profile[]>;
   //
   protected notifyDataChange(eventName: string, data: any): void {
     this.emit(eventName, data);

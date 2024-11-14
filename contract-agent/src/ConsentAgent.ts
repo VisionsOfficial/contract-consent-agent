@@ -47,4 +47,15 @@ export class ConsentAgent extends Agent {
   }): void {
     throw new Error('Method not implemented.');
   }
+
+  protected updateMatchingForProfile(profile: Profile, data: unknown): void {
+    throw new Error('Method not implemented.');
+  }
+
+  protected updateRecommendationForProfile(
+    profile: Profile,
+    data: unknown,
+  ): void {
+    throw new Error('Method not implemented.');
+  }
 }

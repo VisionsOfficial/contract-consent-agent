@@ -1,3 +1,5 @@
+import { DataProvider } from 'DataProvider';
+
 export interface ProfilePolicy {
   policy: string;
   frequency: number;
@@ -37,4 +39,9 @@ export enum FilterOperator {
   LT = 'LT',
   CONTAINS = 'CONTAINS',
   REGEX = 'REGEX',
+}
+
+export interface Provider {
+  source: string;
+  provider: DataProvider;
 }
