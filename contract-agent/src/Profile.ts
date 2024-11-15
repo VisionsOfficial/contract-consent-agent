@@ -9,19 +9,16 @@ export class Profile {
   configurations: ProfileConfigurations;
   recommendations: ProfileRecommendation[];
   matching: ProfileMatching[];
-  services: [];
 
   constructor(
     url: string,
     configurations: ProfileConfigurations,
     recommendations: ProfileRecommendation[],
     matching: ProfileMatching[],
-    services: [],
   ) {
     this.url = url;
     this.configurations = configurations;
     this.recommendations = recommendations;
     this.matching = matching;
-    this.services = services;
   }
 }

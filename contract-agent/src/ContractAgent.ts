@@ -71,7 +71,6 @@ export class ContractAgent extends Agent {
           result.configurations,
           result.recommendations || [],
           result.matching || [],
-          [],
         ),
     );
   }
@@ -87,8 +86,12 @@ export class ContractAgent extends Agent {
     }
     for (const dataProvider of this.dataProviders) {
       const { source } = dataProvider;
-      const profiles = await this.findProfiles(source, criteria);
-      allProfiles.push(...profiles);
+      if (source) {
+        const profiles = await this.findProfiles(source, criteria);
+        allProfiles.push(...profiles);
+      } else {
+        throw new Error('Provider "source" is undefined');
+      }
     }
     return allProfiles;
   }
@@ -123,36 +126,42 @@ export class ContractAgent extends Agent {
         threshold: 0,
       };
       const source = profileProvider.source;
-      const profiles = await this.findProfiles(source, criteria);
-      const profile = profiles[0];
-      this.updateMatchingForProfile(profile, contract);
-      this.updateRecommendationForProfile(profile, contract);
+      if (source) {
+        const profiles = await this.findProfiles(source, criteria);
+        const profile = profiles[0];
+        this.updateMatchingForProfile(profile, contract);
+        this.updateRecommendationForProfile(profile, contract);
+      } else {
+        throw new Error('Provider "source" is undefined');
+      }
     } else {
       throw new Error('Profile DataProvider not found');
     }
   }
 
-  protected handleDataInserted(data: {
+  protected async handleDataInserted(data: {
     fullDocument: any;
     source: string;
-  }): void {
+  }): Promise<void> {
     switch (data.source) {
       case 'contract':
-        this.updateProfileFromContractChange(data.fullDocument as Contract);
+        await this.updateProfileFromContractChange(
+          data.fullDocument as Contract,
+        );
         break;
       default:
         Logger.info(`Unhandled data insertion for source: ${data.source}`);
     }
   }
 
-  protected handleDataUpdated(data: {
+  protected async handleDataUpdated(data: {
     documentKey: any;
     updateDescription: any;
     source: string;
-  }): void {
+  }): Promise<void> {
     switch (data.source) {
       case 'contract':
-        this.updateProfileFromContractChange(
+        await this.updateProfileFromContractChange(
           data.updateDescription.updatedFields as Contract,
         );
         break;

@@ -44,6 +44,6 @@ export enum FilterOperator {
 }
 
 export interface Provider {
-  source: string;
+  source?: string;
   provider: DataProvider;
 }

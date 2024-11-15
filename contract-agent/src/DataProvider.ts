@@ -7,7 +7,7 @@ type ChildType = { new (...args: any[]): DataProvider };
 export abstract class DataProvider extends EventEmitter {
   static childType?: ChildType;
 
-  constructor(protected dataSource: string) {
+  constructor(public dataSource: string) {
     super();
   }
   //

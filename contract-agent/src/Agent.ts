@@ -69,6 +69,11 @@ export abstract class Agent {
     if (!dataProviders || dataProviders.length === 0) {
       throw new Error('Data Providers array cannot be empty');
     }
+    dataProviders.forEach((dataProvider) => {
+      if (dataProvider.provider) {
+        dataProvider.source = dataProvider.provider.dataSource;
+      }
+    });
     this.dataProviders.push(...dataProviders);
   }
 

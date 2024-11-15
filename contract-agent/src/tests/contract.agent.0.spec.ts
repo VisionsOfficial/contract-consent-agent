@@ -25,12 +25,14 @@ describe('Contract Agent Test Cases 0', function () {
             },
           ],
           ecosystemContracts: [],
+          services: [],
         },
       ],
       [
         {
           policies: [],
           ecosystemContracts: [],
+          services: [],
         },
       ],
     );
@@ -47,7 +49,7 @@ describe('Contract Agent Test Cases 0', function () {
         console.log('MongoDB connected successfully');
 
         const db = client.db('contract_consent_agent_db');
-        const mongoProvider = new MongoDBProvider(db);
+        const mongoProvider = new MongoDBProvider(db, 'Profile');
 
         return mongoProvider;
       } catch (error) {
@@ -57,7 +59,8 @@ describe('Contract Agent Test Cases 0', function () {
     };
 
     const mongoProvider = await setupMongoDB();
-    ContractAgent.setDataProvider(mongoProvider);
+    const contractAgent = ContractAgent.retrieveService();
+    contractAgent.addDataProviders([{ provider: mongoProvider }]);
 
     const buildSearchCriteriaSpy: SinonSpy = sinon.spy(
       ContractAgent.prototype as any,
@@ -65,7 +68,6 @@ describe('Contract Agent Test Cases 0', function () {
     );
 
     const contract = new Contract(
-      '1234',
       '2023-01-01',
       '2023-01-01',
       'Ecosystem A',
@@ -128,7 +130,6 @@ describe('Contract Agent Test Cases 0', function () {
       'Active',
     );
 
-    const contractAgent = ContractAgent.retrieveService();
     const profiles = await contractAgent.findSimilarProfiles(contract);
 
     sinon.assert.calledOnce(buildSearchCriteriaSpy);

@@ -25,12 +25,14 @@ const seedProfiles = async (): Promise<void> => {
               },
             ],
             ecosystemContracts: [],
+            services: [],
           },
         ],
         [
           {
             policies: [],
             ecosystemContracts: [],
+            services: [],
           },
         ],
       ),
@@ -46,12 +48,14 @@ const seedProfiles = async (): Promise<void> => {
               },
             ],
             ecosystemContracts: ['ContractA', 'ContractB'],
+            services: [],
           },
         ],
         [
           {
             policies: [],
             ecosystemContracts: ['ContractC'],
+            services: [],
           },
         ],
       ),
@@ -67,12 +71,14 @@ const seedProfiles = async (): Promise<void> => {
               },
             ],
             ecosystemContracts: [],
+            services: [],
           },
         ],
         [
           {
             policies: [{ policy: 'Must ... 2', frequency: 0 }],
             ecosystemContracts: [],
+            services: [],
           },
         ],
       ),
@@ -88,6 +94,7 @@ const seedProfiles = async (): Promise<void> => {
               },
             ],
             ecosystemContracts: [],
+            services: [],
           },
         ],
         [
@@ -96,6 +103,7 @@ const seedProfiles = async (): Promise<void> => {
               { policy: 'Should match with bob profile', frequency: 0 },
             ],
             ecosystemContracts: [],
+            services: [],
           },
         ],
       ),
