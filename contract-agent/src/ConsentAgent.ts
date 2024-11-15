@@ -18,6 +18,10 @@ export class ConsentAgent extends Agent {
     return ConsentAgent.instance;
   }
 
+  findProfiles(source: string, criteria: SearchCriteria): Promise<Profile[]> {
+    throw new Error('Method not implemented.');
+  }
+
   protected buildSearchCriteria(sourceEntity: any): SearchCriteria {
     throw new Error('Method not implemented.');
   }

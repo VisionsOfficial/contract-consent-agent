@@ -8,11 +8,13 @@ export interface ProfilePolicy {
 export interface ProfileRecommendation {
   policies: ProfilePolicy[];
   ecosystemContracts: unknown[];
+  services: unknown[];
 }
 
 export interface ProfileMatching {
   policies: ProfilePolicy[];
   ecosystemContracts: unknown[];
+  services: unknown[];
 }
 
 export interface ProfileConfigurations {

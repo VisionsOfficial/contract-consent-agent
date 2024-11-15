@@ -1,4 +1,10 @@
-import { Collection, Db, ChangeStreamDocument } from 'mongodb';
+import {
+  Collection,
+  Db,
+  ChangeStreamDocument,
+  Document,
+  WithId,
+} from 'mongodb';
 import { DataProvider } from './DataProvider';
 import { FilterOperator, SearchCriteria, FilterCondition } from './types';
 import { Profile } from './Profile';
@@ -88,20 +94,11 @@ export class MongoDBProvider extends DataProvider {
     }, {});
   }
 
-  async findProfiles(criteria: SearchCriteria): Promise<Profile[]> {
+  async find(criteria: SearchCriteria): Promise<[]> {
     const query = this.makeQuery(criteria.conditions);
-    const results = await this.collection
-      .find(query)
-      .limit(criteria.limit || 100)
-      .toArray();
-    return results.map(
-      (result) =>
-        new Profile(
-          result.url,
-          result.configurations,
-          result.recommendations || [],
-          result.matching || [],
-        ),
-    );
+    return (await this.collection
+      .find(query, { projection: {} })
+      .limit(criteria.limit || 0)
+      .toArray()) as [];
   }
 }

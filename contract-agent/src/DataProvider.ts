@@ -12,6 +12,8 @@ export abstract class DataProvider extends EventEmitter {
   }
   //
 
+  abstract find(criteria: SearchCriteria): Promise<[]>;
+
   setChildType(childType: ChildType) {
     DataProvider.childType = childType;
   }
@@ -26,8 +28,7 @@ export abstract class DataProvider extends EventEmitter {
   protected abstract makeQuery(
     conditions: FilterCondition[],
   ): Record<string, any>;
-  //
-  abstract findProfiles(criteria: SearchCriteria): Promise<Profile[]>;
+
   //
   protected notifyDataChange(eventName: string, data: any): void {
     this.emit(eventName, data);

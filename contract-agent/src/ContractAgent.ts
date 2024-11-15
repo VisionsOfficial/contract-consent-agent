@@ -52,6 +52,30 @@ export class ContractAgent extends Agent {
     };
   }
 
+  async findProfiles(
+    source: string,
+    criteria: SearchCriteria,
+  ): Promise<Profile[]> {
+    interface ProfileDocument {
+      url: string;
+      configurations: any;
+      recommendations?: any[];
+      matching?: any[];
+    }
+    const dataProvider = this.getDataProvider(source);
+    const results: ProfileDocument[] = await dataProvider.find(criteria);
+    return results.map(
+      (result) =>
+        new Profile(
+          result.url,
+          result.configurations,
+          result.recommendations || [],
+          result.matching || [],
+          [],
+        ),
+    );
+  }
+
   async findProfilesAcrossProviders(
     criteria: SearchCriteria,
   ): Promise<Profile[]> {
@@ -62,8 +86,8 @@ export class ContractAgent extends Agent {
       );
     }
     for (const dataProvider of this.dataProviders) {
-      const { provider, source } = dataProvider;
-      const profiles = await provider.findProfiles(criteria);
+      const { source } = dataProvider;
+      const profiles = await this.findProfiles(source, criteria);
       allProfiles.push(...profiles);
     }
     return allProfiles;
@@ -98,7 +122,8 @@ export class ContractAgent extends Agent {
         conditions: [conditions],
         threshold: 0,
       };
-      const profiles = await profileProvider.provider.findProfiles(criteria);
+      const source = profileProvider.source;
+      const profiles = await this.findProfiles(source, criteria);
       const profile = profiles[0];
       this.updateMatchingForProfile(profile, contract);
       this.updateRecommendationForProfile(profile, contract);
@@ -166,6 +191,7 @@ export class ContractAgent extends Agent {
         })),
       ),
       ecosystemContracts: [contract._id],
+      services: [],
     };
 
     const existingMatchingIndex = profile.matching.findIndex((m) =>
@@ -198,6 +224,7 @@ export class ContractAgent extends Agent {
         frequency: 1,
       })),
       ecosystemContracts: [contract._id],
+      services: [],
     };
 
     const existingRecommendationIndex = profile.recommendations.findIndex((r) =>

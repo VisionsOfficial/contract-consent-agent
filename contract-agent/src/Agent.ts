@@ -28,21 +28,42 @@ export abstract class Agent {
     });
   }
 
+  protected getDataProvider(source: string): DataProvider {
+    const dataProvider = this.dataProviders.find(
+      (dataProvider) => dataProvider.source === source,
+    );
+    if (dataProvider) {
+      return dataProvider.provider;
+    } else {
+      throw new Error(`DataProvider for source '${source}' not found.`);
+    }
+  }
+
+  // eslint-disable-next-line no-unused-vars
   protected abstract handleDataInserted(data: {
     fullDocument: any;
     source: string;
   }): void;
 
+  // eslint-disable-next-line no-unused-vars
   protected abstract handleDataUpdated(data: {
     documentKey: any;
     updateDescription: any;
     source: string;
   }): void;
 
+  // eslint-disable-next-line no-unused-vars
   protected abstract handleDataDeleted(data: {
     documentKey: any;
     source: string;
   }): void;
+
+  abstract findProfiles(
+    // eslint-disable-next-line no-unused-vars
+    source: string,
+    // eslint-disable-next-line no-unused-vars
+    criteria: SearchCriteria,
+  ): Promise<Profile[]>;
 
   addDataProviders(dataProviders: Provider[]) {
     if (!dataProviders || dataProviders.length === 0) {
