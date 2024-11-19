@@ -26,6 +26,14 @@ export interface ServiceOffering {
   _id?: string;
 }
 
+export type ContractJSON = Omit<
+  Pick<Contract, keyof Contract>,
+  'createdAt' | 'updatedAt'
+> & {
+  createdAt: string | Date;
+  updatedAt: string | Date;
+};
+
 export class Contract {
   _id?: string;
   createdAt: Date;
@@ -39,19 +47,19 @@ export class Contract {
   serviceOfferings: ServiceOffering[];
   status: string;
 
-  constructor(
-    createdAt: string,
-    updatedAt: string,
-    ecosystem: string,
-    members: Participant[],
-    orchestrator: string,
-    purpose: string[],
-    revokedMembers: Participant[],
-    rolesAndObligations: any[],
-    serviceOfferings: ServiceOffering[],
-    status: string,
-    _id?: string,
-  ) {
+  constructor({
+    createdAt,
+    updatedAt,
+    ecosystem,
+    members,
+    orchestrator,
+    purpose,
+    revokedMembers,
+    rolesAndObligations,
+    serviceOfferings,
+    status,
+    _id,
+  }: ContractJSON) {
     this._id = _id;
     this.createdAt = new Date(createdAt);
     this.updatedAt = new Date(updatedAt);

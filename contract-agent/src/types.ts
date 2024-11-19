@@ -45,5 +45,6 @@ export enum FilterOperator {
 
 export interface Provider {
   source?: string;
+  watchChanges?: boolean;
   provider: DataProvider;
 }

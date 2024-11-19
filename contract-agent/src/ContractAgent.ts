@@ -1,14 +1,10 @@
 import { Profile } from './Profile';
-import { DataProvider } from './DataProvider';
-import {
-  FilterCondition,
-  FilterOperator,
-  ProfilePolicy,
-  SearchCriteria,
-} from './types';
+import { FilterCondition, FilterOperator, SearchCriteria } from './types';
 import { Agent } from './Agent';
 import { Contract } from './Contract';
-import { Logger } from 'Logger';
+import { Logger } from './Logger';
+import { DataProvider, DataProviderType } from './DataProvider';
+import { MongoDBProvider } from './MongoDBProvider';
 
 export class ContractAgent extends Agent {
   private static instance: ContractAgent;
@@ -20,8 +16,12 @@ export class ContractAgent extends Agent {
     this.setupProviderEventHandlers();
   }
 
-  static retrieveService(refresh: boolean = false): ContractAgent {
+  static retrieveService(
+    dataProviderType: DataProviderType = MongoDBProvider,
+    refresh: boolean = false,
+  ): ContractAgent {
     if (!ContractAgent.instance || refresh) {
+      DataProvider.setChildType(dataProviderType);
       const instance = new ContractAgent();
       ContractAgent.instance = instance;
     }
@@ -71,6 +71,7 @@ export class ContractAgent extends Agent {
           result.configurations,
           result.recommendations || [],
           result.matching || [],
+          [], //
         ),
     );
   }
@@ -144,10 +145,15 @@ export class ContractAgent extends Agent {
     source: string;
   }): Promise<void> {
     switch (data.source) {
-      case 'contract':
-        await this.updateProfileFromContractChange(
-          data.fullDocument as Contract,
-        );
+      case 'contracts':
+        try {
+          await this.updateProfileFromContractChange(
+            data.fullDocument as Contract,
+          );
+          Logger.info(`Data inserted for source: ${data.source}`);
+        } catch (error) {
+          Logger.error((error as Error).message);
+        }
         break;
       default:
         Logger.info(`Unhandled data insertion for source: ${data.source}`);
@@ -160,7 +166,7 @@ export class ContractAgent extends Agent {
     source: string;
   }): Promise<void> {
     switch (data.source) {
-      case 'contract':
+      case 'contracts':
         await this.updateProfileFromContractChange(
           data.updateDescription.updatedFields as Contract,
         );
@@ -175,7 +181,7 @@ export class ContractAgent extends Agent {
     source: string;
   }): void {
     switch (data.source) {
-      case 'contract':
+      case 'contracts':
         Logger.info(`Contract deleted: ${data.documentKey}`);
         break;
       default:

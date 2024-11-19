@@ -1,6 +1,5 @@
-import { DataProvider } from './DataProvider';
 import { Profile } from './Profile';
-import { ProfilePolicy, SearchCriteria } from './types';
+import { SearchCriteria } from './types';
 import { Agent } from './Agent';
 
 export class ConsentAgent extends Agent {

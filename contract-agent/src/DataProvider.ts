@@ -2,10 +2,10 @@ import { EventEmitter } from 'events';
 import { Profile } from './Profile';
 import { FilterCondition, SearchCriteria } from './types';
 
-type ChildType = { new (...args: any[]): DataProvider };
+export type DataProviderType = { new (...args: any[]): DataProvider };
 
 export abstract class DataProvider extends EventEmitter {
-  static childType?: ChildType;
+  static childType?: DataProviderType;
 
   constructor(public dataSource: string) {
     super();
@@ -13,8 +13,9 @@ export abstract class DataProvider extends EventEmitter {
   //
 
   abstract find(criteria: SearchCriteria): Promise<[]>;
+  abstract create(data: unknown): Promise<unknown>;
 
-  setChildType(childType: ChildType) {
+  static setChildType(childType: DataProviderType) {
     DataProvider.childType = childType;
   }
 

@@ -1,7 +1,7 @@
 import { Profile } from './Profile';
 import { DataProvider } from './DataProvider';
 import * as fs from 'fs';
-import { Logger } from 'Logger';
+import { Logger } from './Logger';
 import {
   SearchCriteria,
   ProfilePolicy,
@@ -9,6 +9,8 @@ import {
   ProfileMatching,
   Provider,
 } from './types';
+
+import path from 'path';
 
 export interface AgentConfig {
   dataSources: string[];
@@ -21,14 +23,16 @@ export abstract class Agent {
   constructor() {}
 
   protected setupProviderEventHandlers(): void {
-    this.dataProviders.forEach(({ provider }) => {
-      provider.on('dataInserted', this.handleDataInserted.bind(this));
-      provider.on('dataUpdated', this.handleDataUpdated.bind(this));
-      provider.on('dataDeleted', this.handleDataDeleted.bind(this));
+    this.dataProviders.forEach(({ provider, watchChanges }) => {
+      if (watchChanges !== false) {
+        provider.on('dataInserted', this.handleDataInserted.bind(this));
+        provider.on('dataUpdated', this.handleDataUpdated.bind(this));
+        provider.on('dataDeleted', this.handleDataDeleted.bind(this));
+      }
     });
   }
 
-  protected getDataProvider(source: string): DataProvider {
+  getDataProvider(source: string): DataProvider {
     const dataProvider = this.dataProviders.find(
       (dataProvider) => dataProvider.source === source,
     );
@@ -83,6 +87,7 @@ export abstract class Agent {
         const providerType = DataProvider.childType;
         if (typeof providerType === 'function') {
           try {
+            console.log(providerType, 'providerType');
             const provider = new providerType(source);
             this.addDataProviders([{ source, provider }]);
           } catch (error) {
@@ -103,7 +108,12 @@ export abstract class Agent {
 
   protected loadDefaultConfiguration(): void {
     try {
-      const configData = fs.readFileSync('contract-agent.config.json', 'utf-8');
+      // eslint-disable-next-line no-undef
+      const filePath = __filename;
+      const fileDir = path.dirname(filePath);
+      const configPath = path.join(fileDir, 'contract-agent.config.json');
+
+      const configData = fs.readFileSync(configPath, 'utf-8');
       this.config = JSON.parse(configData) as AgentConfig;
       Logger.info(
         `Configuration loaded successfully: ${JSON.stringify(this.config, null, 2)}`,
@@ -113,7 +123,6 @@ export abstract class Agent {
       this.config = { dataSources: [] };
     }
   }
-
   // Provide recommendations for ecosystem contracts and policies that align with potential participant needs.
   // These recommendations are based on the participant's usage history or suggestions pushed by the system.
   getRecommendations(profile: Profile): ProfileRecommendation[] {
