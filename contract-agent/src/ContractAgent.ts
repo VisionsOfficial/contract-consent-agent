@@ -62,18 +62,22 @@ export class ContractAgent extends Agent {
       recommendations?: any[];
       matching?: any[];
     }
-    const dataProvider = this.getDataProvider(source);
-    const results: ProfileDocument[] = await dataProvider.find(criteria);
-    return results.map(
-      (result) =>
-        new Profile(
-          result.url,
-          result.configurations,
-          result.recommendations || [],
-          result.matching || [],
-          [], //
-        ),
-    );
+    try {
+      const dataProvider = this.getDataProvider(source);
+      const results: ProfileDocument[] = await dataProvider.find(criteria);
+      return results.map((result) => {
+        const profil = {
+          url: result.url,
+          configurations: result.configurations,
+          recommendations: result.recommendations || [],
+          matching: result.matching || [],
+        };
+        return new Profile(profil);
+      });
+    } catch (error) {
+      Logger.error(`Error while finding profile: ${(error as Error).message}`);
+      throw new Error();
+    }
   }
 
   async findProfilesAcrossProviders(
@@ -100,43 +104,59 @@ export class ContractAgent extends Agent {
   private async updateProfileFromContractChange(
     contract: Contract,
   ): Promise<void> {
-    for (const member of contract.members) {
-      await this.updateProfile(member.participant, contract);
+    if (contract) {
+      for (const member of contract.members) {
+        await this.updateProfile(member.participant, contract);
+      }
+      // Todo:
+      /*
+      for (const offering of contract.serviceOfferings) {
+        await this.updateProfile(offering.participant, contract);
+      }
+      await this.updateProfile(contract.orchestrator, contract);*/
+    } else {
+      throw new Error('Contract is undefined');
     }
-    for (const offering of contract.serviceOfferings) {
-      await this.updateProfile(offering.participant, contract);
-    }
-    await this.updateProfile(contract.orchestrator, contract);
   }
 
   private async updateProfile(
     participantId: string,
     contract: Contract,
   ): Promise<void> {
-    const profileProvider = this.dataProviders.find(
-      (dataProvider) => dataProvider.source === 'Profile',
-    );
-    if (profileProvider) {
-      const conditions: FilterCondition = {
-        field: 'url',
-        operator: FilterOperator.EQUALS,
-        value: participantId,
-      };
-      const criteria: SearchCriteria = {
-        conditions: [conditions],
-        threshold: 0,
-      };
-      const source = profileProvider.source;
-      if (source) {
-        const profiles = await this.findProfiles(source, criteria);
-        const profile = profiles[0];
-        this.updateMatchingForProfile(profile, contract);
-        this.updateRecommendationForProfile(profile, contract);
+    try {
+      const profileProvider = this.dataProviders.find(
+        (dataProvider) => dataProvider.source === 'profiles',
+      );
+      if (profileProvider) {
+        const conditions: FilterCondition = {
+          field: 'url',
+          operator: FilterOperator.EQUALS,
+          value: participantId,
+        };
+        const criteria: SearchCriteria = {
+          conditions: [conditions],
+          threshold: 0,
+        };
+        const source = profileProvider.source;
+        if (source) {
+          const profiles = await this.findProfiles(source, criteria);
+          const profile =
+            profiles[0] ??
+            (await (async () => {
+              Logger.warn('Profile not found, new one will be created...');
+              return await this.createProfileForParticipant(participantId);
+            })());
+          this.updateMatchingForProfile(profile, contract);
+          // Todo:
+          // this.updateRecommendationForProfile(profile, contract);
+        } else {
+          throw new Error('Provider "source" is undefined');
+        }
       } else {
-        throw new Error('Provider "source" is undefined');
+        throw new Error('Profile DataProvider not found');
       }
-    } else {
-      throw new Error('Profile DataProvider not found');
+    } catch (error) {
+      Logger.error(`Update profile failed: ${(error as Error).message}`);
     }
   }
 
@@ -152,7 +172,7 @@ export class ContractAgent extends Agent {
           );
           Logger.info(`Data inserted for source: ${data.source}`);
         } catch (error) {
-          Logger.error((error as Error).message);
+          Logger.error(`Data insertion failed: ${(error as Error).message}`);
         }
         break;
       default:
@@ -190,33 +210,39 @@ export class ContractAgent extends Agent {
   }
 
   protected updateMatchingForProfile(profile: Profile, data: unknown): void {
-    const contract: Contract = data as Contract;
+    try {
+      const contract: Contract = data as Contract;
 
-    const otherParticipantsServices = contract.serviceOfferings.filter(
-      (service) => service.participant !== profile.url,
-    );
+      const otherParticipantsServices = contract.serviceOfferings.filter(
+        (service) => service.participant !== profile.url,
+      );
 
-    if (!otherParticipantsServices.length) return;
+      if (!otherParticipantsServices.length) return;
 
-    const newMatching = {
-      policies: otherParticipantsServices.flatMap((service) =>
-        service.policies.map((policy) => ({
-          policy: policy.description,
-          frequency: 1,
-        })),
-      ),
-      ecosystemContracts: [contract._id],
-      services: [],
-    };
+      const newMatching = {
+        policies: otherParticipantsServices.flatMap((service) =>
+          service.policies.map((policy) => ({
+            policy: policy.description,
+            frequency: 1,
+          })),
+        ),
+        ecosystemContracts: [contract._id],
+        services: [],
+      };
 
-    const existingMatchingIndex = profile.matching.findIndex((m) =>
-      m.ecosystemContracts.includes(contract._id),
-    );
+      const existingMatchingIndex = profile.matching.findIndex((m) =>
+        m.ecosystemContracts.includes(contract._id),
+      );
 
-    if (existingMatchingIndex !== -1) {
-      profile.matching[existingMatchingIndex] = newMatching;
-    } else {
-      profile.matching.push(newMatching);
+      if (existingMatchingIndex !== -1) {
+        profile.matching[existingMatchingIndex] = newMatching;
+      } else {
+        profile.matching.push(newMatching);
+      }
+    } catch (error) {
+      Logger.error(
+        `Profile matching update failed: ${(error as Error).message}`,
+      );
     }
   }
 

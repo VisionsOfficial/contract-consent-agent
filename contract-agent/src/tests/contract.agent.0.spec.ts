@@ -6,6 +6,7 @@ import { Contract } from '../Contract';
 import sinon, { SinonSpy } from 'sinon';
 import { expect } from 'chai';
 import { ContractBase } from './mocks/contract.mock';
+import { DataProvider } from '../DataProvider';
 
 describe('Contract Agent Test Cases 0', function () {
   let contractAgent: ContractAgent;
@@ -36,11 +37,17 @@ describe('Contract Agent Test Cases 0', function () {
   });
 
   it('it should 0', async function () {
-    const handleDataInsertedSpy: SinonSpy = sinon.spy(
+    const delay = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+
+    const updateProfileFromContractChangeSpy: SinonSpy = sinon.spy(
       ContractAgent.prototype as any,
-      'handleDataInserted',
+      'updateProfileFromContractChange',
     );
     await contractProvider.create(ContractBase);
-    expect(handleDataInsertedSpy.calledOnce).to.be.true;
+    await delay(100);
+    await new Promise(setImmediate);
+    sinon.assert.calledOnce(updateProfileFromContractChangeSpy);
+    expect(updateProfileFromContractChangeSpy.calledOnce).to.be.true;
   });
 });

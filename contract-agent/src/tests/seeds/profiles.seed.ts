@@ -1,5 +1,5 @@
 import { MongoClient, Db, Collection } from 'mongodb';
-import { Profile } from '../../Profile';
+import { Profile, ProfileJSON } from '../../Profile';
 
 const seedProfiles = async (): Promise<void> => {
   const uri = 'mongodb://localhost:27017';
@@ -12,11 +12,11 @@ const seedProfiles = async (): Promise<void> => {
     const db: Db = client.db('contract_consent_agent_db');
     const profilesCollection: Collection<Profile> = db.collection('Profiles');
 
-    const profiles: Profile[] = [
-      new Profile(
-        'https://catalog.com/v1/catalog/participants/6564abb5d853e8e05b132057',
-        { allowRecommendation: true, allowPolicies: true },
-        [
+    const profiles: ProfileJSON[] = [
+      {
+        url: 'https://catalog.com/v1/catalog/participants/6564abb5d853e8e05b132057',
+        configurations: { allowRecommendation: true, allowPolicies: true },
+        recommendations: [
           {
             policies: [
               {
@@ -28,18 +28,18 @@ const seedProfiles = async (): Promise<void> => {
             services: [],
           },
         ],
-        [
+        matching: [
           {
             policies: [],
             ecosystemContracts: [],
             services: [],
           },
         ],
-      ),
-      new Profile(
-        'https://catalog.com/v1/catalog/participants/12345abcd',
-        { allowRecommendation: false, allowPolicies: true },
-        [
+      },
+      {
+        url: 'https://catalog.com/v1/catalog/participants/12345abcd',
+        configurations: { allowRecommendation: false, allowPolicies: true },
+        recommendations: [
           {
             policies: [
               {
@@ -51,18 +51,18 @@ const seedProfiles = async (): Promise<void> => {
             services: [],
           },
         ],
-        [
+        matching: [
           {
             policies: [],
             ecosystemContracts: ['ContractC'],
             services: [],
           },
         ],
-      ),
-      new Profile(
-        'https://catalog.com/v1/catalog/participants/98765xyz',
-        { allowRecommendation: true, allowPolicies: false },
-        [
+      },
+      {
+        url: 'https://catalog.com/v1/catalog/participants/98765xyz',
+        configurations: { allowRecommendation: true, allowPolicies: false },
+        recommendations: [
           {
             policies: [
               {
@@ -74,18 +74,18 @@ const seedProfiles = async (): Promise<void> => {
             services: [],
           },
         ],
-        [
+        matching: [
           {
             policies: [{ policy: 'Must ... 2', frequency: 0 }],
             ecosystemContracts: [],
             services: [],
           },
         ],
-      ),
-      new Profile(
-        'https://catalog.com/v1/catalog/participants/98765xyz',
-        { allowRecommendation: true, allowPolicies: false },
-        [
+      },
+      {
+        url: 'https://catalog.com/v1/catalog/participants/98765xyz',
+        configurations: { allowRecommendation: true, allowPolicies: false },
+        recommendations: [
           {
             policies: [
               {
@@ -97,7 +97,7 @@ const seedProfiles = async (): Promise<void> => {
             services: [],
           },
         ],
-        [
+        matching: [
           {
             policies: [
               { policy: 'Should match with bob profile', frequency: 0 },
@@ -106,10 +106,14 @@ const seedProfiles = async (): Promise<void> => {
             services: [],
           },
         ],
-      ),
+      },
     ];
 
-    const result = await profilesCollection.insertMany(profiles);
+    const profileInstances = profiles.map(
+      (profileData) => new Profile(profileData),
+    );
+
+    const result = await profilesCollection.insertMany(profileInstances);
     console.log(
       `${result.insertedCount} documents inserted with IDs:`,
       result.insertedIds,

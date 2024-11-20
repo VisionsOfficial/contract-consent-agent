@@ -1,4 +1,4 @@
-import { Profile } from './Profile';
+import { Profile, ProfileJSON } from './Profile';
 import { DataProvider } from './DataProvider';
 import * as fs from 'fs';
 import { Logger } from './Logger';
@@ -87,7 +87,6 @@ export abstract class Agent {
         const providerType = DataProvider.childType;
         if (typeof providerType === 'function') {
           try {
-            console.log(providerType, 'providerType');
             const provider = new providerType(source);
             this.addDataProviders([{ source, provider }]);
           } catch (error) {
@@ -134,7 +133,25 @@ export abstract class Agent {
     return profile.matching;
   }
 
-  //
+  protected async createProfileForParticipant(
+    participantId: string,
+  ): Promise<Profile> {
+    try {
+      const profileProvider = this.getDataProvider('profiles');
+      const newProfileData = {
+        url: participantId,
+        configurations: {},
+        recommendations: [],
+        matching: [],
+      };
+      const profile = await profileProvider.create(newProfileData);
+      return new Profile(profile as ProfileJSON);
+    } catch (error) {
+      Logger.error(`Error creating profile: ${(error as Error).message}`);
+      throw new Error('Profile creation failed');
+    }
+  }
+
   protected abstract updateMatchingForProfile(
     profile: Profile,
     data: unknown,
