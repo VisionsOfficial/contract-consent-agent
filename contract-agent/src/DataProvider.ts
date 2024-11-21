@@ -14,6 +14,7 @@ export abstract class DataProvider extends EventEmitter {
 
   abstract find(criteria: SearchCriteria): Promise<[]>;
   abstract create(data: unknown): Promise<unknown>;
+  abstract delete(id: string): Promise<boolean>;
 
   static setChildType(childType: DataProviderType) {
     DataProvider.childType = childType;

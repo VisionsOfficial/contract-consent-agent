@@ -104,19 +104,32 @@ export class ContractAgent extends Agent {
   private async updateProfileFromContractChange(
     contract: Contract,
   ): Promise<void> {
-    if (contract) {
-      for (const member of contract.members) {
-        await this.updateProfile(member.participant, contract);
-      }
-      // Todo:
-      /*
-      for (const offering of contract.serviceOfferings) {
-        await this.updateProfile(offering.participant, contract);
-      }
-      await this.updateProfile(contract.orchestrator, contract);*/
-    } else {
+    if (!contract) {
       throw new Error('Contract is undefined');
     }
+    await this.updateProfilesForMembers(contract);
+    await this.updateProfilesForServiceOfferings(contract);
+    await this.updateProfileForOrchestrator(contract);
+  }
+
+  private async updateProfilesForMembers(contract: Contract): Promise<void> {
+    for (const member of contract.members) {
+      await this.updateProfile(member.participant, contract);
+    }
+  }
+
+  private async updateProfilesForServiceOfferings(
+    contract: Contract,
+  ): Promise<void> {
+    for (const offering of contract.serviceOfferings) {
+      await this.updateProfile(offering.participant, contract);
+    }
+  }
+
+  private async updateProfileForOrchestrator(
+    contract: Contract,
+  ): Promise<void> {
+    await this.updateProfile(contract.orchestrator, contract);
   }
 
   private async updateProfile(
@@ -127,34 +140,37 @@ export class ContractAgent extends Agent {
       const profileProvider = this.dataProviders.find(
         (dataProvider) => dataProvider.source === 'profiles',
       );
-      if (profileProvider) {
-        const conditions: FilterCondition = {
-          field: 'url',
-          operator: FilterOperator.EQUALS,
-          value: participantId,
-        };
-        const criteria: SearchCriteria = {
-          conditions: [conditions],
-          threshold: 0,
-        };
-        const source = profileProvider.source;
-        if (source) {
-          const profiles = await this.findProfiles(source, criteria);
-          const profile =
-            profiles[0] ??
-            (await (async () => {
-              Logger.warn('Profile not found, new one will be created...');
-              return await this.createProfileForParticipant(participantId);
-            })());
-          this.updateMatchingForProfile(profile, contract);
-          // Todo:
-          // this.updateRecommendationForProfile(profile, contract);
-        } else {
-          throw new Error('Provider "source" is undefined');
-        }
-      } else {
+
+      if (!profileProvider) {
         throw new Error('Profile DataProvider not found');
       }
+
+      const conditions: FilterCondition = {
+        field: 'url',
+        operator: FilterOperator.EQUALS,
+        value: participantId,
+      };
+      const criteria: SearchCriteria = {
+        conditions: [conditions],
+        threshold: 0,
+      };
+
+      const source = profileProvider.source;
+      if (!source) {
+        throw new Error('Provider "source" is undefined');
+      }
+
+      const profiles = await this.findProfiles(source, criteria);
+      const profile =
+        profiles[0] ??
+        (await (async () => {
+          Logger.warn('Profile not found, new one will be created...');
+          return await this.createProfileForParticipant(participantId);
+        })());
+
+      this.updateMatchingForProfile(profile, contract);
+      // Todo:
+      // this.updateRecommendationForProfile(profile, contract);
     } catch (error) {
       Logger.error(`Update profile failed: ${(error as Error).message}`);
     }

@@ -5,6 +5,7 @@ import {
   WithId,
   InsertOneResult,
   MongoClient,
+  ObjectId,
 } from 'mongodb';
 import { DataProvider } from './DataProvider';
 import { FilterOperator, SearchCriteria, FilterCondition } from './types';
@@ -115,51 +116,7 @@ export class MongoDBProvider extends DataProvider {
 
     return new Proxy(collection, handler);
   }
-  /*
-  private static createCollectionProxy(collection: Collection): Collection {
-    const interceptor = MongoInterceptor.getInstance();
-    const handler = {
-      get(target: Collection, prop: string | symbol): any {
-        const original = target[prop as keyof Collection];
-        if (typeof original !== 'function') return original;
 
-        return async function (this: any, ...args: any[]) {
-          const method = original as (...args: any[]) => Promise<any>;
-          const result = await method.apply(target, args);
-
-          if (prop === 'insertOne') {
-            interceptor.notifyCallbacks('insert', collection.collectionName, {
-              fullDocument: args[0],
-              insertedId: result.insertedId,
-              acknowledged: result.acknowledged,
-            });
-          } else if (prop === 'insertMany') {
-            interceptor.notifyCallbacks('insert', collection.collectionName, {
-              fullDocuments: args[0],
-              insertedIds: result.insertedIds,
-              acknowledged: result.acknowledged,
-            });
-          } else if (prop === 'updateOne' || prop === 'updateMany') {
-            interceptor.notifyCallbacks('update', collection.collectionName, {
-              filter: args[0],
-              update: args[1],
-              result,
-            });
-          } else if (prop === 'deleteOne' || prop === 'deleteMany') {
-            interceptor.notifyCallbacks('delete', collection.collectionName, {
-              filter: args[0],
-              result,
-            });
-          }
-
-          return result;
-        };
-      },
-    };
-
-    return new Proxy(collection, handler);
-  }
-*/
   static async mongoDBConnect(): Promise<Db> {
     try {
       const client = await MongoClient.connect('mongodb://localhost:27017');
@@ -263,6 +220,25 @@ export class MongoDBProvider extends DataProvider {
     } catch (error) {
       Logger.info(
         `Error during document insertion: ${(error as Error).message}`,
+      );
+      throw error;
+    }
+  }
+
+  async delete(id: string): Promise<boolean> {
+    try {
+      const result = await this.collection.deleteOne({ _id: new ObjectId(id) });
+
+      if (result.deletedCount === 0) {
+        Logger.warn(`No document found with id: ${id}`);
+        return false;
+      }
+
+      Logger.info(`Document with id: ${id} successfully deleted`);
+      return true;
+    } catch (error) {
+      Logger.error(
+        `Error during document deletion: ${(error as Error).message}`,
       );
       throw error;
     }
