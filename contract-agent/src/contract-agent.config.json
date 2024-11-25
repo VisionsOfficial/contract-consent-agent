@@ -1,3 +1,14 @@
 {
-  "dataSources": ["contracts", "profiles"]
+  "dataProviderConfig": [
+    {
+      "source": "contracts",
+      "url": "mongodb://localhost:27017",
+      "dbName": "contract_consent_agent_db"
+    },
+    {
+      "source": "profiles",
+      "url": "mongodb://localhost:27017",
+      "dbName": "contract_consent_agent_db"
+    }
+  ]
 }

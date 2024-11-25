@@ -11,18 +11,22 @@ export class ContractAgent extends Agent {
 
   private constructor() {
     super();
+  }
+
+  async prepare(): Promise<void> {
     this.loadDefaultConfiguration();
-    this.addDefaultProviders();
+    await this.addDefaultProviders();
     this.setupProviderEventHandlers();
   }
 
-  static retrieveService(
+  static async retrieveService(
     dataProviderType: DataProviderType = MongoDBProvider,
     refresh: boolean = false,
-  ): ContractAgent {
+  ): Promise<ContractAgent> {
     if (!ContractAgent.instance || refresh) {
       DataProvider.setChildType(dataProviderType);
       const instance = new ContractAgent();
+      await instance.prepare();
       ContractAgent.instance = instance;
     }
     return ContractAgent.instance;
@@ -86,7 +90,9 @@ export class ContractAgent extends Agent {
     const allProfiles: Profile[] = [];
     if (this.config) {
       Logger.info(
-        `Using data sources: ${JSON.stringify(this.config.dataSources, null, 2)}`,
+        `Using data sources: ${this.config.dataProviderConfig
+          .map((config) => config.source)
+          .join(', ')}`,
       );
     }
     for (const dataProvider of this.dataProviders) {
@@ -168,9 +174,9 @@ export class ContractAgent extends Agent {
           return await this.createProfileForParticipant(participantId);
         })());
 
-      this.updateMatchingForProfile(profile, contract);
-      // Todo:
       // this.updateRecommendationForProfile(profile, contract);
+      // Todo:
+      this.updateMatchingForProfile(profile, contract);
     } catch (error) {
       Logger.error(`Update profile failed: ${(error as Error).message}`);
     }

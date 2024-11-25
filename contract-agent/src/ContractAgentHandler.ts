@@ -3,10 +3,12 @@ import { SearchCriteria, FilterOperator } from './types';
 
 // Orchestrator Request Handler
 export class OrchestratorRequestHandler {
-  private contractAgent: ContractAgent;
+  private contractAgent?: ContractAgent;
 
-  constructor() {
-    this.contractAgent = ContractAgent.retrieveService();
+  constructor() {}
+
+  async prepare() {
+    this.contractAgent = await ContractAgent.retrieveService();
   }
 
   // Return only the policies from recommendations
@@ -22,9 +24,13 @@ export class OrchestratorRequestHandler {
       threshold: 0,
     };
 
+    if (!this.contractAgent) {
+      throw new Error('Contract Agent undefined');
+    }
     const profiles = await this.contractAgent.findProfiles('Profile', criteria);
-    if (profiles.length === 0) throw new Error('Profile not found');
-
+    if (profiles.length === 0) {
+      throw new Error('Profile not found');
+    }
     return profiles[0].recommendations.map((rec) => rec.policies);
   }
 
@@ -40,10 +46,13 @@ export class OrchestratorRequestHandler {
       ],
       threshold: 0,
     };
-
+    if (!this.contractAgent) {
+      throw new Error('Contract Agent undefined');
+    }
     const profiles = await this.contractAgent.findProfiles('Profile', criteria);
-    if (profiles.length === 0) throw new Error('Profile not found');
-
+    if (profiles.length === 0) {
+      throw new Error('Profile not found');
+    }
     return profiles[0].recommendations.map((rec) => rec.services);
   }
 
@@ -60,6 +69,9 @@ export class OrchestratorRequestHandler {
       threshold: 0,
     };
 
+    if (!this.contractAgent) {
+      throw new Error('Contract Agent undefined');
+    }
     const profiles = await this.contractAgent.findProfiles('Profile', criteria);
     if (profiles.length === 0) throw new Error('Profile not found');
 
@@ -78,7 +90,9 @@ export class OrchestratorRequestHandler {
       ],
       threshold: 0,
     };
-
+    if (!this.contractAgent) {
+      throw new Error('Contract Agent undefined');
+    }
     const profiles = await this.contractAgent.findProfiles('Profile', criteria);
     if (profiles.length === 0) throw new Error('Profile not found');
 
@@ -88,12 +102,13 @@ export class OrchestratorRequestHandler {
 
 // Participant Request Handler
 export class ParticipantRequestHandler {
-  private contractAgent: ContractAgent;
+  private contractAgent?: ContractAgent;
 
-  constructor() {
-    this.contractAgent = ContractAgent.retrieveService();
+  constructor() {}
+
+  async prepare() {
+    this.contractAgent = await ContractAgent.retrieveService();
   }
-
   // Return only the services from recommendations
   async getServiceRecommendationFromProfile(profileId: string): Promise<any> {
     const criteria: SearchCriteria = {
@@ -107,9 +122,13 @@ export class ParticipantRequestHandler {
       threshold: 0,
     };
 
+    if (!this.contractAgent) {
+      throw new Error('Contract Agent undefined');
+    }
     const profiles = await this.contractAgent.findProfiles('Profile', criteria);
-    if (profiles.length === 0) throw new Error('Profile not found');
-
+    if (profiles.length === 0) {
+      throw new Error('Profile not found');
+    }
     return profiles[0].recommendations.map((rec) => rec.services);
   }
 
@@ -126,9 +145,13 @@ export class ParticipantRequestHandler {
       threshold: 0,
     };
 
+    if (!this.contractAgent) {
+      throw new Error('Contract Agent undefined');
+    }
     const profiles = await this.contractAgent.findProfiles('Profile', criteria);
-    if (profiles.length === 0) throw new Error('Profile not found');
-
+    if (profiles.length === 0) {
+      throw new Error('Profile not found');
+    }
     return profiles[0].matching.map((match) => match.policies);
   }
 
@@ -145,9 +168,13 @@ export class ParticipantRequestHandler {
       threshold: 0,
     };
 
+    if (!this.contractAgent) {
+      throw new Error('Contract Agent undefined');
+    }
     const profiles = await this.contractAgent.findProfiles('Profile', criteria);
-    if (profiles.length === 0) throw new Error('Profile not found');
-
+    if (profiles.length === 0) {
+      throw new Error('Profile not found');
+    }
     return profiles[0].matching.map((match) => match.ecosystemContracts);
   }
 }

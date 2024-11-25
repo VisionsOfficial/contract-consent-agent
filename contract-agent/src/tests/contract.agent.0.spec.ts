@@ -19,8 +19,7 @@ describe('Contract Agent Test Cases 0', function () {
   let updateProfileSpy: SinonSpy;
 
   before(async function () {
-    await MongoDBProvider.mongoDBConnect();
-    contractAgent = ContractAgent.retrieveService();
+    contractAgent = await ContractAgent.retrieveService();
     contractProvider = contractAgent.getDataProvider(
       'contracts',
     ) as MongoDBProvider;

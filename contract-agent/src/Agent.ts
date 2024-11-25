@@ -8,12 +8,13 @@ import {
   ProfileRecommendation,
   ProfileMatching,
   Provider,
+  DataProviderConfig,
 } from './types';
 
 import path from 'path';
 
 export interface AgentConfig {
-  dataSources: string[];
+  dataProviderConfig: DataProviderConfig[];
 }
 
 export abstract class Agent {
@@ -81,25 +82,26 @@ export abstract class Agent {
     this.dataProviders.push(...dataProviders);
   }
 
-  protected addDefaultProviders(): void {
+  protected async addDefaultProviders(): Promise<void> {
     if (this.config) {
-      this.config.dataSources.forEach((source) => {
+      for (const dpConfig of this.config.dataProviderConfig) {
         const providerType = DataProvider.childType;
         if (typeof providerType === 'function') {
           try {
-            const provider = new providerType(source);
-            this.addDataProviders([{ source, provider }]);
+            const provider = new providerType(dpConfig);
+            await provider.ensureReady();
+            this.addDataProviders([{ source: dpConfig.source, provider }]);
           } catch (error) {
             Logger.error(
-              `Failed to add data provider for source: ${source}: ${(error as Error).message}`,
+              `Failed to add data provider for source: ${dpConfig.source}: ${(error as Error).message}`,
             );
           }
         } else {
           Logger.warn(
-            `Invalid provider type for source: ${source}. No data provider added.`,
+            `Invalid provider type for source: ${dpConfig.source}. No data provider added.`,
           );
         }
-      });
+      }
     } else {
       Logger.warn('No configuration found. No data providers added.');
     }
@@ -119,7 +121,7 @@ export abstract class Agent {
       );
     } catch (error) {
       Logger.error(`Failed to load configuration: ${(error as Error).message}`);
-      this.config = { dataSources: [] };
+      this.config = { dataProviderConfig: [] };
     }
   }
   // Provide recommendations for ecosystem contracts and policies that align with potential participant needs.

@@ -27,6 +27,8 @@ export abstract class DataProvider extends EventEmitter {
     return new DataProvider.childType();
   }
 
+  async ensureReady(): Promise<void> {}
+
   protected abstract makeQuery(
     conditions: FilterCondition[],
   ): Record<string, any>;

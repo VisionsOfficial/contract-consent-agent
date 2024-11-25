@@ -48,3 +48,9 @@ export interface Provider {
   watchChanges?: boolean;
   provider: DataProvider;
 }
+
+export interface DataProviderConfig {
+  source: string;
+  url: string;
+  dbName: string;
+}

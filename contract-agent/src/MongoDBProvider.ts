@@ -8,7 +8,12 @@ import {
   ObjectId,
 } from 'mongodb';
 import { DataProvider } from './DataProvider';
-import { FilterOperator, SearchCriteria, FilterCondition } from './types';
+import {
+  FilterOperator,
+  SearchCriteria,
+  FilterCondition,
+  DataProviderConfig,
+} from './types';
 import { Logger } from './Logger';
 
 type DocumentChangeHandler = (collectionName: string, document: any) => void;
@@ -51,20 +56,80 @@ class MongoInterceptor {
 }
 
 export class MongoDBProvider extends DataProvider {
-  private static db?: Db;
-  private collection: Collection;
+  private static connections: Map<
+    string,
+    { db: Db; client: MongoClient } | undefined
+  > = new Map();
+  private db?: Db;
+  private client?: MongoClient;
+  private collection!: Collection<Document>;
+  private dbName: string;
+  private connectionPromise?: Promise<Db>;
 
-  constructor(dataSource: string) {
-    super(dataSource);
-    if (MongoDBProvider.db) {
-      this.collection = MongoDBProvider.createCollectionProxy(
-        MongoDBProvider.db.collection(this.dataSource),
-      );
-      this.setupCallbacks();
-    } else {
-      throw new Error('MongoDB database not set');
+  constructor(config: DataProviderConfig) {
+    super(config.source);
+    this.dbName = config.dbName;
+    this.connectionPromise = this.connectToDatabase(config.url);
+  }
+
+  private async connectToDatabase(url: string): Promise<Db> {
+    if (!url) {
+      throw new Error('Database URL is required');
+    }
+
+    const connectionKey = `${url}:${this.dbName}`;
+    const existingConnection = MongoDBProvider.connections.get(connectionKey);
+    if (existingConnection) {
+      Logger.info('Reusing existing MongoDB connection');
+      this.db = existingConnection.db;
+      this.client = existingConnection.client;
+      return this.db;
+    }
+
+    try {
+      const client = await MongoClient.connect(url);
+      const db = client.db(this.dbName);
+
+      Logger.info('MongoDB connected successfully');
+      this.db = db;
+      this.client = client;
+
+      MongoDBProvider.connections.set(connectionKey, { db, client });
+      return db;
+    } catch (error) {
+      Logger.error(`Error connecting to MongoDB: ${(error as Error).message}`);
+      throw error;
     }
   }
+
+  public static async disconnectFromDatabase(
+    url: string,
+    dbName: string,
+  ): Promise<void> {
+    const connectionKey = `${url}:${dbName}`;
+    const existingConnection = MongoDBProvider.connections.get(connectionKey);
+
+    if (existingConnection) {
+      try {
+        await existingConnection.client.close();
+        MongoDBProvider.connections.set(connectionKey, undefined);
+        Logger.info(`MongoDB connection for ${connectionKey} closed`);
+      } catch (error) {
+        Logger.error(`Error during disconnect: ${(error as Error).message}`);
+      }
+    } else {
+      Logger.warn(`No active connection found for ${connectionKey}`);
+    }
+  }
+
+  async ensureReady(): Promise<void> {
+    await this.connectionPromise;
+    this.collection = MongoDBProvider.createCollectionProxy(
+      this.db!.collection(this.dataSource),
+    );
+    this.setupCallbacks();
+  }
+
   private static createCollectionProxy(collection: Collection): Collection {
     const interceptor = MongoInterceptor.getInstance();
     const handler = {
@@ -115,18 +180,6 @@ export class MongoDBProvider extends DataProvider {
     };
 
     return new Proxy(collection, handler);
-  }
-
-  static async mongoDBConnect(): Promise<Db> {
-    try {
-      const client = await MongoClient.connect('mongodb://localhost:27017');
-      Logger.info('MongoDB connected successfully');
-      MongoDBProvider.db = client.db('contract_consent_agent_db');
-      return MongoDBProvider.db;
-    } catch (error) {
-      Logger.error(`Error connecting to MongoDB: ${(error as Error).message}`);
-      throw error;
-    }
   }
 
   private setupCallbacks(): void {
