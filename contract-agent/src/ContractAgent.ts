@@ -5,6 +5,8 @@ import { Contract } from './Contract';
 import { Logger } from './Logger';
 import { DataProvider, DataProviderType } from './DataProvider';
 import { MongoDBProvider } from './MongoDBProvider';
+import { MatchingService } from './MatchingService';
+import { RecommendationService } from './RecommendationService';
 
 export class ContractAgent extends Agent {
   private static instance: ContractAgent;
@@ -174,9 +176,9 @@ export class ContractAgent extends Agent {
           return await this.createProfileForParticipant(participantId);
         })());
 
-      // this.updateRecommendationForProfile(profile, contract);
-      // Todo:
-      this.updateMatchingForProfile(profile, contract);
+      await this.updateRecommendationForProfile(profile, contract);
+      // update profile via matching service
+      await this.updateMatchingForProfile(profile, contract);
     } catch (error) {
       Logger.error(`Update profile failed: ${(error as Error).message}`);
     }
@@ -224,50 +226,30 @@ export class ContractAgent extends Agent {
   }): void {
     switch (data.source) {
       case 'contracts':
-        Logger.info(`Contract deleted: ${data.documentKey}`);
+        Logger.info(`Removing contract: ${data.documentKey?._id}`);
         break;
       default:
         Logger.info(`Unhandled data deletion for source: ${data.source}`);
     }
   }
 
-  protected updateMatchingForProfile(profile: Profile, data: unknown): void {
-    try {
-      const contract: Contract = data as Contract;
-
-      const otherParticipantsServices = contract.serviceOfferings.filter(
-        (service) => service.participant !== profile.url,
-      );
-
-      if (!otherParticipantsServices.length) return;
-
-      const newMatching = {
-        policies: otherParticipantsServices.flatMap((service) =>
-          service.policies.map((policy) => ({
-            policy: policy.description,
-            frequency: 1,
-          })),
-        ),
-        ecosystemContracts: [contract._id],
-        services: [],
-      };
-
-      const existingMatchingIndex = profile.matching.findIndex((m) =>
-        m.ecosystemContracts.includes(contract._id),
-      );
-
-      if (existingMatchingIndex !== -1) {
-        profile.matching[existingMatchingIndex] = newMatching;
-      } else {
-        profile.matching.push(newMatching);
-      }
-    } catch (error) {
-      Logger.error(
-        `Profile matching update failed: ${(error as Error).message}`,
-      );
-    }
+  protected async updateMatchingForProfile(
+    profile: Profile,
+    data: unknown,
+  ): Promise<void> {
+    const matchingService = MatchingService.retrieveService();
+    await matchingService.updateProfile(profile, data);
   }
 
+  protected async updateRecommendationForProfile(
+    profile: Profile,
+    data: unknown,
+  ): Promise<void> {
+    const recommendationService = RecommendationService.retrieveService();
+    await recommendationService.updateProfile(profile, data);
+  }
+
+  /*
   protected updateRecommendationForProfile(
     profile: Profile,
     data: unknown,
@@ -313,4 +295,5 @@ export class ContractAgent extends Agent {
       profile.recommendations.push(newRecommendation);
     }
   }
+  */
 }
