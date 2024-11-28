@@ -1,7 +1,8 @@
 import {
   ProfileConfigurations,
-  ProfileMatching,
   ProfileRecommendation,
+  ProfilePreference,
+  ProfileMatching,
 } from './types';
 
 export type ProfileJSON = Omit<
@@ -18,11 +19,19 @@ export class Profile {
   configurations: ProfileConfigurations;
   recommendations: ProfileRecommendation[];
   matching: ProfileMatching[];
+  preference: ProfilePreference[];
 
-  constructor({ url, configurations, recommendations, matching }: ProfileJSON) {
+  constructor({
+    url,
+    configurations,
+    recommendations,
+    matching = [],
+    preference = [],
+  }: ProfileJSON) {
     this.url = url;
     this.configurations = configurations;
     this.recommendations = recommendations;
     this.matching = matching;
+    this.preference = preference;
   }
 }

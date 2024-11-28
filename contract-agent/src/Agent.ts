@@ -18,10 +18,21 @@ export interface AgentConfig {
 }
 
 export abstract class Agent {
+  private static configPath: string;
   protected config?: AgentConfig;
   protected dataProviders: Provider[] = [];
 
-  constructor() {}
+  constructor() {
+    if (!Agent.configPath) {
+      throw new Error('Config path not set');
+    }
+  }
+
+  static setConfigPath(configPath: string, callerFilePath: string) {
+    const fileDir = path.dirname(callerFilePath);
+    const agentConfigPath = path.join(fileDir, configPath);
+    Agent.configPath = agentConfigPath;
+  }
 
   protected setupProviderEventHandlers(): void {
     this.dataProviders.forEach(({ provider, watchChanges }) => {
@@ -74,7 +85,7 @@ export abstract class Agent {
     if (!dataProviders || dataProviders.length === 0) {
       throw new Error('Data Providers array cannot be empty');
     }
-    dataProviders.forEach((dataProvider) => {
+    dataProviders.forEach((dataProvider: Provider) => {
       if (dataProvider.provider) {
         dataProvider.source = dataProvider.provider.dataSource;
       }
@@ -90,7 +101,13 @@ export abstract class Agent {
           try {
             const provider = new providerType(dpConfig);
             await provider.ensureReady();
-            this.addDataProviders([{ source: dpConfig.source, provider }]);
+            this.addDataProviders([
+              {
+                watchChanges: dpConfig.watchChanges,
+                source: dpConfig.source,
+                provider,
+              },
+            ]);
           } catch (error) {
             Logger.error(
               `Failed to add data provider for source: ${dpConfig.source}: ${(error as Error).message}`,
@@ -109,12 +126,7 @@ export abstract class Agent {
 
   protected loadDefaultConfiguration(): void {
     try {
-      // eslint-disable-next-line no-undef
-      const filePath = __filename;
-      const fileDir = path.dirname(filePath);
-      const configPath = path.join(fileDir, 'contract-agent.config.json');
-
-      const configData = fs.readFileSync(configPath, 'utf-8');
+      const configData = fs.readFileSync(Agent.configPath, 'utf-8');
       this.config = JSON.parse(configData) as AgentConfig;
       Logger.info(
         `Configuration loaded successfully: ${JSON.stringify(this.config, null, 2)}`,

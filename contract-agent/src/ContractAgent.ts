@@ -1,5 +1,10 @@
 import { Profile } from './Profile';
-import { FilterCondition, FilterOperator, SearchCriteria } from './types';
+import {
+  FilterCondition,
+  FilterOperator,
+  ProfileDocument,
+  SearchCriteria,
+} from './types';
 import { Agent } from './Agent';
 import { Contract } from './Contract';
 import { Logger } from './Logger';
@@ -62,12 +67,6 @@ export class ContractAgent extends Agent {
     source: string,
     criteria: SearchCriteria,
   ): Promise<Profile[]> {
-    interface ProfileDocument {
-      url: string;
-      configurations: any;
-      recommendations?: any[];
-      matching?: any[];
-    }
     try {
       const dataProvider = this.getDataProvider(source);
       const results: ProfileDocument[] = await dataProvider.find(criteria);
@@ -77,6 +76,7 @@ export class ContractAgent extends Agent {
           configurations: result.configurations,
           recommendations: result.recommendations || [],
           matching: result.matching || [],
+          preference: result.preference || [],
         };
         return new Profile(profil);
       });
@@ -248,52 +248,4 @@ export class ContractAgent extends Agent {
     const recommendationService = RecommendationService.retrieveService();
     await recommendationService.updateProfile(profile, data);
   }
-
-  /*
-  protected updateRecommendationForProfile(
-    profile: Profile,
-    data: unknown,
-  ): void {
-    const contract: Contract = data as Contract;
-
-    const allPolicies = new Set<string>();
-    contract.serviceOfferings.forEach((service) => {
-      service.policies.forEach((policy) => {
-        allPolicies.add(policy.description);
-      });
-    });
-
-    const newRecommendation = {
-      policies: Array.from(allPolicies).map((policy) => ({
-        policy: policy,
-        frequency: 1,
-      })),
-      ecosystemContracts: [contract._id],
-      services: [],
-    };
-
-    const existingRecommendationIndex = profile.recommendations.findIndex((r) =>
-      r.ecosystemContracts.includes(contract._id),
-    );
-
-    if (existingRecommendationIndex !== -1) {
-      newRecommendation.policies.forEach((newPolicy) => {
-        const existingPolicyIndex = profile.recommendations[
-          existingRecommendationIndex
-        ].policies.findIndex((p) => p.policy === newPolicy.policy);
-
-        if (existingPolicyIndex !== -1) {
-          newPolicy.frequency =
-            profile.recommendations[existingRecommendationIndex].policies[
-              existingPolicyIndex
-            ].frequency + 1;
-        }
-      });
-
-      profile.recommendations[existingRecommendationIndex] = newRecommendation;
-    } else {
-      profile.recommendations.push(newRecommendation);
-    }
-  }
-  */
 }

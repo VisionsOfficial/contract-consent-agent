@@ -5,6 +5,11 @@ export interface ProfilePolicy {
   frequency: number;
 }
 
+export interface ProfilePreference {
+  policies: ProfilePolicy[];
+  ecosystems: string[];
+  services: string[];
+}
 export interface ProfileRecommendation {
   policies: ProfilePolicy[];
   ecosystemContracts: any[];
@@ -53,4 +58,13 @@ export interface DataProviderConfig {
   source: string;
   url: string;
   dbName: string;
+  watchChanges?: boolean;
+}
+
+export interface ProfileDocument {
+  url: string;
+  configurations: any;
+  recommendations?: any[];
+  matching?: any[];
+  preference?: any[];
 }

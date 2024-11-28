@@ -3,6 +3,7 @@ import { ContractAgent } from '../ContractAgent';
 import sinon, { SinonSpy } from 'sinon';
 import { expect } from 'chai';
 import { ContractBase } from './mocks/contract.mock';
+import { Agent } from '../Agent';
 
 describe('Contract Agent Test Cases 0', function () {
   let createdDocument: any;
@@ -19,6 +20,8 @@ describe('Contract Agent Test Cases 0', function () {
   let updateProfileSpy: SinonSpy;
 
   before(async function () {
+    Agent.setConfigPath('./mocks/contract-agent.config.json', __filename);
+
     contractAgent = await ContractAgent.retrieveService();
     contractProvider = contractAgent.getDataProvider(
       'contracts',
