@@ -112,8 +112,18 @@ describe('NegotiationService', () => {
         .false;
     });
 
-    it('should reject contract with disallowed ecosystem', () => {
-      contract.ecosystem = 'disallowed-ecosystem';
+    it('should reject contract with unacceptable service offering', () => {
+      contract.serviceOfferings[0].serviceOffering = 'disallowed-service';
+      expect(negotiationService.canAcceptContract(profile, contract)).to.be
+        .false;
+    });
+
+    it('should reject contract with unacceptable policies', () => {
+      contract.serviceOfferings[0].policies.push({
+        description: 'disallowed-policy',
+        permission: [],
+        prohibition: [],
+      });
       expect(negotiationService.canAcceptContract(profile, contract)).to.be
         .false;
     });
@@ -136,6 +146,14 @@ describe('NegotiationService', () => {
       const result = negotiationService.negotiateContract(profile, contract);
       expect(result.canAccept).to.be.false;
       expect(result.unacceptablePolicies).to.include('disallowed-policy');
+    });
+
+    it('should return failed negotiation with unacceptable services', () => {
+      contract.serviceOfferings[0].serviceOffering = 'disallowed-service';
+
+      const result = negotiationService.negotiateContract(profile, contract);
+      expect(result.canAccept).to.be.false;
+      expect(result.unacceptableServices).to.include('disallowed-service');
     });
   });
 });

@@ -14,8 +14,17 @@ export class NegotiationService {
     return NegotiationService.instance;
   }
 
+  /**
+   * Checks if a policy is acceptable based on the profile preferences.
+   * A policy is acceptable if it matches a profile's allowed policies
+   * and has a frequency greater than 0.
+   *
+   * @param {Profile} profile - The profile to evaluate.
+   * @param {Policy} policy - The policy to check.
+   * @returns {boolean} - True if acceptable, otherwise false.
+   */
   isPolicyAcceptable(profile: Profile, policy: Policy): boolean {
-    if (!profile.configurations.allowPolicies) {
+    if (profile.configurations.allowPolicies === false) {
       Logger.info('Policies are not allowed by the profile configurations.');
       return false;
     }
@@ -26,6 +35,13 @@ export class NegotiationService {
     );
   }
 
+  /**
+   * Checks if a service offering is acceptable based on the profile preferences.
+   *
+   * @param {Profile} profile - The profile to evaluate.
+   * @param {ServiceOffering} serviceOffering - The service offering to check.
+   * @returns {boolean} - True if acceptable, otherwise false.
+   */
   isServiceAcceptable(
     profile: Profile,
     serviceOffering: ServiceOffering,
@@ -35,6 +51,16 @@ export class NegotiationService {
     );
   }
 
+  /**
+   * Validates if all policies of a service offering are acceptable.
+   * A service offering is considered acceptable if:
+   * - The service is acceptable to the profile.
+   * - All its policies are acceptable to the profile.
+   *
+   * @param {Profile} profile - The profile to evaluate.
+   * @param {ServiceOffering} serviceOffering - The service offering to check.
+   * @returns {boolean} - True if acceptable, otherwise false.
+   */
   areServicePoliciesAcceptable(
     profile: Profile,
     serviceOffering: ServiceOffering,
@@ -47,17 +73,19 @@ export class NegotiationService {
     );
   }
 
+  /**
+   * Determines if a contract can be accepted by the profile.
+   * A contract is acceptable if:
+   * - Its status is 'active'.
+   * - All its service offerings and their policies are acceptable.
+   *
+   * @param {Profile} profile - The profile to evaluate.
+   * @param {Contract} contract - The contract to evaluate.
+   * @returns {boolean} - True if acceptable, otherwise false.
+   */
   canAcceptContract(profile: Profile, contract: Contract): boolean {
     if (contract.status !== 'active') {
       Logger.info('Contract is not active.');
-      return false;
-    }
-    const isEcosystemAccepted = profile.preference.some((pref) =>
-      pref.ecosystems.includes(contract.ecosystem),
-    );
-
-    if (!isEcosystemAccepted) {
-      Logger.info('Ecosystem is not accepted.');
       return false;
     }
     const acceptableServices = contract.serviceOfferings.every(
@@ -67,6 +95,12 @@ export class NegotiationService {
     return acceptableServices;
   }
 
+  /**
+   * Updates a profile's preferences by adding new valid preferences.
+   * Valid preferences must:
+   * - Be neither undefined nor null.
+   * - Have policies, services, and ecosystems as arrays.
+   */
   updateProfilePreferences(
     profile: Profile,
     preferences: Partial<ProfilePreference>[],
@@ -87,6 +121,14 @@ export class NegotiationService {
     }
   }
 
+  /**
+   * Negotiates a contract by checking its compatibility with the profile.
+   * Returns detailed information about the acceptability of the contract.
+   *
+   * @param {Profile} profile - The profile to evaluate.
+   * @param {Contract} contract - The contract to negotiate.
+   * @returns {object} - Details about contract acceptability.
+   */
   negotiateContract(
     profile: Profile,
     contract: Contract,
