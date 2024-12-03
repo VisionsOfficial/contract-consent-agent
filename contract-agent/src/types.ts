@@ -52,6 +52,7 @@ export interface Provider {
   source?: string;
   watchChanges?: boolean;
   provider: DataProvider;
+  hostsProfiles?: boolean;
 }
 
 export interface DataProviderConfig {
@@ -59,6 +60,7 @@ export interface DataProviderConfig {
   url: string;
   dbName: string;
   watchChanges?: boolean;
+  hostsProfiles?: boolean;
 }
 
 export interface ProfileDocument {

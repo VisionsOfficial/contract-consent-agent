@@ -1,14 +1,19 @@
+import { Agent } from './Agent';
 import { ContractAgent } from './ContractAgent';
 import { SearchCriteria, FilterOperator } from './types';
 
 // Orchestrator Request Handler
 export class OrchestratorRequestHandler {
   private contractAgent?: ContractAgent;
-
+  private profilesHost: string = '';
   constructor() {}
 
   async prepare() {
     this.contractAgent = await ContractAgent.retrieveService();
+    this.profilesHost = Agent.getProfileHost();
+    if (!this.profilesHost) {
+      throw new Error('Profiles Host not set');
+    }
   }
 
   // Return only the policies from recommendations
@@ -27,7 +32,10 @@ export class OrchestratorRequestHandler {
     if (!this.contractAgent) {
       throw new Error('Contract Agent undefined');
     }
-    const profiles = await this.contractAgent.findProfiles('Profile', criteria);
+    const profiles = await this.contractAgent.findProfiles(
+      this.profilesHost,
+      criteria,
+    );
     if (profiles.length === 0) {
       throw new Error('Profile not found');
     }
@@ -49,7 +57,10 @@ export class OrchestratorRequestHandler {
     if (!this.contractAgent) {
       throw new Error('Contract Agent undefined');
     }
-    const profiles = await this.contractAgent.findProfiles('Profile', criteria);
+    const profiles = await this.contractAgent.findProfiles(
+      this.profilesHost,
+      criteria,
+    );
     if (profiles.length === 0) {
       throw new Error('Profile not found');
     }
@@ -72,7 +83,10 @@ export class OrchestratorRequestHandler {
     if (!this.contractAgent) {
       throw new Error('Contract Agent undefined');
     }
-    const profiles = await this.contractAgent.findProfiles('Profile', criteria);
+    const profiles = await this.contractAgent.findProfiles(
+      this.profilesHost,
+      criteria,
+    );
     if (profiles.length === 0) throw new Error('Profile not found');
 
     return profiles[0].matching.map((match) => match.policies);
@@ -93,7 +107,10 @@ export class OrchestratorRequestHandler {
     if (!this.contractAgent) {
       throw new Error('Contract Agent undefined');
     }
-    const profiles = await this.contractAgent.findProfiles('Profile', criteria);
+    const profiles = await this.contractAgent.findProfiles(
+      this.profilesHost,
+      criteria,
+    );
     if (profiles.length === 0) throw new Error('Profile not found');
 
     return profiles[0].matching.map((match) => match.services);
@@ -103,11 +120,16 @@ export class OrchestratorRequestHandler {
 // Participant Request Handler
 export class ParticipantRequestHandler {
   private contractAgent?: ContractAgent;
+  private profilesHost: string = '';
 
   constructor() {}
 
   async prepare() {
     this.contractAgent = await ContractAgent.retrieveService();
+    this.profilesHost = Agent.getProfileHost();
+    if (!this.profilesHost) {
+      throw new Error('Profiles Host not set');
+    }
   }
   // Return only the services from recommendations
   async getServiceRecommendationFromProfile(profileId: string): Promise<any> {
@@ -125,7 +147,10 @@ export class ParticipantRequestHandler {
     if (!this.contractAgent) {
       throw new Error('Contract Agent undefined');
     }
-    const profiles = await this.contractAgent.findProfiles('Profile', criteria);
+    const profiles = await this.contractAgent.findProfiles(
+      this.profilesHost,
+      criteria,
+    );
     if (profiles.length === 0) {
       throw new Error('Profile not found');
     }
@@ -148,7 +173,10 @@ export class ParticipantRequestHandler {
     if (!this.contractAgent) {
       throw new Error('Contract Agent undefined');
     }
-    const profiles = await this.contractAgent.findProfiles('Profile', criteria);
+    const profiles = await this.contractAgent.findProfiles(
+      this.profilesHost,
+      criteria,
+    );
     if (profiles.length === 0) {
       throw new Error('Profile not found');
     }
@@ -171,7 +199,10 @@ export class ParticipantRequestHandler {
     if (!this.contractAgent) {
       throw new Error('Contract Agent undefined');
     }
-    const profiles = await this.contractAgent.findProfiles('Profile', criteria);
+    const profiles = await this.contractAgent.findProfiles(
+      this.profilesHost,
+      criteria,
+    );
     if (profiles.length === 0) {
       throw new Error('Profile not found');
     }

@@ -5,6 +5,7 @@ import { Policy, ServiceOffering, Contract } from './Contract';
 import { ContractAgent } from './ContractAgent';
 import { Logger } from './Logger';
 import { SearchCriteria, FilterOperator } from './types';
+import { Agent } from './Agent';
 
 const router: Router = express.Router();
 const negotiationService = NegotiationService.retrieveService();
@@ -21,7 +22,11 @@ async function fetchProfileById(profileId: string): Promise<Profile> {
     threshold: 0,
   };
   const contractAgent = await ContractAgent.retrieveService();
-  const profiles = await contractAgent.findProfiles('Profile', criteria);
+  const profilesHost = Agent.getProfileHost();
+  if (!profilesHost) {
+    throw new Error('profiles host not set');
+  }
+  const profiles = await contractAgent.findProfiles(profilesHost, criteria);
   if (profiles.length === 0) {
     throw new Error(`Profile not found for ID: ${profileId}`);
   }

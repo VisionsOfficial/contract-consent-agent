@@ -363,6 +363,7 @@ var CAECode;
 // src/DataProvider.ts
 import { EventEmitter } from "events";
 var DataProvider = class _DataProvider extends EventEmitter {
+  // eslint-disable-next-line no-unused-vars
   constructor(dataSource) {
     super();
     this.dataSource = dataSource;
@@ -396,6 +397,16 @@ var Agent = class _Agent {
       throw new Error("Config path not set");
     }
   }
+  static setProfilesHost(profilesHost) {
+    _Agent.profilesHost = profilesHost;
+    if (!_Agent.profilesHost) {
+      Logger.warn("using default profiles source");
+      _Agent.profilesHost = "profiles";
+    }
+  }
+  static getProfileHost() {
+    return _Agent.profilesHost;
+  }
   static setConfigPath(configPath, callerFilePath) {
     const fileDir = path.dirname(callerFilePath);
     const agentConfigPath = path.join(fileDir, configPath);
@@ -421,14 +432,18 @@ var Agent = class _Agent {
     return dataProvider;
   }
   addDataProviders(dataProviders) {
-    if (!(dataProviders == null ? void 0 : dataProviders.length)) {
-      throw new Error("Data Providers array cannot be empty");
+    if (!dataProviders || dataProviders.length === 0) {
+      throw new Error("The dataProviders array cannot be empty.");
     }
-    dataProviders.forEach((dataProvider) => {
-      if (dataProvider.provider) {
-        dataProvider.source = dataProvider.provider.dataSource;
+    for (const dataProvider of dataProviders) {
+      if (!dataProvider.provider) {
+        continue;
       }
-    });
+      dataProvider.source = dataProvider.provider.dataSource;
+      if (dataProvider.hostsProfiles && dataProvider.source) {
+        _Agent.setProfilesHost(dataProvider.source);
+      }
+    }
     this.dataProviders.push(...dataProviders);
   }
   addDefaultProviders() {
@@ -445,11 +460,13 @@ var Agent = class _Agent {
         try {
           const provider = new providerType(dpConfig);
           yield provider.ensureReady();
+          const { watchChanges, source, hostsProfiles } = dpConfig;
           this.addDataProviders([
             {
-              watchChanges: dpConfig.watchChanges,
-              source: dpConfig.source,
-              provider
+              watchChanges,
+              source,
+              provider,
+              hostsProfiles
             }
           ]);
         } catch (error) {
@@ -479,7 +496,7 @@ var Agent = class _Agent {
   createProfileForParticipant(participantId) {
     return __async(this, null, function* () {
       try {
-        const profileProvider = this.getDataProvider("profiles");
+        const profileProvider = this.getDataProvider(_Agent.profilesHost);
         const newProfileData = {
           url: participantId,
           configurations: {},
@@ -1232,7 +1249,11 @@ function fetchProfileById(profileId) {
       threshold: 0
     };
     const contractAgent = yield ContractAgent.retrieveService();
-    const profiles = yield contractAgent.findProfiles("Profile", criteria);
+    const profilesHost = Agent.getProfileHost();
+    if (!profilesHost) {
+      throw new Error("profiles host not set");
+    }
+    const profiles = yield contractAgent.findProfiles(profilesHost, criteria);
     if (profiles.length === 0) {
       throw new Error(`Profile not found for ID: ${profileId}`);
     }
@@ -1327,10 +1348,15 @@ var agent_negotation_router_default = router;
 // src/ContractAgentHandler.ts
 var OrchestratorRequestHandler = class {
   constructor() {
+    this.profilesHost = "";
   }
   prepare() {
     return __async(this, null, function* () {
       this.contractAgent = yield ContractAgent.retrieveService();
+      this.profilesHost = Agent.getProfileHost();
+      if (!this.profilesHost) {
+        throw new Error("Profiles Host not set");
+      }
     });
   }
   // Return only the policies from recommendations
@@ -1349,7 +1375,10 @@ var OrchestratorRequestHandler = class {
       if (!this.contractAgent) {
         throw new Error("Contract Agent undefined");
       }
-      const profiles = yield this.contractAgent.findProfiles("Profile", criteria);
+      const profiles = yield this.contractAgent.findProfiles(
+        this.profilesHost,
+        criteria
+      );
       if (profiles.length === 0) {
         throw new Error("Profile not found");
       }
@@ -1372,7 +1401,10 @@ var OrchestratorRequestHandler = class {
       if (!this.contractAgent) {
         throw new Error("Contract Agent undefined");
       }
-      const profiles = yield this.contractAgent.findProfiles("Profile", criteria);
+      const profiles = yield this.contractAgent.findProfiles(
+        this.profilesHost,
+        criteria
+      );
       if (profiles.length === 0) {
         throw new Error("Profile not found");
       }
@@ -1395,7 +1427,10 @@ var OrchestratorRequestHandler = class {
       if (!this.contractAgent) {
         throw new Error("Contract Agent undefined");
       }
-      const profiles = yield this.contractAgent.findProfiles("Profile", criteria);
+      const profiles = yield this.contractAgent.findProfiles(
+        this.profilesHost,
+        criteria
+      );
       if (profiles.length === 0) throw new Error("Profile not found");
       return profiles[0].matching.map((match) => match.policies);
     });
@@ -1416,7 +1451,10 @@ var OrchestratorRequestHandler = class {
       if (!this.contractAgent) {
         throw new Error("Contract Agent undefined");
       }
-      const profiles = yield this.contractAgent.findProfiles("Profile", criteria);
+      const profiles = yield this.contractAgent.findProfiles(
+        this.profilesHost,
+        criteria
+      );
       if (profiles.length === 0) throw new Error("Profile not found");
       return profiles[0].matching.map((match) => match.services);
     });
@@ -1424,10 +1462,15 @@ var OrchestratorRequestHandler = class {
 };
 var ParticipantRequestHandler = class {
   constructor() {
+    this.profilesHost = "";
   }
   prepare() {
     return __async(this, null, function* () {
       this.contractAgent = yield ContractAgent.retrieveService();
+      this.profilesHost = Agent.getProfileHost();
+      if (!this.profilesHost) {
+        throw new Error("Profiles Host not set");
+      }
     });
   }
   // Return only the services from recommendations
@@ -1446,7 +1489,10 @@ var ParticipantRequestHandler = class {
       if (!this.contractAgent) {
         throw new Error("Contract Agent undefined");
       }
-      const profiles = yield this.contractAgent.findProfiles("Profile", criteria);
+      const profiles = yield this.contractAgent.findProfiles(
+        this.profilesHost,
+        criteria
+      );
       if (profiles.length === 0) {
         throw new Error("Profile not found");
       }
@@ -1469,7 +1515,10 @@ var ParticipantRequestHandler = class {
       if (!this.contractAgent) {
         throw new Error("Contract Agent undefined");
       }
-      const profiles = yield this.contractAgent.findProfiles("Profile", criteria);
+      const profiles = yield this.contractAgent.findProfiles(
+        this.profilesHost,
+        criteria
+      );
       if (profiles.length === 0) {
         throw new Error("Profile not found");
       }
@@ -1492,7 +1541,10 @@ var ParticipantRequestHandler = class {
       if (!this.contractAgent) {
         throw new Error("Contract Agent undefined");
       }
-      const profiles = yield this.contractAgent.findProfiles("Profile", criteria);
+      const profiles = yield this.contractAgent.findProfiles(
+        this.profilesHost,
+        criteria
+      );
       if (profiles.length === 0) {
         throw new Error("Profile not found");
       }

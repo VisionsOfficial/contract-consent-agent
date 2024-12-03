@@ -18,6 +18,8 @@ export interface AgentConfig {
 
 export abstract class Agent {
   private static configPath: string;
+  private static profilesHost: string;
+
   protected config?: AgentConfig;
   protected dataProviders: Provider[] = [];
 
@@ -25,6 +27,18 @@ export abstract class Agent {
     if (!Agent.configPath) {
       throw new Error('Config path not set');
     }
+  }
+
+  static setProfilesHost(profilesHost: string) {
+    Agent.profilesHost = profilesHost;
+    if (!Agent.profilesHost) {
+      Logger.warn('using default profiles source');
+      Agent.profilesHost = 'profiles';
+    }
+  }
+
+  static getProfileHost(): string {
+    return Agent.profilesHost;
   }
 
   static setConfigPath(configPath: string, callerFilePath: string): void {
@@ -70,16 +84,18 @@ export abstract class Agent {
   ): Promise<Profile[]>;
 
   addDataProviders(dataProviders: Provider[]): void {
-    if (!dataProviders?.length) {
-      throw new Error('Data Providers array cannot be empty');
+    if (!dataProviders || dataProviders.length === 0) {
+      throw new Error('The dataProviders array cannot be empty.');
     }
-
-    dataProviders.forEach((dataProvider: Provider) => {
-      if (dataProvider.provider) {
-        dataProvider.source = dataProvider.provider.dataSource;
+    for (const dataProvider of dataProviders) {
+      if (!dataProvider.provider) {
+        continue;
       }
-    });
-
+      dataProvider.source = dataProvider.provider.dataSource;
+      if (dataProvider.hostsProfiles && dataProvider.source) {
+        Agent.setProfilesHost(dataProvider.source);
+      }
+    }
     this.dataProviders.push(...dataProviders);
   }
 
@@ -88,22 +104,21 @@ export abstract class Agent {
       Logger.warn('No configuration found. No data providers added.');
       return;
     }
-
     const providerType = DataProvider.childType;
     if (typeof providerType !== 'function') {
       throw new Error('Invalid DataProvider type');
     }
-
     for (const dpConfig of this.config.dataProviderConfig) {
       try {
         const provider = new providerType(dpConfig);
         await provider.ensureReady();
-
+        const { watchChanges, source, hostsProfiles } = dpConfig;
         this.addDataProviders([
           {
-            watchChanges: dpConfig.watchChanges,
-            source: dpConfig.source,
+            watchChanges,
+            source,
             provider,
+            hostsProfiles,
           },
         ]);
       } catch (error) {
@@ -137,7 +152,7 @@ export abstract class Agent {
     participantId: string,
   ): Promise<Profile> {
     try {
-      const profileProvider = this.getDataProvider('profiles');
+      const profileProvider = this.getDataProvider(Agent.profilesHost);
       const newProfileData = {
         url: participantId,
         configurations: {},

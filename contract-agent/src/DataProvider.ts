@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-import { Profile } from './Profile';
 import { FilterCondition, SearchCriteria } from './types';
 
 export type DataProviderType = { new (...args: any[]): DataProvider };
@@ -7,13 +6,17 @@ export type DataProviderType = { new (...args: any[]): DataProvider };
 export abstract class DataProvider extends EventEmitter {
   static childType?: DataProviderType;
 
+  // eslint-disable-next-line no-unused-vars
   constructor(public dataSource: string) {
     super();
   }
   //
 
+  // eslint-disable-next-line no-unused-vars
   abstract find(criteria: SearchCriteria): Promise<[]>;
+  // eslint-disable-next-line no-unused-vars
   abstract create(data: unknown): Promise<unknown>;
+  // eslint-disable-next-line no-unused-vars
   abstract delete(id: string): Promise<boolean>;
 
   static setChildType(childType: DataProviderType) {
@@ -30,6 +33,7 @@ export abstract class DataProvider extends EventEmitter {
   async ensureReady(): Promise<void> {}
 
   protected abstract makeQuery(
+    // eslint-disable-next-line no-unused-vars
     conditions: FilterCondition[],
   ): Record<string, any>;
 

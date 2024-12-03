@@ -68,12 +68,14 @@ interface Provider {
     source?: string;
     watchChanges?: boolean;
     provider: DataProvider;
+    hostsProfiles?: boolean;
 }
 interface DataProviderConfig {
     source: string;
     url: string;
     dbName: string;
     watchChanges?: boolean;
+    hostsProfiles?: boolean;
 }
 interface ProfileDocument {
     url: string;
@@ -114,9 +116,12 @@ interface AgentConfig {
 }
 declare abstract class Agent {
     private static configPath;
+    private static profilesHost;
     protected config?: AgentConfig;
     protected dataProviders: Provider[];
     protected constructor();
+    static setProfilesHost(profilesHost: string): void;
+    static getProfileHost(): string;
     static setConfigPath(configPath: string, callerFilePath: string): void;
     protected setupProviderEventHandlers(): void;
     getDataProvider(source: string): DataProvider;
