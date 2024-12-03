@@ -4,13 +4,12 @@ import * as fs from 'fs';
 import { Logger } from './Logger';
 import {
   SearchCriteria,
-  ProfilePolicy,
   ProfileRecommendation,
   ProfileMatching,
   Provider,
   DataProviderConfig,
+  DataChangeEvent,
 } from './types';
-
 import path from 'path';
 
 export interface AgentConfig {
@@ -22,13 +21,13 @@ export abstract class Agent {
   protected config?: AgentConfig;
   protected dataProviders: Provider[] = [];
 
-  constructor() {
+  protected constructor() {
     if (!Agent.configPath) {
       throw new Error('Config path not set');
     }
   }
 
-  static setConfigPath(configPath: string, callerFilePath: string) {
+  static setConfigPath(configPath: string, callerFilePath: string): void {
     const fileDir = path.dirname(callerFilePath);
     const agentConfigPath = path.join(fileDir, configPath);
     Agent.configPath = agentConfigPath;
@@ -46,33 +45,22 @@ export abstract class Agent {
 
   getDataProvider(source: string): DataProvider {
     const dataProvider = this.dataProviders.find(
-      (dataProvider) => dataProvider.source === source,
-    );
-    if (dataProvider) {
-      return dataProvider.provider;
-    } else {
+      (provider) => provider.source === source,
+    )?.provider;
+
+    if (!dataProvider) {
       throw new Error(`DataProvider for source '${source}' not found.`);
     }
+
+    return dataProvider;
   }
 
   // eslint-disable-next-line no-unused-vars
-  protected abstract handleDataInserted(data: {
-    fullDocument: any;
-    source: string;
-  }): void;
-
+  protected abstract handleDataInserted(data: DataChangeEvent): Promise<void>;
   // eslint-disable-next-line no-unused-vars
-  protected abstract handleDataUpdated(data: {
-    documentKey: any;
-    updateDescription: any;
-    source: string;
-  }): void;
-
+  protected abstract handleDataUpdated(data: DataChangeEvent): Promise<void>;
   // eslint-disable-next-line no-unused-vars
-  protected abstract handleDataDeleted(data: {
-    documentKey: any;
-    source: string;
-  }): void;
+  protected abstract handleDataDeleted(data: DataChangeEvent): void;
 
   abstract findProfiles(
     // eslint-disable-next-line no-unused-vars
@@ -81,46 +69,48 @@ export abstract class Agent {
     criteria: SearchCriteria,
   ): Promise<Profile[]>;
 
-  addDataProviders(dataProviders: Provider[]) {
-    if (!dataProviders || dataProviders.length === 0) {
+  addDataProviders(dataProviders: Provider[]): void {
+    if (!dataProviders?.length) {
       throw new Error('Data Providers array cannot be empty');
     }
+
     dataProviders.forEach((dataProvider: Provider) => {
       if (dataProvider.provider) {
         dataProvider.source = dataProvider.provider.dataSource;
       }
     });
+
     this.dataProviders.push(...dataProviders);
   }
 
   protected async addDefaultProviders(): Promise<void> {
-    if (this.config) {
-      for (const dpConfig of this.config.dataProviderConfig) {
-        const providerType = DataProvider.childType;
-        if (typeof providerType === 'function') {
-          try {
-            const provider = new providerType(dpConfig);
-            await provider.ensureReady();
-            this.addDataProviders([
-              {
-                watchChanges: dpConfig.watchChanges,
-                source: dpConfig.source,
-                provider,
-              },
-            ]);
-          } catch (error) {
-            Logger.error(
-              `Failed to add data provider for source: ${dpConfig.source}: ${(error as Error).message}`,
-            );
-          }
-        } else {
-          Logger.warn(
-            `Invalid provider type for source: ${dpConfig.source}. No data provider added.`,
-          );
-        }
-      }
-    } else {
+    if (!this.config) {
       Logger.warn('No configuration found. No data providers added.');
+      return;
+    }
+
+    const providerType = DataProvider.childType;
+    if (typeof providerType !== 'function') {
+      throw new Error('Invalid DataProvider type');
+    }
+
+    for (const dpConfig of this.config.dataProviderConfig) {
+      try {
+        const provider = new providerType(dpConfig);
+        await provider.ensureReady();
+
+        this.addDataProviders([
+          {
+            watchChanges: dpConfig.watchChanges,
+            source: dpConfig.source,
+            provider,
+          },
+        ]);
+      } catch (error) {
+        Logger.error(
+          `Failed to add data provider for source ${dpConfig.source}: ${(error as Error).message}`,
+        );
+      }
     }
   }
 
@@ -128,21 +118,17 @@ export abstract class Agent {
     try {
       const configData = fs.readFileSync(Agent.configPath, 'utf-8');
       this.config = JSON.parse(configData) as AgentConfig;
-      Logger.info(
-        `Configuration loaded successfully: ${JSON.stringify(this.config, null, 2)}`,
-      );
+      Logger.info('Configuration loaded successfully');
     } catch (error) {
       Logger.error(`Failed to load configuration: ${(error as Error).message}`);
       this.config = { dataProviderConfig: [] };
     }
   }
-  // Provide recommendations for ecosystem contracts and policies that align with potential participant needs.
-  // These recommendations are based on the participant's usage history or suggestions pushed by the system.
+
   getRecommendations(profile: Profile): ProfileRecommendation[] {
     return profile.recommendations;
   }
 
-  // Check compatibility criteria between entities and the participant's profile to ensure a precise match.
   getMatchings(profile: Profile): ProfileMatching[] {
     return profile.matching;
   }
@@ -167,16 +153,21 @@ export abstract class Agent {
   }
 
   protected abstract updateMatchingForProfile(
+    // eslint-disable-next-line no-unused-vars
     profile: Profile,
+    // eslint-disable-next-line no-unused-vars
     data: unknown,
-  ): void;
-  //
+  ): Promise<void>;
+
   protected abstract updateRecommendationForProfile(
+    // eslint-disable-next-line no-unused-vars
     profile: Profile,
+    // eslint-disable-next-line no-unused-vars
     data: unknown,
-  ): void;
-  // Method to enrich the user profile by adding system-generated recommendations
+  ): Promise<void>;
+
   protected abstract enrichProfileWithSystemRecommendations(): Profile;
-  // Search criteria
-  protected abstract buildSearchCriteria(sourceEntity: any): SearchCriteria;
+
+  // eslint-disable-next-line no-unused-vars
+  protected abstract buildSearchCriteria(sourceEntity: unknown): SearchCriteria;
 }

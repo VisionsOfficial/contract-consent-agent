@@ -68,3 +68,41 @@ export interface ProfileDocument {
   matching?: any[];
   preference?: any[];
 }
+
+export namespace CAECode {
+  export type Type =
+    | 'SERVICE_RETRIEVAL_FAILED'
+    | 'PREPARATION_FAILED'
+    | 'PROFILE_SEARCH_FAILED';
+  export const SERVICE_RETRIEVAL_FAILED: Type = 'SERVICE_RETRIEVAL_FAILED';
+  export const PREPARATION_FAILED: Type = 'PREPARATION_FAILED';
+  export const PROFILE_SEARCH_FAILED: Type = 'PROFILE_SEARCH_FAILED';
+}
+
+export interface ContractAgentError extends Error {
+  code: CAECode.Type;
+  context?: unknown;
+}
+
+export interface DataProviderResult<T> {
+  success: boolean;
+  data?: T;
+  error?: ContractAgentError;
+}
+
+export interface ProfileUpdateResult {
+  success: boolean;
+  profileId: string;
+  error?: ContractAgentError;
+}
+
+export type DataChangeEvent = {
+  source: string;
+  type: 'insert' | 'update' | 'delete';
+  documentKey?: { _id: string };
+  fullDocument?: unknown;
+  updateDescription?: {
+    updatedFields: unknown;
+    removedFields?: string[];
+  };
+};

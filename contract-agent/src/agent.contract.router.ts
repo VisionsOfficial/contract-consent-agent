@@ -2,8 +2,8 @@ import {
   OrchestratorRequestHandler,
   ParticipantRequestHandler,
 } from 'ContractAgentHandler';
-import express, { Request, Response } from 'express';
-const router = express.Router();
+import express, { Request, Response, Router } from 'express';
+const router: Router = express.Router();
 
 const orchestratorHandler = new OrchestratorRequestHandler();
 const participantHandler = new ParticipantRequestHandler();

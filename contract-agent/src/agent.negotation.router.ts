@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, Router } from 'express';
 import { NegotiationService } from './NegotiationService';
 import { Profile } from './Profile';
 import { Policy, ServiceOffering, Contract } from './Contract';
@@ -6,7 +6,7 @@ import { ContractAgent } from './ContractAgent';
 import { Logger } from './Logger';
 import { SearchCriteria, FilterOperator } from './types';
 
-const router = express.Router();
+const router: Router = express.Router();
 const negotiationService = NegotiationService.retrieveService();
 
 async function fetchProfileById(profileId: string): Promise<Profile> {
