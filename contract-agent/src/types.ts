@@ -75,10 +75,12 @@ export namespace CAECode {
   export type Type =
     | 'SERVICE_RETRIEVAL_FAILED'
     | 'PREPARATION_FAILED'
-    | 'PROFILE_SEARCH_FAILED';
+    | 'PROFILE_SEARCH_FAILED'
+    | 'PROFILE_SAVE_FAILED';
   export const SERVICE_RETRIEVAL_FAILED: Type = 'SERVICE_RETRIEVAL_FAILED';
   export const PREPARATION_FAILED: Type = 'PREPARATION_FAILED';
   export const PROFILE_SEARCH_FAILED: Type = 'PROFILE_SEARCH_FAILED';
+  export const PROFILE_SAVE_FAILED: Type = 'PROFILE_SAVE_FAILED';
 }
 
 export interface ContractAgentError extends Error {

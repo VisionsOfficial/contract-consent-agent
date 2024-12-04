@@ -147,6 +147,51 @@ export class ContractAgent extends Agent {
   }
 
   /**
+   * Saves a profile to a specified data source
+   * @param source - Data source identifier
+   * @param criteria - Search criteria used to find the profile to update
+   * @param profile - Profile to be saved
+   * @returns Promise<boolean> - Indicates successful save operation
+   */
+  async saveProfile(
+    source: string,
+    criteria: SearchCriteria,
+    profile: Profile,
+  ): Promise<boolean> {
+    try {
+      const dataProvider = this.getDataProvider(source);
+      if (!dataProvider) {
+        throw new Error(`Data provider not found for source: ${source}`);
+      }
+      const profileDocument: ProfileDocument = {
+        url: profile.url,
+        configurations: profile.configurations,
+        recommendations: profile.recommendations || [],
+        matching: profile.matching || [],
+        preference: profile.preference || [],
+      };
+      const updateResult = await dataProvider.update(criteria, profileDocument);
+      if (!updateResult) {
+        Logger.warn(
+          `No profile found matching criteria to update for source: ${source}`,
+        );
+        return false;
+      }
+      Logger.info(`Profile saved successfully to source: ${source}`);
+      return true;
+    } catch (error) {
+      const saveError: ContractAgentError = {
+        name: 'ProfileSaveError',
+        message: `Failed to save profile: ${(error as Error).message}`,
+        code: CAECode.PROFILE_SAVE_FAILED,
+        context: { source, profile },
+      };
+      Logger.error(saveError.message);
+      throw saveError;
+    }
+  }
+
+  /**
    * Finds profiles across all configured providers
    * @param criteria - Search criteria
    * @returns Promise<Profile[]>
@@ -342,5 +387,6 @@ export class ContractAgent extends Agent {
   ): Promise<void> {
     const recommendationService = RecommendationService.retrieveService();
     await recommendationService.updateProfile(profile, data);
+    // todo: save
   }
 }

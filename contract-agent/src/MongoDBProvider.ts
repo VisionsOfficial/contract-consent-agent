@@ -6,6 +6,7 @@ import {
   InsertOneResult,
   MongoClient,
   ObjectId,
+  MatchKeysAndValues,
 } from 'mongodb';
 import { DataProvider } from './DataProvider';
 import {
@@ -304,5 +305,28 @@ export class MongoDBProvider extends DataProvider {
       .limit(criteria.limit || 0)
       .toArray()) as [];
     return data;
+  }
+
+  async update(criteria: SearchCriteria, data: unknown): Promise<boolean> {
+    try {
+      const updateData = data as MatchKeysAndValues<Document>;
+      const query = this.makeQuery(criteria.conditions);
+      const result = await this.collection.updateOne(query, {
+        $set: updateData,
+      });
+      if (result.matchedCount === 0) {
+        Logger.warn(`No document found matching the criteria`);
+        return false;
+      }
+      if (result.modifiedCount === 0) {
+        Logger.info(`No changes made to document`);
+        return false;
+      }
+      Logger.info(`Document successfully updated`);
+      return true;
+    } catch (error) {
+      Logger.error(`Error during document update: ${(error as Error).message}`);
+      throw error;
+    }
   }
 }

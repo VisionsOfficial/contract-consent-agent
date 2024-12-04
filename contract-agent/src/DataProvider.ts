@@ -18,6 +18,8 @@ export abstract class DataProvider extends EventEmitter {
   abstract create(data: unknown): Promise<unknown>;
   // eslint-disable-next-line no-unused-vars
   abstract delete(id: string): Promise<boolean>;
+  // eslint-disable-next-line no-unused-vars
+  abstract update(criteria: SearchCriteria, data: unknown): Promise<boolean>;
 
   static setChildType(childType: DataProviderType) {
     DataProvider.childType = childType;

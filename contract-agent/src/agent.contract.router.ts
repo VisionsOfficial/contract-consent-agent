@@ -1,19 +1,15 @@
-import {
-  OrchestratorRequestHandler,
-  ParticipantRequestHandler,
-} from 'ContractAgentHandler';
+import { RequestHandler } from 'ContractAgentHandler';
 import express, { Request, Response, Router } from 'express';
 const router: Router = express.Router();
 
-const orchestratorHandler = new OrchestratorRequestHandler();
-const participantHandler = new ParticipantRequestHandler();
+const requestHandler = new RequestHandler();
 
 router.get(
-  '/orchestrator/profile/:id/policies-recommendations',
+  '/profile/:id/policies-recommendations',
   async (req: Request, res: Response) => {
     try {
       const policies =
-        await orchestratorHandler.getPoliciesRecommendationFromProfile(
+        await requestHandler.getPoliciesRecommendationFromProfile(
           req.params.id,
         );
       res.json(policies);
@@ -24,11 +20,11 @@ router.get(
 );
 
 router.get(
-  '/orchestrator/profile/:id/services-recommendations',
+  '/profile/:id/services-recommendations',
   async (req: Request, res: Response) => {
     try {
       const services =
-        await orchestratorHandler.getServicesRecommendationFromProfile(
+        await requestHandler.getServicesRecommendationFromProfile(
           req.params.id,
         );
       res.json(services);
@@ -39,10 +35,10 @@ router.get(
 );
 
 router.get(
-  '/orchestrator/profile/:id/policies-matching',
+  '/profile/:id/policies-matching',
   async (req: Request, res: Response) => {
     try {
-      const policies = await orchestratorHandler.getPoliciesMatchingFromProfile(
+      const policies = await requestHandler.getPoliciesMatchingFromProfile(
         req.params.id,
       );
       res.json(policies);
@@ -53,10 +49,10 @@ router.get(
 );
 
 router.get(
-  '/orchestrator/profile/:id/services-matching',
+  '/profile/:id/services-matching',
   async (req: Request, res: Response) => {
     try {
-      const services = await orchestratorHandler.getServicesMatchingFromProfile(
+      const services = await requestHandler.getServicesMatchingFromProfile(
         req.params.id,
       );
       res.json(services);
@@ -67,11 +63,11 @@ router.get(
 );
 
 router.get(
-  '/participant/profile/:id/service-recommendations',
+  '/profile/:id/service-recommendations',
   async (req: Request, res: Response) => {
     try {
       const services =
-        await participantHandler.getServiceRecommendationFromProfile(
+        await requestHandler.getServicesRecommendationFromProfile(
           req.params.id,
         );
       res.json(services);
@@ -82,10 +78,10 @@ router.get(
 );
 
 router.get(
-  '/participant/profile/:id/policies-matching',
+  '/profile/:id/policies-matching',
   async (req: Request, res: Response) => {
     try {
-      const policies = await participantHandler.getPoliciesMatchingFromProfile(
+      const policies = await requestHandler.getPoliciesMatchingFromProfile(
         req.params.id,
       );
       res.json(policies);
@@ -96,13 +92,70 @@ router.get(
 );
 
 router.get(
-  '/participant/profile/:id/contract-matching',
+  '/profile/:id/contract-matching',
   async (req: Request, res: Response) => {
     try {
-      const contracts = await participantHandler.getContractMatchingFromProfile(
+      const contracts = await requestHandler.getContractMatchingFromProfile(
         req.params.id,
       );
       res.json(contracts);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  },
+);
+
+router.get(
+  '/profile/:id/configurations',
+  async (req: Request, res: Response) => {
+    try {
+      const configurations = await requestHandler.getConfigurationsFromProfile(
+        req.params.id,
+      );
+      res.json(configurations);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  },
+);
+
+router.post('/profile/configurations', async (req: Request, res: Response) => {
+  try {
+    const { profileId, configurations } = req.body;
+    const result = await requestHandler.addConfigurationsToProfile(
+      profileId,
+      configurations,
+    );
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+router.put(
+  '/profile/:id/configurations',
+  async (req: Request, res: Response) => {
+    try {
+      const { configurations } = req.body;
+      const result = await requestHandler.updateConfigurationsForProfile(
+        req.params.id,
+        configurations,
+      );
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  },
+);
+
+router.delete(
+  '/profile/:id/configurations',
+  async (req: Request, res: Response) => {
+    try {
+      const result = await requestHandler.removeConfigurationsFromProfile(
+        req.params.id,
+      );
+      res.json(result);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
