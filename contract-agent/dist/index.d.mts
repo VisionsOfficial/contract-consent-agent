@@ -139,51 +139,6 @@ declare abstract class Agent {
     protected abstract updateMatchingForProfile(profile: Profile, data: unknown): Promise<void>;
     protected abstract updateRecommendationForProfile(profile: Profile, data: unknown): Promise<void>;
     protected abstract enrichProfileWithSystemRecommendations(): Profile;
-    protected abstract buildSearchCriteria(sourceEntity: unknown): SearchCriteria;
-}
-
-interface Participant {
-    participant: string;
-    role: string;
-    signature: string;
-    date: string;
-}
-interface Policy {
-    description: string;
-    permission: {
-        action: string;
-        target: string;
-        constraint: {
-            leftOperand: string;
-            operator: string;
-            rightOperand: number | string;
-        }[];
-    }[];
-    prohibition: any[];
-}
-interface ServiceOffering {
-    participant: string;
-    serviceOffering: string;
-    policies: Policy[];
-    _id?: string;
-}
-type ContractJSON = Omit<Pick<Contract, keyof Contract>, 'createdAt' | 'updatedAt'> & {
-    createdAt: string | Date;
-    updatedAt: string | Date;
-};
-declare class Contract {
-    _id?: string;
-    createdAt: Date;
-    updatedAt: Date;
-    ecosystem: string;
-    members: Participant[];
-    orchestrator: string;
-    purpose: string[];
-    revokedMembers: Participant[];
-    rolesAndObligations: any[];
-    serviceOfferings: ServiceOffering[];
-    status: string;
-    constructor({ createdAt, updatedAt, ecosystem, members, orchestrator, purpose, revokedMembers, rolesAndObligations, serviceOfferings, status, _id, }: ContractJSON);
 }
 
 /**
@@ -210,12 +165,6 @@ declare class ContractAgent extends Agent {
      * @throws {ContractAgentError} Method not implemented
      */
     protected enrichProfileWithSystemRecommendations(): Profile;
-    /**
-     * Builds search criteria based on contract policies
-     * @param contract - Contract instance to extract policies from
-     * @returns SearchCriteria
-     */
-    protected buildSearchCriteria(contract: Contract): SearchCriteria;
     /**
      * Finds profiles based on given criteria from a specific source
      * @param source - Data source identifier

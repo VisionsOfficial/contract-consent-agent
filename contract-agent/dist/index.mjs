@@ -497,6 +497,11 @@ var Agent = class _Agent {
   createProfileForParticipant(participantId) {
     return __async(this, null, function* () {
       try {
+        if (!_Agent.profilesHost) {
+          throw new Error(
+            `Can't create profile for participant "profilesHost" is not set`
+          );
+        }
         const profileProvider = this.getDataProvider(_Agent.profilesHost);
         const newProfileData = {
           url: participantId,
@@ -1020,25 +1025,6 @@ var _ContractAgent = class _ContractAgent extends Agent {
     throw new Error("Method not implemented.");
   }
   /**
-   * Builds search criteria based on contract policies
-   * @param contract - Contract instance to extract policies from
-   * @returns SearchCriteria
-   */
-  buildSearchCriteria(contract) {
-    const policies = contract.serviceOfferings.map((offering) => offering.policies.map((policy) => policy.description)).flat();
-    return {
-      conditions: [
-        {
-          field: "recommendations.policies.policy",
-          operator: "REGEX" /* REGEX */,
-          value: policies
-        }
-      ],
-      threshold: 0.7,
-      limit: 100
-    };
-  }
-  /**
    * Finds profiles based on given criteria from a specific source
    * @param source - Data source identifier
    * @param criteria - Search criteria
@@ -1292,8 +1278,32 @@ var _ContractAgent = class _ContractAgent extends Agent {
    */
   updateRecommendationForProfile(profile, data) {
     return __async(this, null, function* () {
-      const recommendationService = RecommendationService.retrieveService();
-      yield recommendationService.updateProfile(profile, data);
+      try {
+        const recommendationService = RecommendationService.retrieveService();
+        yield recommendationService.updateProfile(profile, data);
+        const criteria = {
+          conditions: [
+            {
+              field: "url",
+              operator: "EQUALS" /* EQUALS */,
+              value: profile.url
+            }
+          ],
+          threshold: 0
+        };
+        const saved = yield this.saveProfile("profiles", criteria, profile);
+        if (!saved) {
+          throw new Error(`Failed to save updated profile: ${profile.url}`);
+        }
+        Logger.info(
+          `Recommendations updated and profile saved for: ${profile.url}`
+        );
+      } catch (error) {
+        Logger.error(
+          `Error updating recommendations for profile: ${error.message}`
+        );
+        throw error;
+      }
     });
   }
 };
