@@ -36,15 +36,6 @@ export class ConsentAgent extends Agent {
   }
 
   /**
-   * Builds search criteria based on the provided source entity.
-   * @param sourceEntity - Entity from which to derive search criteria.
-   * @returns The constructed search criteria.
-   */
-  protected buildSearchCriteria(sourceEntity: unknown): SearchCriteria {
-    throw new Error('Method not implemented.');
-  }
-
-  /**
    * Enriches a profile with system recommendations.
    * @returns The enriched profile.
    */

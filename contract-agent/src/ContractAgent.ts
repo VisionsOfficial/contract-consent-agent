@@ -85,29 +85,6 @@ export class ContractAgent extends Agent {
   }
 
   /**
-   * Builds search criteria based on contract policies
-   * @param contract - Contract instance to extract policies from
-   * @returns SearchCriteria
-   */
-  protected buildSearchCriteria(contract: Contract): SearchCriteria {
-    const policies: string[] = contract.serviceOfferings
-      .map((offering) => offering.policies.map((policy) => policy.description))
-      .flat();
-
-    return {
-      conditions: [
-        {
-          field: 'recommendations.policies.policy',
-          operator: FilterOperator.REGEX,
-          value: policies,
-        },
-      ],
-      threshold: 0.7,
-      limit: 100,
-    };
-  }
-
-  /**
    * Finds profiles based on given criteria from a specific source
    * @param source - Data source identifier
    * @param criteria - Search criteria
@@ -385,8 +362,32 @@ export class ContractAgent extends Agent {
     profile: Profile,
     data: unknown,
   ): Promise<void> {
-    const recommendationService = RecommendationService.retrieveService();
-    await recommendationService.updateProfile(profile, data);
-    // todo: save
+    try {
+      const recommendationService = RecommendationService.retrieveService();
+      await recommendationService.updateProfile(profile, data);
+      const criteria: SearchCriteria = {
+        conditions: [
+          {
+            field: 'url',
+            operator: FilterOperator.EQUALS,
+            value: profile.url,
+          },
+        ],
+        threshold: 0,
+      };
+      const saved = await this.saveProfile('profiles', criteria, profile);
+
+      if (!saved) {
+        throw new Error(`Failed to save updated profile: ${profile.url}`);
+      }
+      Logger.info(
+        `Recommendations updated and profile saved for: ${profile.url}`,
+      );
+    } catch (error) {
+      Logger.error(
+        `Error updating recommendations for profile: ${(error as Error).message}`,
+      );
+      throw error;
+    }
   }
 }

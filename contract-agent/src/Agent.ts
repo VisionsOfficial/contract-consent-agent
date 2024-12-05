@@ -152,6 +152,11 @@ export abstract class Agent {
     participantId: string,
   ): Promise<Profile> {
     try {
+      if (!Agent.profilesHost) {
+        throw new Error(
+          `Can't create profile for participant "profilesHost" is not set`,
+        );
+      }
       const profileProvider = this.getDataProvider(Agent.profilesHost);
       const newProfileData = {
         url: participantId,
@@ -182,7 +187,4 @@ export abstract class Agent {
   ): Promise<void>;
 
   protected abstract enrichProfileWithSystemRecommendations(): Profile;
-
-  // eslint-disable-next-line no-unused-vars
-  protected abstract buildSearchCriteria(sourceEntity: unknown): SearchCriteria;
 }

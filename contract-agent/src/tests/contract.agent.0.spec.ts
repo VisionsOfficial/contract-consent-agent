@@ -21,7 +21,7 @@ describe('Contract Agent Test Cases', function () {
 
   before(async function () {
     Agent.setConfigPath('./mocks/contract-agent.config.json', __filename);
-
+    Agent.setProfilesHost('profiles');
     contractAgent = await ContractAgent.retrieveService();
     contractProvider = contractAgent.getDataProvider(
       'contracts',
