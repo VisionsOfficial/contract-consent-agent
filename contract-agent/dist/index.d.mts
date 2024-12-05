@@ -16,6 +16,7 @@ declare abstract class DataProvider extends EventEmitter {
     abstract find(criteria: SearchCriteria): Promise<[]>;
     abstract create(data: unknown): Promise<unknown>;
     abstract delete(id: string): Promise<boolean>;
+    abstract update(criteria: SearchCriteria, data: unknown): Promise<boolean>;
     static setChildType(childType: DataProviderType): void;
     createInstance(): DataProvider;
     ensureReady(): Promise<void>;
@@ -223,6 +224,14 @@ declare class ContractAgent extends Agent {
      */
     findProfiles(source: string, criteria: SearchCriteria): Promise<Profile[]>;
     /**
+     * Saves a profile to a specified data source
+     * @param source - Data source identifier
+     * @param criteria - Search criteria used to find the profile to update
+     * @param profile - Profile to be saved
+     * @returns Promise<boolean> - Indicates successful save operation
+     */
+    saveProfile(source: string, criteria: SearchCriteria, profile: Profile): Promise<boolean>;
+    /**
      * Finds profiles across all configured providers
      * @param criteria - Search criteria
      * @returns Promise<Profile[]>
@@ -301,6 +310,7 @@ declare class MongoDBProvider extends DataProvider {
     create(data: Document): Promise<WithId<Document>>;
     delete(id: string): Promise<boolean>;
     find(criteria: SearchCriteria): Promise<[]>;
+    update(criteria: SearchCriteria, data: unknown): Promise<boolean>;
 }
 
 export { ContractAgent, router as ContractAgentRouter, type DataProviderConfig, type FilterCondition, MongoDBProvider, router$1 as NegotiationAgentRouter, Profile, type ProfileConfigurations, type ProfileDocument, type ProfileMatching, type ProfilePolicy, type ProfilePreference, type ProfileRecommendation, type Provider, type SearchCriteria };

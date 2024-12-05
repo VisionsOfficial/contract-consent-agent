@@ -9,7 +9,7 @@ const seedContracts = async (): Promise<void> => {
     await client.connect();
     console.log('Connected to MongoDB');
 
-    const db: Db = client.db('contract_consent_agent_db'); // ecosystem contract
+    const db: Db = client.db('contract_consent_agent_db');
     const contractsCollection: Collection<Contract> =
       db.collection('Contracts');
 
@@ -17,11 +17,11 @@ const seedContracts = async (): Promise<void> => {
     console.log(`Deleted ${deleteResult.deletedCount} existing contracts`);
 
     const contracts: Contract[] = [
-      new Contract(
-        '2023-01-01T10:00:00Z',
-        '2023-02-01T10:00:00Z',
-        'Ecosystem A',
-        [
+      new Contract({
+        createdAt: '2023-01-01T10:00:00Z',
+        updatedAt: '2023-02-01T10:00:00Z',
+        ecosystem: 'Ecosystem A',
+        members: [
           {
             participant: 'participant1',
             role: 'A',
@@ -35,11 +35,11 @@ const seedContracts = async (): Promise<void> => {
             date: '2023-01-02',
           },
         ],
-        'orchestrator1',
-        ['Purpose A', 'Purpose B'],
-        [],
-        [],
-        [
+        orchestrator: 'orchestrator1',
+        purpose: ['Purpose A', 'Purpose B'],
+        revokedMembers: [],
+        rolesAndObligations: [],
+        serviceOfferings: [
           {
             participant: 'participant1',
             serviceOffering: 'Service 1',
@@ -64,13 +64,13 @@ const seedContracts = async (): Promise<void> => {
             ],
           },
         ],
-        'signed',
-      ),
-      new Contract(
-        '2023-02-10T15:30:00Z',
-        '2023-03-15T15:30:00Z',
-        'Ecosystem B',
-        [
+        status: 'signed',
+      }),
+      new Contract({
+        createdAt: '2023-02-10T15:30:00Z',
+        updatedAt: '2023-03-15T15:30:00Z',
+        ecosystem: 'Ecosystem B',
+        members: [
           {
             participant: 'participant3',
             role: 'C',
@@ -90,11 +90,11 @@ const seedContracts = async (): Promise<void> => {
             date: '2023-02-14',
           },
         ],
-        'orchestrator2',
-        ['Purpose C'],
-        [],
-        [],
-        [
+        orchestrator: 'orchestrator2',
+        purpose: ['Purpose C'],
+        revokedMembers: [],
+        rolesAndObligations: [],
+        serviceOfferings: [
           {
             participant: 'participant3',
             serviceOffering: 'Service 2',
@@ -119,13 +119,13 @@ const seedContracts = async (): Promise<void> => {
             ],
           },
         ],
-        'pending',
-      ),
-      new Contract(
-        '2023-03-01T08:00:00Z',
-        '2023-03-20T08:00:00Z',
-        'Ecosystem C',
-        [
+        status: 'pending',
+      }),
+      new Contract({
+        createdAt: '2023-03-01T08:00:00Z',
+        updatedAt: '2023-03-20T08:00:00Z',
+        ecosystem: 'Ecosystem C',
+        members: [
           {
             participant: 'participant6',
             role: 'A',
@@ -133,9 +133,9 @@ const seedContracts = async (): Promise<void> => {
             date: '2023-03-01',
           },
         ],
-        'orchestrator3',
-        ['Purpose D', 'Purpose E'],
-        [
+        orchestrator: 'orchestrator3',
+        purpose: ['Purpose D', 'Purpose E'],
+        revokedMembers: [
           {
             participant: 'participant4',
             role: 'C',
@@ -143,8 +143,8 @@ const seedContracts = async (): Promise<void> => {
             date: '2023-03-15',
           },
         ],
-        [],
-        [
+        rolesAndObligations: [],
+        serviceOfferings: [
           {
             participant: 'participant6',
             serviceOffering: 'Service 3',
@@ -169,13 +169,13 @@ const seedContracts = async (): Promise<void> => {
             ],
           },
         ],
-        'revoked',
-      ),
-      new Contract(
-        '2023-04-05T12:00:00Z',
-        '2023-04-30T12:00:00Z',
-        'Ecosystem D',
-        [
+        status: 'revoked',
+      }),
+      new Contract({
+        createdAt: '2023-04-05T12:00:00Z',
+        updatedAt: '2023-04-30T12:00:00Z',
+        ecosystem: 'Ecosystem D',
+        members: [
           {
             participant: 'participant7',
             role: 'A',
@@ -189,11 +189,11 @@ const seedContracts = async (): Promise<void> => {
             date: '2023-04-07',
           },
         ],
-        'orchestrator4',
-        ['Purpose F'],
-        [],
-        [],
-        [
+        orchestrator: 'orchestrator4',
+        purpose: ['Purpose F'],
+        revokedMembers: [],
+        rolesAndObligations: [],
+        serviceOfferings: [
           {
             participant: 'participant7',
             serviceOffering: 'Service 4',
@@ -218,13 +218,13 @@ const seedContracts = async (): Promise<void> => {
             ],
           },
         ],
-        'signed',
-      ),
-      new Contract(
-        '2023-05-10T09:00:00Z',
-        '2023-05-20T09:00:00Z',
-        'Ecosystem E',
-        [
+        status: 'signed',
+      }),
+      new Contract({
+        createdAt: '2023-05-10T09:00:00Z',
+        updatedAt: '2023-05-20T09:00:00Z',
+        ecosystem: 'Ecosystem E',
+        members: [
           {
             participant: 'participant9',
             role: 'C',
@@ -238,11 +238,11 @@ const seedContracts = async (): Promise<void> => {
             date: '2023-05-11',
           },
         ],
-        'orchestrator5',
-        ['Purpose G', 'Purpose H'],
-        [],
-        [],
-        [
+        orchestrator: 'orchestrator5',
+        purpose: ['Purpose G', 'Purpose H'],
+        revokedMembers: [],
+        rolesAndObligations: [],
+        serviceOfferings: [
           {
             participant: 'participant9',
             serviceOffering: 'Service 5',
@@ -267,8 +267,8 @@ const seedContracts = async (): Promise<void> => {
             ],
           },
         ],
-        'pending',
-      ),
+        status: 'pending',
+      }),
     ];
 
     const result = await contractsCollection.insertMany(contracts);

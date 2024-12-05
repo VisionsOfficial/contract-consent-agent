@@ -3,12 +3,12 @@
     {
       "source": "contracts",
       "url": "mongodb://localhost:27017",
-      "dbName": "contract_consent_agent_db"
+      "dbName": "contract_consent_agent_db_test"
     },
     {
       "source": "profiles",
       "url": "mongodb://localhost:27017",
-      "dbName": "contract_consent_agent_db"
+      "dbName": "contract_consent_agent_db_test"
     }
   ]
 }

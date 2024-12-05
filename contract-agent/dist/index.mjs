@@ -358,6 +358,7 @@ var CAECode;
   CAECode2.SERVICE_RETRIEVAL_FAILED = "SERVICE_RETRIEVAL_FAILED";
   CAECode2.PREPARATION_FAILED = "PREPARATION_FAILED";
   CAECode2.PROFILE_SEARCH_FAILED = "PROFILE_SEARCH_FAILED";
+  CAECode2.PROFILE_SAVE_FAILED = "PROFILE_SAVE_FAILED";
 })(CAECode || (CAECode = {}));
 
 // src/DataProvider.ts
@@ -753,6 +754,30 @@ var _MongoDBProvider = class _MongoDBProvider extends DataProvider {
       return data;
     });
   }
+  update(criteria, data) {
+    return __async(this, null, function* () {
+      try {
+        const updateData = data;
+        const query = this.makeQuery(criteria.conditions);
+        const result = yield this.collection.updateOne(query, {
+          $set: updateData
+        });
+        if (result.matchedCount === 0) {
+          Logger.warn(`No document found matching the criteria`);
+          return false;
+        }
+        if (result.modifiedCount === 0) {
+          Logger.info(`No changes made to document`);
+          return false;
+        }
+        Logger.info(`Document successfully updated`);
+        return true;
+      } catch (error) {
+        Logger.error(`Error during document update: ${error.message}`);
+        throw error;
+      }
+    });
+  }
 };
 _MongoDBProvider.connections = /* @__PURE__ */ new Map();
 var MongoDBProvider = _MongoDBProvider;
@@ -1046,6 +1071,48 @@ var _ContractAgent = class _ContractAgent extends Agent {
         };
         Logger.error(searchError.message);
         throw searchError;
+      }
+    });
+  }
+  /**
+   * Saves a profile to a specified data source
+   * @param source - Data source identifier
+   * @param criteria - Search criteria used to find the profile to update
+   * @param profile - Profile to be saved
+   * @returns Promise<boolean> - Indicates successful save operation
+   */
+  saveProfile(source, criteria, profile) {
+    return __async(this, null, function* () {
+      try {
+        const dataProvider = this.getDataProvider(source);
+        if (!dataProvider) {
+          throw new Error(`Data provider not found for source: ${source}`);
+        }
+        const profileDocument = {
+          url: profile.url,
+          configurations: profile.configurations,
+          recommendations: profile.recommendations || [],
+          matching: profile.matching || [],
+          preference: profile.preference || []
+        };
+        const updateResult = yield dataProvider.update(criteria, profileDocument);
+        if (!updateResult) {
+          Logger.warn(
+            `No profile found matching criteria to update for source: ${source}`
+          );
+          return false;
+        }
+        Logger.info(`Profile saved successfully to source: ${source}`);
+        return true;
+      } catch (error) {
+        const saveError = {
+          name: "ProfileSaveError",
+          message: `Failed to save profile: ${error.message}`,
+          code: CAECode.PROFILE_SAVE_FAILED,
+          context: { source, profile }
+        };
+        Logger.error(saveError.message);
+        throw saveError;
       }
     });
   }
@@ -1346,7 +1413,7 @@ router.put(
 var agent_negotation_router_default = router;
 
 // src/ContractAgentHandler.ts
-var OrchestratorRequestHandler = class {
+var RequestHandler = class {
   constructor() {
     this.profilesHost = "";
   }
@@ -1431,7 +1498,9 @@ var OrchestratorRequestHandler = class {
         this.profilesHost,
         criteria
       );
-      if (profiles.length === 0) throw new Error("Profile not found");
+      if (profiles.length === 0) {
+        throw new Error("Profile not found");
+      }
       return profiles[0].matching.map((match) => match.policies);
     });
   }
@@ -1455,74 +1524,10 @@ var OrchestratorRequestHandler = class {
         this.profilesHost,
         criteria
       );
-      if (profiles.length === 0) throw new Error("Profile not found");
+      if (profiles.length === 0) {
+        throw new Error("Profile not found");
+      }
       return profiles[0].matching.map((match) => match.services);
-    });
-  }
-};
-var ParticipantRequestHandler = class {
-  constructor() {
-    this.profilesHost = "";
-  }
-  prepare() {
-    return __async(this, null, function* () {
-      this.contractAgent = yield ContractAgent.retrieveService();
-      this.profilesHost = Agent.getProfileHost();
-      if (!this.profilesHost) {
-        throw new Error("Profiles Host not set");
-      }
-    });
-  }
-  // Return only the services from recommendations
-  getServiceRecommendationFromProfile(profileId) {
-    return __async(this, null, function* () {
-      const criteria = {
-        conditions: [
-          {
-            field: "url",
-            operator: "EQUALS" /* EQUALS */,
-            value: profileId
-          }
-        ],
-        threshold: 0
-      };
-      if (!this.contractAgent) {
-        throw new Error("Contract Agent undefined");
-      }
-      const profiles = yield this.contractAgent.findProfiles(
-        this.profilesHost,
-        criteria
-      );
-      if (profiles.length === 0) {
-        throw new Error("Profile not found");
-      }
-      return profiles[0].recommendations.map((rec) => rec.services);
-    });
-  }
-  // Return only the policies from matching
-  getPoliciesMatchingFromProfile(profileId) {
-    return __async(this, null, function* () {
-      const criteria = {
-        conditions: [
-          {
-            field: "url",
-            operator: "EQUALS" /* EQUALS */,
-            value: profileId
-          }
-        ],
-        threshold: 0
-      };
-      if (!this.contractAgent) {
-        throw new Error("Contract Agent undefined");
-      }
-      const profiles = yield this.contractAgent.findProfiles(
-        this.profilesHost,
-        criteria
-      );
-      if (profiles.length === 0) {
-        throw new Error("Profile not found");
-      }
-      return profiles[0].matching.map((match) => match.policies);
     });
   }
   // Return only the ecosystemContracts from matching
@@ -1551,18 +1556,130 @@ var ParticipantRequestHandler = class {
       return profiles[0].matching.map((match) => match.ecosystemContracts);
     });
   }
+  // configurations
+  getConfigurationsFromProfile(profileId) {
+    return __async(this, null, function* () {
+      const criteria = {
+        conditions: [
+          {
+            field: "url",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileId
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.contractAgent) {
+        throw new Error("Contract Agent undefined");
+      }
+      const profiles = yield this.contractAgent.findProfiles(
+        this.profilesHost,
+        criteria
+      );
+      if (profiles.length === 0) {
+        throw new Error("Profile not found");
+      }
+      return profiles[0].configurations;
+    });
+  }
+  addConfigurationsToProfile(profileId, configurations) {
+    return __async(this, null, function* () {
+      const criteria = {
+        conditions: [
+          {
+            field: "url",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileId
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.contractAgent) {
+        throw new Error("Contract Agent undefined");
+      }
+      const profiles = yield this.contractAgent.findProfiles(
+        this.profilesHost,
+        criteria
+      );
+      if (profiles.length === 0) {
+        throw new Error("Profile not found");
+      }
+      const profile = profiles[0];
+      profile.configurations = __spreadValues(__spreadValues({}, profile.configurations), configurations);
+      yield this.contractAgent.saveProfile(this.profilesHost, criteria, profile);
+      return { message: "Configurations added successfully", profile };
+    });
+  }
+  updateConfigurationsForProfile(profileId, configurations) {
+    return __async(this, null, function* () {
+      const criteria = {
+        conditions: [
+          {
+            field: "url",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileId
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.contractAgent) {
+        throw new Error("Contract Agent undefined");
+      }
+      const profiles = yield this.contractAgent.findProfiles(
+        this.profilesHost,
+        criteria
+      );
+      if (profiles.length === 0) {
+        throw new Error("Profile not found");
+      }
+      const profile = profiles[0];
+      profile.configurations = configurations;
+      yield this.contractAgent.saveProfile(this.profilesHost, criteria, profile);
+      return { message: "Configurations updated successfully", profile };
+    });
+  }
+  removeConfigurationsFromProfile(profileId) {
+    return __async(this, null, function* () {
+      const criteria = {
+        conditions: [
+          {
+            field: "url",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileId
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.contractAgent) {
+        throw new Error("Contract Agent undefined");
+      }
+      const profiles = yield this.contractAgent.findProfiles(
+        this.profilesHost,
+        criteria
+      );
+      if (profiles.length === 0) {
+        throw new Error("Profile not found");
+      }
+      const profile = profiles[0];
+      profile.configurations = {
+        allowRecommendation: false,
+        allowPolicies: false
+      };
+      yield this.contractAgent.saveProfile(this.profilesHost, criteria, profile);
+      return { message: "Configurations removed successfully", profile };
+    });
+  }
 };
 
 // src/agent.contract.router.ts
 import express2 from "express";
 var router2 = express2.Router();
-var orchestratorHandler = new OrchestratorRequestHandler();
-var participantHandler = new ParticipantRequestHandler();
+var requestHandler = new RequestHandler();
 router2.get(
-  "/orchestrator/profile/:id/policies-recommendations",
+  "/profile/:id/policies-recommendations",
   (req, res) => __async(void 0, null, function* () {
     try {
-      const policies = yield orchestratorHandler.getPoliciesRecommendationFromProfile(
+      const policies = yield requestHandler.getPoliciesRecommendationFromProfile(
         req.params.id
       );
       res.json(policies);
@@ -1572,10 +1689,10 @@ router2.get(
   })
 );
 router2.get(
-  "/orchestrator/profile/:id/services-recommendations",
+  "/profile/:id/services-recommendations",
   (req, res) => __async(void 0, null, function* () {
     try {
-      const services = yield orchestratorHandler.getServicesRecommendationFromProfile(
+      const services = yield requestHandler.getServicesRecommendationFromProfile(
         req.params.id
       );
       res.json(services);
@@ -1585,10 +1702,10 @@ router2.get(
   })
 );
 router2.get(
-  "/orchestrator/profile/:id/policies-matching",
+  "/profile/:id/policies-matching",
   (req, res) => __async(void 0, null, function* () {
     try {
-      const policies = yield orchestratorHandler.getPoliciesMatchingFromProfile(
+      const policies = yield requestHandler.getPoliciesMatchingFromProfile(
         req.params.id
       );
       res.json(policies);
@@ -1598,10 +1715,10 @@ router2.get(
   })
 );
 router2.get(
-  "/orchestrator/profile/:id/services-matching",
+  "/profile/:id/services-matching",
   (req, res) => __async(void 0, null, function* () {
     try {
-      const services = yield orchestratorHandler.getServicesMatchingFromProfile(
+      const services = yield requestHandler.getServicesMatchingFromProfile(
         req.params.id
       );
       res.json(services);
@@ -1611,10 +1728,10 @@ router2.get(
   })
 );
 router2.get(
-  "/participant/profile/:id/service-recommendations",
+  "/profile/:id/service-recommendations",
   (req, res) => __async(void 0, null, function* () {
     try {
-      const services = yield participantHandler.getServiceRecommendationFromProfile(
+      const services = yield requestHandler.getServicesRecommendationFromProfile(
         req.params.id
       );
       res.json(services);
@@ -1624,10 +1741,10 @@ router2.get(
   })
 );
 router2.get(
-  "/participant/profile/:id/policies-matching",
+  "/profile/:id/policies-matching",
   (req, res) => __async(void 0, null, function* () {
     try {
-      const policies = yield participantHandler.getPoliciesMatchingFromProfile(
+      const policies = yield requestHandler.getPoliciesMatchingFromProfile(
         req.params.id
       );
       res.json(policies);
@@ -1637,13 +1754,66 @@ router2.get(
   })
 );
 router2.get(
-  "/participant/profile/:id/contract-matching",
+  "/profile/:id/contract-matching",
   (req, res) => __async(void 0, null, function* () {
     try {
-      const contracts = yield participantHandler.getContractMatchingFromProfile(
+      const contracts = yield requestHandler.getContractMatchingFromProfile(
         req.params.id
       );
       res.json(contracts);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router2.get(
+  "/profile/:id/configurations",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const configurations = yield requestHandler.getConfigurationsFromProfile(
+        req.params.id
+      );
+      res.json(configurations);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router2.post("/profile/configurations", (req, res) => __async(void 0, null, function* () {
+  try {
+    const { profileId, configurations } = req.body;
+    const result = yield requestHandler.addConfigurationsToProfile(
+      profileId,
+      configurations
+    );
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}));
+router2.put(
+  "/profile/:id/configurations",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const { configurations } = req.body;
+      const result = yield requestHandler.updateConfigurationsForProfile(
+        req.params.id,
+        configurations
+      );
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router2.delete(
+  "/profile/:id/configurations",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const result = yield requestHandler.removeConfigurationsFromProfile(
+        req.params.id
+      );
+      res.json(result);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }

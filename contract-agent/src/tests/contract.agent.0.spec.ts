@@ -5,7 +5,7 @@ import { expect } from 'chai';
 import { ContractBase } from './mocks/contract.mock';
 import { Agent } from '../Agent';
 
-describe('Contract Agent Test Cases 0', function () {
+describe('Contract Agent Test Cases', function () {
   let createdDocument: any;
   let contractAgent: ContractAgent;
   let contractProvider: MongoDBProvider;
