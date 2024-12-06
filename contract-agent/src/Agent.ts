@@ -9,6 +9,10 @@ import {
   Provider,
   DataProviderConfig,
   DataChangeEvent,
+  ProfileDocument,
+  ContractAgentError,
+  CAECode,
+  FilterOperator,
 } from './types';
 import path from 'path';
 
@@ -148,6 +152,90 @@ export abstract class Agent {
     return profile.matching;
   }
 
+  /**
+   * Finds profiles based on given criteria from a specific source
+   * @param source - Data source identifier
+   * @param criteria - Search criteria
+   * @returns Promise<Profile[]>
+   */
+  async findProfiles(
+    source: string,
+    criteria: SearchCriteria,
+  ): Promise<Profile[]> {
+    try {
+      const dataProvider = this.getDataProvider(source);
+      if (!dataProvider) {
+        throw new Error(`Data provider not found for source: ${source}`);
+      }
+
+      const results: ProfileDocument[] = await dataProvider.find(criteria);
+      return results.map((result) => {
+        const profileData: ProfileJSON = {
+          url: result.url,
+          configurations: result.configurations,
+          recommendations: result.recommendations || [],
+          matching: result.matching || [],
+          preference: result.preference || [],
+        };
+        return new Profile(profileData);
+      });
+    } catch (error) {
+      const searchError: ContractAgentError = {
+        name: 'ProfileSearchError',
+        message: `Failed to find profiles: ${(error as Error).message}`,
+        code: CAECode.PROFILE_SEARCH_FAILED,
+        context: { source, criteria },
+      };
+      Logger.error(searchError.message);
+      throw searchError;
+    }
+  }
+
+  /**
+   * Saves a profile to a specified data source
+   * @param source - Data source identifier
+   * @param criteria - Search criteria used to find the profile to update
+   * @param profile - Profile to be saved
+   * @returns Promise<boolean> - Indicates successful save operation
+   */
+  protected async saveProfile(
+    source: string,
+    criteria: SearchCriteria,
+    profile: Profile,
+  ): Promise<boolean> {
+    try {
+      const dataProvider = this.getDataProvider(source);
+      if (!dataProvider) {
+        throw new Error(`Data provider not found for source: ${source}`);
+      }
+      const profileDocument: ProfileDocument = {
+        url: profile.url,
+        configurations: profile.configurations,
+        recommendations: profile.recommendations || [],
+        matching: profile.matching || [],
+        preference: profile.preference || [],
+      };
+      const updateResult = await dataProvider.update(criteria, profileDocument);
+      if (!updateResult) {
+        Logger.warn(
+          `No profile found matching criteria to update for source: ${source}`,
+        );
+        return false;
+      }
+      Logger.info(`Profile saved successfully to source: ${source}`);
+      return true;
+    } catch (error) {
+      const saveError: ContractAgentError = {
+        name: 'ProfileSaveError',
+        message: `Failed to save profile: ${(error as Error).message}`,
+        code: CAECode.PROFILE_SAVE_FAILED,
+        context: { source, profile },
+      };
+      Logger.error(saveError.message);
+      throw saveError;
+    }
+  }
+
   protected async createProfileForParticipant(
     participantId: string,
   ): Promise<Profile> {
@@ -157,6 +245,24 @@ export abstract class Agent {
           `Can't create profile for participant "profilesHost" is not set`,
         );
       }
+
+      const criteria: SearchCriteria = {
+        conditions: [
+          {
+            field: 'url',
+            operator: FilterOperator.EQUALS,
+            value: participantId,
+          },
+        ],
+        threshold: 0,
+      };
+
+      const existingProfile = await this.findProfile('profiles', criteria);
+      if (existingProfile) {
+        Logger.warn(`Profile already exists for participant: ${participantId}`);
+        return existingProfile;
+      }
+
       const profileProvider = this.getDataProvider(Agent.profilesHost);
       const newProfileData = {
         url: participantId,
@@ -165,7 +271,15 @@ export abstract class Agent {
         matching: [],
       };
       const profile = await profileProvider.create(newProfileData);
-      return new Profile(profile as ProfileJSON);
+      const newProfile = new Profile(profile as ProfileJSON);
+
+      const saved = await this.saveProfile('profiles', criteria, newProfile);
+      if (!saved) {
+        throw new Error(`Failed to save new profile for: ${participantId}`);
+      }
+
+      Logger.info(`New profile created and saved for: ${participantId}`);
+      return newProfile;
     } catch (error) {
       Logger.error(`Error creating profile: ${(error as Error).message}`);
       throw new Error('Profile creation failed');

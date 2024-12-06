@@ -64,6 +64,10 @@ export class ContractAgent extends Agent {
         await instance.prepare();
         ContractAgent.instance = instance;
       }
+      const dpChildType = DataProvider.getChildType();
+      if (!dpChildType) {
+        Logger.warn('Data Provider Type not set');
+      }
       return ContractAgent.instance;
     } catch (error) {
       const serviceError: ContractAgentError = {
@@ -82,90 +86,6 @@ export class ContractAgent extends Agent {
    */
   protected enrichProfileWithSystemRecommendations(): Profile {
     throw new Error('Method not implemented.');
-  }
-
-  /**
-   * Finds profiles based on given criteria from a specific source
-   * @param source - Data source identifier
-   * @param criteria - Search criteria
-   * @returns Promise<Profile[]>
-   */
-  async findProfiles(
-    source: string,
-    criteria: SearchCriteria,
-  ): Promise<Profile[]> {
-    try {
-      const dataProvider = this.getDataProvider(source);
-      if (!dataProvider) {
-        throw new Error(`Data provider not found for source: ${source}`);
-      }
-
-      const results: ProfileDocument[] = await dataProvider.find(criteria);
-      return results.map((result) => {
-        const profileData: ProfileJSON = {
-          url: result.url,
-          configurations: result.configurations,
-          recommendations: result.recommendations || [],
-          matching: result.matching || [],
-          preference: result.preference || [],
-        };
-        return new Profile(profileData);
-      });
-    } catch (error) {
-      const searchError: ContractAgentError = {
-        name: 'ProfileSearchError',
-        message: `Failed to find profiles: ${(error as Error).message}`,
-        code: CAECode.PROFILE_SEARCH_FAILED,
-        context: { source, criteria },
-      };
-      Logger.error(searchError.message);
-      throw searchError;
-    }
-  }
-
-  /**
-   * Saves a profile to a specified data source
-   * @param source - Data source identifier
-   * @param criteria - Search criteria used to find the profile to update
-   * @param profile - Profile to be saved
-   * @returns Promise<boolean> - Indicates successful save operation
-   */
-  async saveProfile(
-    source: string,
-    criteria: SearchCriteria,
-    profile: Profile,
-  ): Promise<boolean> {
-    try {
-      const dataProvider = this.getDataProvider(source);
-      if (!dataProvider) {
-        throw new Error(`Data provider not found for source: ${source}`);
-      }
-      const profileDocument: ProfileDocument = {
-        url: profile.url,
-        configurations: profile.configurations,
-        recommendations: profile.recommendations || [],
-        matching: profile.matching || [],
-        preference: profile.preference || [],
-      };
-      const updateResult = await dataProvider.update(criteria, profileDocument);
-      if (!updateResult) {
-        Logger.warn(
-          `No profile found matching criteria to update for source: ${source}`,
-        );
-        return false;
-      }
-      Logger.info(`Profile saved successfully to source: ${source}`);
-      return true;
-    } catch (error) {
-      const saveError: ContractAgentError = {
-        name: 'ProfileSaveError',
-        message: `Failed to save profile: ${(error as Error).message}`,
-        code: CAECode.PROFILE_SAVE_FAILED,
-        context: { source, profile },
-      };
-      Logger.error(saveError.message);
-      throw saveError;
-    }
   }
 
   /**
@@ -249,6 +169,9 @@ export class ContractAgent extends Agent {
     await this.updateProfile(contract.orchestrator, contract);
   }
 
+  async createProfileForParticipant(participantId: string): Promise<Profile> {
+    return super.createProfileForParticipant(participantId);
+  }
   /**
    * Updates a single profile
    * @param participantId - Participant identifier

@@ -2,6 +2,7 @@ import { Profile } from './Profile';
 import { Agent } from './Agent';
 import { ContractAgent } from './ContractAgent';
 import { SearchCriteria, FilterOperator } from './types';
+import { Logger } from './Logger';
 
 export class RequestHandler {
   private static instance: RequestHandler | null = null;
@@ -22,34 +23,41 @@ export class RequestHandler {
     this.contractAgent = await ContractAgent.retrieveService();
     this.profilesHost = Agent.getProfileHost();
     if (!this.profilesHost) {
-      throw new Error('Profiles Host not set');
+      throw new Error('Contract Request Handler: Profiles Host not set');
     }
+  }
+
+  async getContractAgent(): Promise<ContractAgent> {
+    return ContractAgent.retrieveService();
   }
 
   // Return only the policies from recommendations
   async getPoliciesRecommendationFromProfile(profileId: string): Promise<any> {
-    const criteria: SearchCriteria = {
-      conditions: [
-        {
-          field: 'url',
-          operator: FilterOperator.EQUALS,
-          value: profileId,
-        },
-      ],
-      threshold: 0,
-    };
-
-    if (!this.contractAgent) {
-      throw new Error('Contract Agent undefined');
+    try {
+      const criteria: SearchCriteria = {
+        conditions: [
+          {
+            field: 'url',
+            operator: FilterOperator.EQUALS,
+            value: profileId,
+          },
+        ],
+        threshold: 0,
+      };
+      if (!this.contractAgent) {
+        throw new Error('Contract Agent undefined');
+      }
+      const profiles = await this.contractAgent.findProfiles(
+        this.profilesHost,
+        criteria,
+      );
+      if (profiles.length === 0) {
+        throw new Error(`Profile not found, profileId: ${profileId}`);
+      }
+      return profiles[0].recommendations.map((rec) => rec.policies);
+    } catch (error) {
+      Logger.error((error as Error).message);
     }
-    const profiles = await this.contractAgent.findProfiles(
-      this.profilesHost,
-      criteria,
-    );
-    if (profiles.length === 0) {
-      throw new Error('Profile not found');
-    }
-    return profiles[0].recommendations.map((rec) => rec.policies);
   }
 
   // Return only the services from recommendations

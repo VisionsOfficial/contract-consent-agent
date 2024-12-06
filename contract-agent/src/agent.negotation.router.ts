@@ -24,7 +24,7 @@ async function fetchProfileById(profileId: string): Promise<Profile> {
   const contractAgent = await ContractAgent.retrieveService();
   const profilesHost = Agent.getProfileHost();
   if (!profilesHost) {
-    throw new Error('profiles host not set');
+    throw new Error('Fetch Profile by Id: profiles host not set');
   }
   const profiles = await contractAgent.findProfiles(profilesHost, criteria);
   if (profiles.length === 0) {

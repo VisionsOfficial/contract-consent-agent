@@ -25,6 +25,10 @@ export abstract class DataProvider extends EventEmitter {
     DataProvider.childType = childType;
   }
 
+  static getChildType(): DataProviderType | undefined {
+    return DataProvider.childType;
+  }
+
   createInstance(): DataProvider {
     if (!DataProvider.childType) {
       throw new Error('Child type not linked');
