@@ -1,15 +1,24 @@
 import { Profile } from './Profile';
 import { Agent } from './Agent';
 import { ContractAgent } from './ContractAgent';
-import { SearchCriteria, FilterOperator, ProfileConfigurations } from './types';
+import { SearchCriteria, FilterOperator } from './types';
 
 export class RequestHandler {
+  private static instance: RequestHandler | null = null;
   private contractAgent?: ContractAgent;
   private profilesHost: string = '';
+  private constructor() {}
 
-  constructor() {}
+  static async retrieveService(): Promise<RequestHandler> {
+    if (!RequestHandler.instance) {
+      const instance = new RequestHandler();
+      await instance.prepare();
+      RequestHandler.instance = instance;
+    }
+    return RequestHandler.instance;
+  }
 
-  async prepare() {
+  private async prepare() {
     this.contractAgent = await ContractAgent.retrieveService();
     this.profilesHost = Agent.getProfileHost();
     if (!this.profilesHost) {

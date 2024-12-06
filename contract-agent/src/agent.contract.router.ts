@@ -1,12 +1,11 @@
-import { RequestHandler } from 'ContractAgentHandler';
+import { RequestHandler } from './ContractAgentHandler';
 import express, { Request, Response, Router } from 'express';
 const router: Router = express.Router();
-
-const requestHandler = new RequestHandler();
 
 router.get(
   '/profile/:id/policies-recommendations',
   async (req: Request, res: Response) => {
+    const requestHandler = await RequestHandler.retrieveService();
     try {
       const policies =
         await requestHandler.getPoliciesRecommendationFromProfile(
@@ -22,6 +21,7 @@ router.get(
 router.get(
   '/profile/:id/services-recommendations',
   async (req: Request, res: Response) => {
+    const requestHandler = await RequestHandler.retrieveService();
     try {
       const services =
         await requestHandler.getServicesRecommendationFromProfile(
@@ -37,6 +37,7 @@ router.get(
 router.get(
   '/profile/:id/policies-matching',
   async (req: Request, res: Response) => {
+    const requestHandler = await RequestHandler.retrieveService();
     try {
       const policies = await requestHandler.getPoliciesMatchingFromProfile(
         req.params.id,
@@ -51,6 +52,7 @@ router.get(
 router.get(
   '/profile/:id/services-matching',
   async (req: Request, res: Response) => {
+    const requestHandler = await RequestHandler.retrieveService();
     try {
       const services = await requestHandler.getServicesMatchingFromProfile(
         req.params.id,
@@ -65,6 +67,7 @@ router.get(
 router.get(
   '/profile/:id/service-recommendations',
   async (req: Request, res: Response) => {
+    const requestHandler = await RequestHandler.retrieveService();
     try {
       const services =
         await requestHandler.getServicesRecommendationFromProfile(
@@ -80,6 +83,7 @@ router.get(
 router.get(
   '/profile/:id/policies-matching',
   async (req: Request, res: Response) => {
+    const requestHandler = await RequestHandler.retrieveService();
     try {
       const policies = await requestHandler.getPoliciesMatchingFromProfile(
         req.params.id,
@@ -94,6 +98,7 @@ router.get(
 router.get(
   '/profile/:id/contract-matching',
   async (req: Request, res: Response) => {
+    const requestHandler = await RequestHandler.retrieveService();
     try {
       const contracts = await requestHandler.getContractMatchingFromProfile(
         req.params.id,
@@ -108,6 +113,7 @@ router.get(
 router.get(
   '/profile/:id/configurations',
   async (req: Request, res: Response) => {
+    const requestHandler = await RequestHandler.retrieveService();
     try {
       const configurations = await requestHandler.getConfigurationsFromProfile(
         req.params.id,
@@ -120,6 +126,7 @@ router.get(
 );
 
 router.post('/profile/configurations', async (req: Request, res: Response) => {
+  const requestHandler = await RequestHandler.retrieveService();
   try {
     const { profileId, configurations } = req.body;
     const result = await requestHandler.addConfigurationsToProfile(
@@ -135,6 +142,7 @@ router.post('/profile/configurations', async (req: Request, res: Response) => {
 router.put(
   '/profile/:id/configurations',
   async (req: Request, res: Response) => {
+    const requestHandler = await RequestHandler.retrieveService();
     try {
       const { configurations } = req.body;
       const result = await requestHandler.updateConfigurationsForProfile(
@@ -151,6 +159,7 @@ router.put(
 router.delete(
   '/profile/:id/configurations',
   async (req: Request, res: Response) => {
+    const requestHandler = await RequestHandler.retrieveService();
     try {
       const result = await requestHandler.removeConfigurationsFromProfile(
         req.params.id,
