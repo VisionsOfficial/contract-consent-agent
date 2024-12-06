@@ -18,6 +18,7 @@ declare abstract class DataProvider extends EventEmitter {
     abstract delete(id: string): Promise<boolean>;
     abstract update(criteria: SearchCriteria, data: unknown): Promise<boolean>;
     static setChildType(childType: DataProviderType): void;
+    static getChildType(): DataProviderType | undefined;
     createInstance(): DataProvider;
     ensureReady(): Promise<void>;
     protected abstract makeQuery(conditions: FilterCondition[]): Record<string, any>;
@@ -79,7 +80,8 @@ interface DataProviderConfig {
     hostsProfiles?: boolean;
 }
 interface ProfileDocument {
-    url: string;
+    _id?: string;
+    uri: string;
     configurations: any;
     recommendations?: any[];
     matching?: any[];
@@ -104,20 +106,20 @@ type ProfileJSON = Omit<Pick<Profile, keyof Profile>, 'createdAt' | 'updatedAt'>
 };
 declare class Profile {
     _id?: string;
-    url: string;
+    uri: string;
     configurations: ProfileConfigurations;
     recommendations: ProfileRecommendation[];
     matching: ProfileMatching[];
     preference: ProfilePreference[];
-    constructor({ url, configurations, recommendations, matching, preference, }: ProfileJSON);
+    constructor({ _id, uri, configurations, recommendations, matching, preference, }: ProfileJSON);
 }
 
 interface AgentConfig {
     dataProviderConfig: DataProviderConfig[];
 }
 declare abstract class Agent {
-    private static configPath;
-    private static profilesHost;
+    protected static configPath: string;
+    protected static profilesHost: string;
     protected config?: AgentConfig;
     protected dataProviders: Provider[];
     protected constructor();
@@ -135,7 +137,8 @@ declare abstract class Agent {
     protected loadDefaultConfiguration(): void;
     getRecommendations(profile: Profile): ProfileRecommendation[];
     getMatchings(profile: Profile): ProfileMatching[];
-    protected createProfileForParticipant(participantId: string): Promise<Profile>;
+    abstract createProfileForParticipant(participantId: string): Promise<Profile>;
+    abstract saveProfile(source: string, criteria: SearchCriteria, profile: Profile): Promise<boolean>;
     protected abstract updateMatchingForProfile(profile: Profile, data: unknown): Promise<void>;
     protected abstract updateRecommendationForProfile(profile: Profile, data: unknown): Promise<void>;
     protected abstract enrichProfileWithSystemRecommendations(): Profile;
@@ -165,21 +168,6 @@ declare class ContractAgent extends Agent {
      * @throws {ContractAgentError} Method not implemented
      */
     protected enrichProfileWithSystemRecommendations(): Profile;
-    /**
-     * Finds profiles based on given criteria from a specific source
-     * @param source - Data source identifier
-     * @param criteria - Search criteria
-     * @returns Promise<Profile[]>
-     */
-    findProfiles(source: string, criteria: SearchCriteria): Promise<Profile[]>;
-    /**
-     * Saves a profile to a specified data source
-     * @param source - Data source identifier
-     * @param criteria - Search criteria used to find the profile to update
-     * @param profile - Profile to be saved
-     * @returns Promise<boolean> - Indicates successful save operation
-     */
-    saveProfile(source: string, criteria: SearchCriteria, profile: Profile): Promise<boolean>;
     /**
      * Finds profiles across all configured providers
      * @param criteria - Search criteria
@@ -240,6 +228,22 @@ declare class ContractAgent extends Agent {
      * @param data - Recommendation data
      */
     protected updateRecommendationForProfile(profile: Profile, data: unknown): Promise<void>;
+    /**
+     * Finds profiles based on given criteria from a specific source
+     * @param source - Data source identifier
+     * @param criteria - Search criteria
+     * @returns Promise<Profile[]>
+     */
+    findProfiles(source: string, criteria: SearchCriteria): Promise<Profile[]>;
+    /**
+     * Saves a profile to a specified data source
+     * @param source - Data source identifier
+     * @param criteria - Search criteria used to find the profile to update
+     * @param profile - Profile to be saved
+     * @returns Promise<boolean> - Indicates successful save operation
+     */
+    saveProfile(source: string, criteria: SearchCriteria, profile: Profile): Promise<boolean>;
+    createProfileForParticipant(participantURI: string): Promise<Profile>;
 }
 
 declare class MongoDBProvider extends DataProvider {

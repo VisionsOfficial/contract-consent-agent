@@ -64,7 +64,8 @@ export interface DataProviderConfig {
 }
 
 export interface ProfileDocument {
-  url: string;
+  _id?: string;
+  uri: string;
   configurations: any;
   recommendations?: any[];
   matching?: any[];

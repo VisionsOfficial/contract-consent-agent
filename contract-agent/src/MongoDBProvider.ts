@@ -297,14 +297,22 @@ export class MongoDBProvider extends DataProvider {
       throw error;
     }
   }
-
   async find(criteria: SearchCriteria): Promise<[]> {
     const query = this.makeQuery(criteria.conditions);
     const data = (await this.collection
       .find(query)
       .limit(criteria.limit || 0)
-      .toArray()) as [];
-    return data;
+      .toArray()) as Array<{ _id?: any; [key: string]: any }>;
+    return data.map((item) => {
+      if (item._id) {
+        const { _id, ...rest } = item;
+        return {
+          _id: _id.toString(),
+          ...rest,
+        };
+      }
+      return item;
+    }) as [];
   }
 
   async update(criteria: SearchCriteria, data: unknown): Promise<boolean> {

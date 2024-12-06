@@ -18,7 +18,7 @@ export class MatchingService {
       const contract: Contract = data as Contract;
 
       const otherParticipantsServices = contract.serviceOfferings.filter(
-        (service) => service.participant !== profile.url,
+        (service) => service.participant !== profile.uri,
       );
 
       if (!otherParticipantsServices.length) return;

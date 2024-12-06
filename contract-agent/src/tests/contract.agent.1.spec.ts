@@ -12,7 +12,7 @@ describe('Negotiation Service Test Cases', () => {
     negotiationService = NegotiationService.retrieveService(true);
 
     profile = new Profile({
-      url: 'test-url',
+      uri: 'test-uri',
       configurations: {
         allowPolicies: true,
         allowRecommendation: true,

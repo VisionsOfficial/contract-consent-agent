@@ -128,12 +128,12 @@ router.get(
 router.post('/profile/configurations', async (req: Request, res: Response) => {
   const requestHandler = await RequestHandler.retrieveService();
   try {
-    const { profileId, configurations } = req.body;
+    const { profileURI, configurations } = req.body;
     const result = await requestHandler.addConfigurationsToProfile(
-      profileId,
+      profileURI,
       configurations,
     );
-    res.status(201).json(result);
+    res.status(201).json({ success: true, ...result });
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }
@@ -149,7 +149,7 @@ router.put(
         req.params.id,
         configurations,
       );
-      res.json(result);
+      res.json({ success: true, ...result });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
@@ -164,7 +164,7 @@ router.delete(
       const result = await requestHandler.removeConfigurationsFromProfile(
         req.params.id,
       );
-      res.json(result);
+      res.json({ success: true, ...result });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }

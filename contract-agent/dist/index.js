@@ -22,6 +22,18 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __objRest = (source, exclude) => {
+  var target = {};
+  for (var prop in source)
+    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
+      target[prop] = source[prop];
+  if (source != null && __getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(source)) {
+      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
+        target[prop] = source[prop];
+    }
+  return target;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -291,7 +303,7 @@ var NegotiationService = class _NegotiationService {
         (pref) => pref !== void 0 && pref !== null && Array.isArray(pref.policies) && Array.isArray(pref.services) && Array.isArray(pref.ecosystems)
       );
       profile.preference = [...profile.preference, ...validPreferences];
-      Logger.info(`Profile preferences updated for ${profile.url}.`);
+      Logger.info(`Profile preferences updated for ${profile.uri}.`);
     } catch (error) {
       Logger.error(`Failed to update profile preferences: ${error}`);
     }
@@ -346,13 +358,15 @@ var NegotiationService = class _NegotiationService {
 // src/Profile.ts
 var Profile = class {
   constructor({
-    url,
+    _id,
+    uri,
     configurations,
     recommendations,
     matching = [],
     preference = []
   }) {
-    this.url = url;
+    this._id = _id;
+    this.uri = uri;
     this.configurations = configurations;
     this.recommendations = recommendations;
     this.matching = matching;
@@ -408,6 +422,9 @@ var DataProvider = class _DataProvider extends import_events.EventEmitter {
   }
   static setChildType(childType) {
     _DataProvider.childType = childType;
+  }
+  static getChildType() {
+    return _DataProvider.childType;
   }
   createInstance() {
     if (!_DataProvider.childType) {
@@ -530,29 +547,6 @@ var Agent = class _Agent {
   }
   getMatchings(profile) {
     return profile.matching;
-  }
-  createProfileForParticipant(participantId) {
-    return __async(this, null, function* () {
-      try {
-        if (!_Agent.profilesHost) {
-          throw new Error(
-            `Can't create profile for participant "profilesHost" is not set`
-          );
-        }
-        const profileProvider = this.getDataProvider(_Agent.profilesHost);
-        const newProfileData = {
-          url: participantId,
-          configurations: {},
-          recommendations: [],
-          matching: []
-        };
-        const profile = yield profileProvider.create(newProfileData);
-        return new Profile(profile);
-      } catch (error) {
-        Logger.error(`Error creating profile: ${error.message}`);
-        throw new Error("Profile creation failed");
-      }
-    });
   }
 };
 
@@ -790,7 +784,15 @@ var _MongoDBProvider = class _MongoDBProvider extends DataProvider {
     return __async(this, null, function* () {
       const query = this.makeQuery(criteria.conditions);
       const data = yield this.collection.find(query).limit(criteria.limit || 0).toArray();
-      return data;
+      return data.map((item) => {
+        if (item._id) {
+          const _a = item, { _id } = _a, rest = __objRest(_a, ["_id"]);
+          return __spreadValues({
+            _id: _id.toString()
+          }, rest);
+        }
+        return item;
+      });
     });
   }
   update(criteria, data) {
@@ -835,7 +837,7 @@ var MatchingService = class _MatchingService {
       try {
         const contract = data;
         const otherParticipantsServices = contract.serviceOfferings.filter(
-          (service) => service.participant !== profile.url
+          (service) => service.participant !== profile.uri
         );
         if (!otherParticipantsServices.length) return;
         const currentRecommendation = profile.recommendations[0];
@@ -915,10 +917,10 @@ var RecommendationService = class _RecommendationService {
     return __async(this, null, function* () {
       try {
         const contract = data;
-        const newPolicyDescriptions = this.collectPolicyDescriptionsForParticipant(contract, profile.url);
+        const newPolicyDescriptions = this.collectPolicyDescriptionsForParticipant(contract, profile.uri);
         const newServiceOfferings = this.collectServiceOfferingsForParticipant(
           contract,
-          profile.url
+          profile.uri
         );
         const contractId = contract._id;
         let recommendation = profile.recommendations[0];
@@ -971,12 +973,12 @@ var RecommendationService = class _RecommendationService {
       }
     });
   }
-  collectPolicyDescriptionsForParticipant(contract, participantUrl) {
+  collectPolicyDescriptionsForParticipant(contract, participantUri) {
     var _a;
     const descriptions = /* @__PURE__ */ new Set();
     (_a = contract.serviceOfferings) == null ? void 0 : _a.forEach((service) => {
       var _a2;
-      if (service.participant === participantUrl) {
+      if (service.participant === participantUri) {
         (_a2 = service.policies) == null ? void 0 : _a2.forEach((policy) => {
           if (policy == null ? void 0 : policy.description) {
             descriptions.add(policy.description);
@@ -986,11 +988,11 @@ var RecommendationService = class _RecommendationService {
     });
     return Array.from(descriptions);
   }
-  collectServiceOfferingsForParticipant(contract, participantUrl) {
+  collectServiceOfferingsForParticipant(contract, participantUri) {
     var _a;
     const services = /* @__PURE__ */ new Set();
     (_a = contract.serviceOfferings) == null ? void 0 : _a.forEach((service) => {
-      if (service.participant === participantUrl && service.serviceOffering) {
+      if (service.participant === participantUri && service.serviceOffering) {
         services.add(service.serviceOffering);
       }
     });
@@ -1039,6 +1041,10 @@ var _ContractAgent = class _ContractAgent extends Agent {
           yield instance.prepare();
           _ContractAgent.instance = instance;
         }
+        const dpChildType = DataProvider.getChildType();
+        if (!dpChildType) {
+          Logger.warn("Data Provider Type not set");
+        }
         return _ContractAgent.instance;
       } catch (error) {
         const serviceError = {
@@ -1057,84 +1063,6 @@ var _ContractAgent = class _ContractAgent extends Agent {
    */
   enrichProfileWithSystemRecommendations() {
     throw new Error("Method not implemented.");
-  }
-  /**
-   * Finds profiles based on given criteria from a specific source
-   * @param source - Data source identifier
-   * @param criteria - Search criteria
-   * @returns Promise<Profile[]>
-   */
-  findProfiles(source, criteria) {
-    return __async(this, null, function* () {
-      try {
-        const dataProvider = this.getDataProvider(source);
-        if (!dataProvider) {
-          throw new Error(`Data provider not found for source: ${source}`);
-        }
-        const results = yield dataProvider.find(criteria);
-        return results.map((result) => {
-          const profileData = {
-            url: result.url,
-            configurations: result.configurations,
-            recommendations: result.recommendations || [],
-            matching: result.matching || [],
-            preference: result.preference || []
-          };
-          return new Profile(profileData);
-        });
-      } catch (error) {
-        const searchError = {
-          name: "ProfileSearchError",
-          message: `Failed to find profiles: ${error.message}`,
-          code: CAECode.PROFILE_SEARCH_FAILED,
-          context: { source, criteria }
-        };
-        Logger.error(searchError.message);
-        throw searchError;
-      }
-    });
-  }
-  /**
-   * Saves a profile to a specified data source
-   * @param source - Data source identifier
-   * @param criteria - Search criteria used to find the profile to update
-   * @param profile - Profile to be saved
-   * @returns Promise<boolean> - Indicates successful save operation
-   */
-  saveProfile(source, criteria, profile) {
-    return __async(this, null, function* () {
-      try {
-        const dataProvider = this.getDataProvider(source);
-        if (!dataProvider) {
-          throw new Error(`Data provider not found for source: ${source}`);
-        }
-        const profileDocument = {
-          url: profile.url,
-          configurations: profile.configurations,
-          recommendations: profile.recommendations || [],
-          matching: profile.matching || [],
-          preference: profile.preference || []
-        };
-        const updateResult = yield dataProvider.update(criteria, profileDocument);
-        if (!updateResult) {
-          Logger.warn(
-            `No profile found matching criteria to update for source: ${source}`
-          );
-          return false;
-        }
-        Logger.info(`Profile saved successfully to source: ${source}`);
-        return true;
-      } catch (error) {
-        const saveError = {
-          name: "ProfileSaveError",
-          message: `Failed to save profile: ${error.message}`,
-          code: CAECode.PROFILE_SAVE_FAILED,
-          context: { source, profile }
-        };
-        Logger.error(saveError.message);
-        throw saveError;
-      }
-    });
   }
   /**
    * Finds profiles across all configured providers
@@ -1223,7 +1151,7 @@ var _ContractAgent = class _ContractAgent extends Agent {
           throw new Error("Profile DataProvider not found");
         }
         const conditions = {
-          field: "url",
+          field: "uri",
           operator: "EQUALS" /* EQUALS */,
           value: participantId
         };
@@ -1318,25 +1246,150 @@ var _ContractAgent = class _ContractAgent extends Agent {
         const criteria = {
           conditions: [
             {
-              field: "url",
+              field: "uri",
               operator: "EQUALS" /* EQUALS */,
-              value: profile.url
+              value: profile.uri
             }
           ],
           threshold: 0
         };
         const saved = yield this.saveProfile("profiles", criteria, profile);
         if (!saved) {
-          throw new Error(`Failed to save updated profile: ${profile.url}`);
+          throw new Error(`Failed to save updated profile: ${profile.uri}`);
         }
         Logger.info(
-          `Recommendations updated and profile saved for: ${profile.url}`
+          `Recommendations updated and profile saved for: ${profile.uri}`
         );
       } catch (error) {
         Logger.error(
           `Error updating recommendations for profile: ${error.message}`
         );
         throw error;
+      }
+    });
+  }
+  /**
+   * Finds profiles based on given criteria from a specific source
+   * @param source - Data source identifier
+   * @param criteria - Search criteria
+   * @returns Promise<Profile[]>
+   */
+  findProfiles(source, criteria) {
+    return __async(this, null, function* () {
+      try {
+        const dataProvider = this.getDataProvider(source);
+        if (!dataProvider) {
+          throw new Error(`Data provider not found for source: ${source}`);
+        }
+        const results = yield dataProvider.find(criteria);
+        return results.map((result) => {
+          const profileData = {
+            _id: result._id,
+            uri: result.uri,
+            configurations: result.configurations,
+            recommendations: result.recommendations || [],
+            matching: result.matching || [],
+            preference: result.preference || []
+          };
+          return new Profile(profileData);
+        });
+      } catch (error) {
+        const searchError = {
+          name: "ProfileSearchError",
+          message: `Failed to find profiles: ${error.message}`,
+          code: CAECode.PROFILE_SEARCH_FAILED,
+          context: { source, criteria }
+        };
+        Logger.error(searchError.message);
+        throw searchError;
+      }
+    });
+  }
+  /**
+   * Saves a profile to a specified data source
+   * @param source - Data source identifier
+   * @param criteria - Search criteria used to find the profile to update
+   * @param profile - Profile to be saved
+   * @returns Promise<boolean> - Indicates successful save operation
+   */
+  saveProfile(source, criteria, profile) {
+    return __async(this, null, function* () {
+      try {
+        const dataProvider = this.getDataProvider(source);
+        if (!dataProvider) {
+          throw new Error(`Data provider not found for source: ${source}`);
+        }
+        const profileDocument = {
+          uri: profile.uri,
+          configurations: profile.configurations,
+          recommendations: profile.recommendations || [],
+          matching: profile.matching || [],
+          preference: profile.preference || []
+        };
+        const updateResult = yield dataProvider.update(criteria, profileDocument);
+        if (!updateResult) {
+          Logger.warn(
+            `No profile found matching criteria to update for source: ${source}`
+          );
+          return false;
+        }
+        Logger.info(`Profile saved successfully to source: ${source}`);
+        return true;
+      } catch (error) {
+        const saveError = {
+          name: "ProfileSaveError",
+          message: `Failed to save profile: ${error.message}`,
+          code: CAECode.PROFILE_SAVE_FAILED,
+          context: { source, profile }
+        };
+        Logger.error(saveError.message);
+        throw saveError;
+      }
+    });
+  }
+  createProfileForParticipant(participantURI) {
+    return __async(this, null, function* () {
+      try {
+        if (!Agent.profilesHost) {
+          throw new Error(
+            `Can't create profile for participant "profilesHost" is not set`
+          );
+        }
+        const criteria = {
+          conditions: [
+            {
+              field: "uri",
+              operator: "EQUALS" /* EQUALS */,
+              value: participantURI
+            }
+          ],
+          threshold: 0
+        };
+        const existingProfile = yield this.findProfiles("profiles", criteria);
+        if ((existingProfile == null ? void 0 : existingProfile.length) && existingProfile[0]) {
+          Logger.warn(
+            `Profile already exists for participant: ${participantURI}`
+          );
+          return existingProfile[0];
+        }
+        const profileProvider = this.getDataProvider(Agent.profilesHost);
+        const newProfileData = {
+          uri: participantURI,
+          configurations: {},
+          recommendations: [],
+          matching: []
+        };
+        const profile = yield profileProvider.create(newProfileData);
+        const newProfile = new Profile(profile);
+        const saved = yield this.saveProfile("profiles", criteria, newProfile);
+        if (!saved) {
+          throw new Error(`Failed to save new profile for: ${participantURI}`);
+        }
+        Logger.info(`New profile created and saved for: ${participantURI}`);
+        return newProfile;
+      } catch (error) {
+        Logger.error(`Error creating profile: ${error.message}`);
+        throw new Error("Profile creation failed");
       }
     });
   }
@@ -1362,7 +1415,7 @@ function fetchProfileById(profileId) {
     const contractAgent = yield ContractAgent.retrieveService();
     const profilesHost = Agent.getProfileHost();
     if (!profilesHost) {
-      throw new Error("profiles host not set");
+      throw new Error("Fetch Profile by Id: profiles host not set");
     }
     const profiles = yield contractAgent.findProfiles(profilesHost, criteria);
     if (profiles.length === 0) {
@@ -1457,43 +1510,62 @@ router.put(
 var agent_negotation_router_default = router;
 
 // src/ContractAgentHandler.ts
-var RequestHandler = class {
+var _RequestHandler = class _RequestHandler {
   constructor() {
     this.profilesHost = "";
+  }
+  static retrieveService() {
+    return __async(this, null, function* () {
+      if (!_RequestHandler.instance) {
+        const instance = new _RequestHandler();
+        yield instance.prepare();
+        _RequestHandler.instance = instance;
+      }
+      return _RequestHandler.instance;
+    });
   }
   prepare() {
     return __async(this, null, function* () {
       this.contractAgent = yield ContractAgent.retrieveService();
       this.profilesHost = Agent.getProfileHost();
       if (!this.profilesHost) {
-        throw new Error("Profiles Host not set");
+        throw new Error("Contract Request Handler: Profiles Host not set");
       }
     });
   }
-  // Return only the policies from recommendations
-  getPoliciesRecommendationFromProfile(profileId) {
+  getContractAgent() {
     return __async(this, null, function* () {
-      const criteria = {
-        conditions: [
-          {
-            field: "url",
-            operator: "EQUALS" /* EQUALS */,
-            value: profileId
-          }
-        ],
-        threshold: 0
-      };
-      if (!this.contractAgent) {
-        throw new Error("Contract Agent undefined");
+      return ContractAgent.retrieveService();
+    });
+  }
+  // Return only the policies from recommendations
+  getPoliciesRecommendationFromProfile(profileURI) {
+    return __async(this, null, function* () {
+      try {
+        const criteria = {
+          conditions: [
+            {
+              field: "uri",
+              operator: "EQUALS" /* EQUALS */,
+              value: profileURI
+            }
+          ],
+          threshold: 0
+        };
+        if (!this.contractAgent) {
+          throw new Error("Contract Agent undefined");
+        }
+        const profiles = yield this.contractAgent.findProfiles(
+          this.profilesHost,
+          criteria
+        );
+        if (profiles.length === 0) {
+          throw new Error(`Profile not found, profileURI: ${profileURI}`);
+        }
+        return profiles[0].recommendations.map((rec) => rec.policies);
+      } catch (error) {
+        Logger.error(error.message);
       }
-      const profiles = yield this.contractAgent.findProfiles(
-        this.profilesHost,
-        criteria
-      );
-      if (profiles.length === 0) {
-        throw new Error("Profile not found");
-      }
-      return profiles[0].recommendations.map((rec) => rec.policies);
     });
   }
   // Return only the services from recommendations
@@ -1502,7 +1574,7 @@ var RequestHandler = class {
       const criteria = {
         conditions: [
           {
-            field: "url",
+            field: "uri",
             operator: "EQUALS" /* EQUALS */,
             value: profileId
           }
@@ -1528,7 +1600,7 @@ var RequestHandler = class {
       const criteria = {
         conditions: [
           {
-            field: "url",
+            field: "uri",
             operator: "EQUALS" /* EQUALS */,
             value: profileId
           }
@@ -1554,7 +1626,7 @@ var RequestHandler = class {
       const criteria = {
         conditions: [
           {
-            field: "url",
+            field: "uri",
             operator: "EQUALS" /* EQUALS */,
             value: profileId
           }
@@ -1580,7 +1652,7 @@ var RequestHandler = class {
       const criteria = {
         conditions: [
           {
-            field: "url",
+            field: "uri",
             operator: "EQUALS" /* EQUALS */,
             value: profileId
           }
@@ -1606,7 +1678,7 @@ var RequestHandler = class {
       const criteria = {
         conditions: [
           {
-            field: "url",
+            field: "uri",
             operator: "EQUALS" /* EQUALS */,
             value: profileId
           }
@@ -1631,7 +1703,7 @@ var RequestHandler = class {
       const criteria = {
         conditions: [
           {
-            field: "url",
+            field: "uri",
             operator: "EQUALS" /* EQUALS */,
             value: profileId
           }
@@ -1659,7 +1731,7 @@ var RequestHandler = class {
       const criteria = {
         conditions: [
           {
-            field: "url",
+            field: "uri",
             operator: "EQUALS" /* EQUALS */,
             value: profileId
           }
@@ -1687,7 +1759,7 @@ var RequestHandler = class {
       const criteria = {
         conditions: [
           {
-            field: "url",
+            field: "uri",
             operator: "EQUALS" /* EQUALS */,
             value: profileId
           }
@@ -1714,14 +1786,16 @@ var RequestHandler = class {
     });
   }
 };
+_RequestHandler.instance = null;
+var RequestHandler = _RequestHandler;
 
 // src/agent.contract.router.ts
 var import_express2 = __toESM(require("express"));
 var router2 = import_express2.default.Router();
-var requestHandler = new RequestHandler();
 router2.get(
   "/profile/:id/policies-recommendations",
   (req, res) => __async(void 0, null, function* () {
+    const requestHandler = yield RequestHandler.retrieveService();
     try {
       const policies = yield requestHandler.getPoliciesRecommendationFromProfile(
         req.params.id
@@ -1735,6 +1809,7 @@ router2.get(
 router2.get(
   "/profile/:id/services-recommendations",
   (req, res) => __async(void 0, null, function* () {
+    const requestHandler = yield RequestHandler.retrieveService();
     try {
       const services = yield requestHandler.getServicesRecommendationFromProfile(
         req.params.id
@@ -1748,6 +1823,7 @@ router2.get(
 router2.get(
   "/profile/:id/policies-matching",
   (req, res) => __async(void 0, null, function* () {
+    const requestHandler = yield RequestHandler.retrieveService();
     try {
       const policies = yield requestHandler.getPoliciesMatchingFromProfile(
         req.params.id
@@ -1761,6 +1837,7 @@ router2.get(
 router2.get(
   "/profile/:id/services-matching",
   (req, res) => __async(void 0, null, function* () {
+    const requestHandler = yield RequestHandler.retrieveService();
     try {
       const services = yield requestHandler.getServicesMatchingFromProfile(
         req.params.id
@@ -1774,6 +1851,7 @@ router2.get(
 router2.get(
   "/profile/:id/service-recommendations",
   (req, res) => __async(void 0, null, function* () {
+    const requestHandler = yield RequestHandler.retrieveService();
     try {
       const services = yield requestHandler.getServicesRecommendationFromProfile(
         req.params.id
@@ -1787,6 +1865,7 @@ router2.get(
 router2.get(
   "/profile/:id/policies-matching",
   (req, res) => __async(void 0, null, function* () {
+    const requestHandler = yield RequestHandler.retrieveService();
     try {
       const policies = yield requestHandler.getPoliciesMatchingFromProfile(
         req.params.id
@@ -1800,6 +1879,7 @@ router2.get(
 router2.get(
   "/profile/:id/contract-matching",
   (req, res) => __async(void 0, null, function* () {
+    const requestHandler = yield RequestHandler.retrieveService();
     try {
       const contracts = yield requestHandler.getContractMatchingFromProfile(
         req.params.id
@@ -1813,6 +1893,7 @@ router2.get(
 router2.get(
   "/profile/:id/configurations",
   (req, res) => __async(void 0, null, function* () {
+    const requestHandler = yield RequestHandler.retrieveService();
     try {
       const configurations = yield requestHandler.getConfigurationsFromProfile(
         req.params.id
@@ -1824,6 +1905,7 @@ router2.get(
   })
 );
 router2.post("/profile/configurations", (req, res) => __async(void 0, null, function* () {
+  const requestHandler = yield RequestHandler.retrieveService();
   try {
     const { profileId, configurations } = req.body;
     const result = yield requestHandler.addConfigurationsToProfile(
@@ -1838,6 +1920,7 @@ router2.post("/profile/configurations", (req, res) => __async(void 0, null, func
 router2.put(
   "/profile/:id/configurations",
   (req, res) => __async(void 0, null, function* () {
+    const requestHandler = yield RequestHandler.retrieveService();
     try {
       const { configurations } = req.body;
       const result = yield requestHandler.updateConfigurationsForProfile(
@@ -1853,6 +1936,7 @@ router2.put(
 router2.delete(
   "/profile/:id/configurations",
   (req, res) => __async(void 0, null, function* () {
+    const requestHandler = yield RequestHandler.retrieveService();
     try {
       const result = yield requestHandler.removeConfigurationsFromProfile(
         req.params.id

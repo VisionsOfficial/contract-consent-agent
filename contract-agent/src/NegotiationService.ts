@@ -115,7 +115,7 @@ export class NegotiationService {
           Array.isArray(pref.ecosystems),
       );
       profile.preference = [...profile.preference, ...validPreferences];
-      Logger.info(`Profile preferences updated for ${profile.url}.`);
+      Logger.info(`Profile preferences updated for ${profile.uri}.`);
     } catch (error) {
       Logger.error(`Failed to update profile preferences: ${error}`);
     }

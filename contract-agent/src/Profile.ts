@@ -15,20 +15,22 @@ export type ProfileJSON = Omit<
 
 export class Profile {
   _id?: string;
-  url: string;
+  uri: string;
   configurations: ProfileConfigurations;
   recommendations: ProfileRecommendation[];
   matching: ProfileMatching[];
   preference: ProfilePreference[];
 
   constructor({
-    url,
+    _id,
+    uri,
     configurations,
     recommendations,
     matching = [],
     preference = [],
   }: ProfileJSON) {
-    this.url = url;
+    this._id = _id;
+    this.uri = uri;
     this.configurations = configurations;
     this.recommendations = recommendations;
     this.matching = matching;

@@ -18,10 +18,10 @@ export class RecommendationService {
       const contract: Contract = data as Contract;
 
       const newPolicyDescriptions =
-        this.collectPolicyDescriptionsForParticipant(contract, profile.url);
+        this.collectPolicyDescriptionsForParticipant(contract, profile.uri);
       const newServiceOfferings = this.collectServiceOfferingsForParticipant(
         contract,
-        profile.url,
+        profile.uri,
       );
       const contractId = contract._id;
 
@@ -85,12 +85,12 @@ export class RecommendationService {
 
   private collectPolicyDescriptionsForParticipant(
     contract: Contract,
-    participantUrl: string,
+    participantUri: string,
   ): string[] {
     const descriptions = new Set<string>();
 
     contract.serviceOfferings?.forEach((service) => {
-      if (service.participant === participantUrl) {
+      if (service.participant === participantUri) {
         service.policies?.forEach((policy) => {
           if (policy?.description) {
             descriptions.add(policy.description);
@@ -104,12 +104,12 @@ export class RecommendationService {
 
   private collectServiceOfferingsForParticipant(
     contract: Contract,
-    participantUrl: string,
+    participantUri: string,
   ): string[] {
     const services = new Set<string>();
 
     contract.serviceOfferings?.forEach((service) => {
-      if (service.participant === participantUrl && service.serviceOffering) {
+      if (service.participant === participantUri && service.serviceOffering) {
         services.add(service.serviceOffering);
       }
     });

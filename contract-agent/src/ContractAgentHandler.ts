@@ -32,14 +32,14 @@ export class RequestHandler {
   }
 
   // Return only the policies from recommendations
-  async getPoliciesRecommendationFromProfile(profileId: string): Promise<any> {
+  async getPoliciesRecommendationFromProfile(profileURI: string): Promise<any> {
     try {
       const criteria: SearchCriteria = {
         conditions: [
           {
-            field: 'url',
+            field: 'uri',
             operator: FilterOperator.EQUALS,
-            value: profileId,
+            value: profileURI,
           },
         ],
         threshold: 0,
@@ -52,7 +52,7 @@ export class RequestHandler {
         criteria,
       );
       if (profiles.length === 0) {
-        throw new Error(`Profile not found, profileId: ${profileId}`);
+        throw new Error(`Profile not found, profileURI: ${profileURI}`);
       }
       return profiles[0].recommendations.map((rec) => rec.policies);
     } catch (error) {
@@ -65,7 +65,7 @@ export class RequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileId,
         },
@@ -90,7 +90,7 @@ export class RequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileId,
         },
@@ -116,7 +116,7 @@ export class RequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileId,
         },
@@ -141,7 +141,7 @@ export class RequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileId,
         },
@@ -164,13 +164,13 @@ export class RequestHandler {
 
   // configurations
 
-  async getConfigurationsFromProfile(profileId: string): Promise<any> {
+  async getConfigurationsFromProfile(profileURI: string): Promise<any> {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
-          value: profileId,
+          value: profileURI,
         },
       ],
       threshold: 0,
@@ -189,15 +189,15 @@ export class RequestHandler {
   }
 
   async addConfigurationsToProfile(
-    profileId: string,
+    profileURI: string,
     configurations: any,
   ): Promise<any> {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
-          value: profileId,
+          value: profileURI,
         },
       ],
       threshold: 0,
@@ -225,7 +225,7 @@ export class RequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileId,
         },
@@ -252,7 +252,7 @@ export class RequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileId,
         },

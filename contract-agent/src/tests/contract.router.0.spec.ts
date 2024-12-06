@@ -17,20 +17,25 @@ describe('ContractAgent Router Tests', function () {
   let addConfigurationsToProfileSpy: SinonSpy;
   let updateConfigurationsForProfileSpy: SinonSpy;
   let removeConfigurationsFromProfileSpy: SinonSpy;
-  let profileId = 'default-profile-id';
+  let profileURI = 'default-profile-id';
 
   const app = express();
   app.use(express.json());
   app.use('/api', router);
 
   before(async function () {
+    console.log('1');
     Agent.setConfigPath('./mocks/contract-agent.config.json', __filename);
+    console.log('2');
     requestHandler = await RequestHandler.retrieveService();
+    console.log('3');
     const contractAgent = await requestHandler.getContractAgent();
-
-    const profile =
-      await contractAgent.createProfileForParticipant('some-participant');
-    profileId = profile._id ?? profileId;
+    console.log('4');
+    const profile = await contractAgent.createProfileForParticipant(
+      'some-participant-uri',
+    );
+    console.log('5');
+    profileURI = profile.uri ?? profileURI;
 
     getPoliciesRecommendationFromProfileSpy = sinon.spy(
       requestHandler,
@@ -84,29 +89,35 @@ describe('ContractAgent Router Tests', function () {
 
   it('should get policies recommendations from profile', async function () {
     const response = await request(app)
-      .get(`/api/profile/${profileId}/policies-recommendations`)
+      .get(`/api/profile/${profileURI}/policies-recommendations`)
       .expect(200);
 
     sinon.assert.calledOnce(getPoliciesRecommendationFromProfileSpy);
-    sinon.assert.calledWith(getPoliciesRecommendationFromProfileSpy, profileId);
+    sinon.assert.calledWith(
+      getPoliciesRecommendationFromProfileSpy,
+      profileURI,
+    );
     expect(response.body).to.be.an('array');
   });
-  /*
+
   it('should get services recommendations from profile', async function () {
     const response = await request(app)
-      .get(`/api/profile/${profileId}/services-recommendations`)
+      .get(`/api/profile/${profileURI}/services-recommendations`)
       .expect(200);
     sinon.assert.calledOnce(getServicesRecommendationFromProfileSpy);
-    sinon.assert.calledWith(getServicesRecommendationFromProfileSpy, profileId);
+    sinon.assert.calledWith(
+      getServicesRecommendationFromProfileSpy,
+      profileURI,
+    );
     expect(response.body).to.be.an('array');
   });
 
   it('should get policies matching from profile', async function () {
     const response = await request(app)
-      .get(`/api/profile/${profileId}/policies-matching`)
+      .get(`/api/profile/${profileURI}/policies-matching`)
       .expect(200);
     sinon.assert.calledOnce(getPoliciesMatchingFromProfileSpy);
-    sinon.assert.calledWith(getPoliciesMatchingFromProfileSpy, profileId);
+    sinon.assert.calledWith(getPoliciesMatchingFromProfileSpy, profileURI);
     expect(response.body).to.be.an('array');
   });
 
@@ -114,12 +125,12 @@ describe('ContractAgent Router Tests', function () {
     const configurations = [{ configId: 'config1' }];
     const response = await request(app)
       .post('/api/profile/configurations')
-      .send({ profileId, configurations })
+      .send({ profileURI, configurations })
       .expect(201);
     sinon.assert.calledOnce(addConfigurationsToProfileSpy);
     sinon.assert.calledWith(
       addConfigurationsToProfileSpy,
-      profileId,
+      profileURI,
       configurations,
     );
     expect(response.body).to.have.property('success', true);
@@ -128,13 +139,13 @@ describe('ContractAgent Router Tests', function () {
   it('should handle updating configurations for profile', async function () {
     const configurations = [{ configId: 'config2' }];
     const response = await request(app)
-      .put(`/api/profile/${profileId}/configurations`)
+      .put(`/api/profile/${profileURI}/configurations`)
       .send({ configurations })
       .expect(200);
     sinon.assert.calledOnce(updateConfigurationsForProfileSpy);
     sinon.assert.calledWith(
       updateConfigurationsForProfileSpy,
-      profileId,
+      profileURI,
       configurations,
     );
     expect(response.body).to.have.property('success', true);
@@ -142,11 +153,10 @@ describe('ContractAgent Router Tests', function () {
 
   it('should handle deleting configurations from profile', async function () {
     const response = await request(app)
-      .delete(`/api/profile/${profileId}/configurations`)
+      .delete(`/api/profile/${profileURI}/configurations`)
       .expect(200);
     sinon.assert.calledOnce(removeConfigurationsFromProfileSpy);
-    sinon.assert.calledWith(removeConfigurationsFromProfileSpy, profileId);
+    sinon.assert.calledWith(removeConfigurationsFromProfileSpy, profileURI);
     expect(response.body).to.have.property('success', true);
   });
-  */
 });
