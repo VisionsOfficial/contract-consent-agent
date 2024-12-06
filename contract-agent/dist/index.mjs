@@ -1639,14 +1639,14 @@ var _RequestHandler = class _RequestHandler {
     });
   }
   // configurations
-  getConfigurationsFromProfile(profileId) {
+  getConfigurationsFromProfile(profileURI) {
     return __async(this, null, function* () {
       const criteria = {
         conditions: [
           {
             field: "uri",
             operator: "EQUALS" /* EQUALS */,
-            value: profileId
+            value: profileURI
           }
         ],
         threshold: 0
@@ -1664,14 +1664,14 @@ var _RequestHandler = class _RequestHandler {
       return profiles[0].configurations;
     });
   }
-  addConfigurationsToProfile(profileId, configurations) {
+  addConfigurationsToProfile(profileURI, configurations) {
     return __async(this, null, function* () {
       const criteria = {
         conditions: [
           {
             field: "uri",
             operator: "EQUALS" /* EQUALS */,
-            value: profileId
+            value: profileURI
           }
         ],
         threshold: 0
@@ -1873,12 +1873,12 @@ router2.get(
 router2.post("/profile/configurations", (req, res) => __async(void 0, null, function* () {
   const requestHandler = yield RequestHandler.retrieveService();
   try {
-    const { profileId, configurations } = req.body;
+    const { profileURI, configurations } = req.body;
     const result = yield requestHandler.addConfigurationsToProfile(
-      profileId,
+      profileURI,
       configurations
     );
-    res.status(201).json(result);
+    res.status(201).json(__spreadValues({ success: true }, result));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1893,7 +1893,7 @@ router2.put(
         req.params.id,
         configurations
       );
-      res.json(result);
+      res.json(__spreadValues({ success: true }, result));
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -1907,7 +1907,7 @@ router2.delete(
       const result = yield requestHandler.removeConfigurationsFromProfile(
         req.params.id
       );
-      res.json(result);
+      res.json(__spreadValues({ success: true }, result));
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
