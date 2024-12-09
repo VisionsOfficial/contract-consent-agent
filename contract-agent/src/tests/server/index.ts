@@ -12,32 +12,49 @@ async function startServer() {
     Logger.info('Initializing ContractAgent...');
     // eslint-disable-next-line no-undef
     Agent.setConfigPath('../mocks/contract-agent.config.json', __filename);
+
+    const originalProto = ContractAgent.prototype as any;
+    const originalHandleDataInserted = originalProto.handleDataInserted;
+    const originalHandleDataUpdated = originalProto.handleDataUpdated;
+    const originalHandleDataDeleted = originalProto.handleDataDeleted;
+
+    (ContractAgent.prototype as any).handleDataInserted = async function (
+      data: any,
+    ) {
+      Logger.info(`Data inserted: ${JSON.stringify(data, null, 2)}`);
+      return await originalHandleDataInserted.call(this, data);
+    };
+
+    (ContractAgent.prototype as any).handleDataUpdated = async function (
+      data: any,
+    ) {
+      Logger.info(`Data updated: ${JSON.stringify(data, null, 2)}`);
+      return await originalHandleDataUpdated.call(this, data);
+    };
+
+    (ContractAgent.prototype as any).handleDataDeleted = async function (
+      data: any,
+    ) {
+      Logger.info(`Data deleted: ${JSON.stringify(data, null, 2)}`);
+      return await originalHandleDataDeleted.call(this, data);
+    };
+
     const contractAgent = await ContractAgent.retrieveService();
+
+    if (!contractAgent) {
+      throw new Error('Failed to initialize ContractAgent.');
+    }
+
     const provider = contractAgent.getDataProvider(
       'contracts',
     ) as MongoDBProvider;
 
     const client = provider.getClient();
     if (!client) {
-      throw new Error('');
+      throw new Error('MongoDB client not initialized');
     }
     const collection = provider.getCollection();
 
-    (provider as any).handleDataInserted = async (data: any) => {
-      Logger.info(`Data inserted: ${JSON.stringify(data)}`);
-    };
-
-    (provider as any).handleDataUpdated = async (data: any) => {
-      Logger.info(`Data updated: ${JSON.stringify(data)}`);
-    };
-
-    (provider as any).handleDataDeleted = (data: any) => {
-      Logger.info(`Data deleted: ${JSON.stringify(data)}`);
-    };
-
-    if (!contractAgent) {
-      throw new Error('Failed to initialize ContractAgent.');
-    }
     Logger.info('ContractAgent initialized successfully.');
 
     app.post('/insert', async (req: Request, res: Response) => {
