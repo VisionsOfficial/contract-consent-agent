@@ -14,7 +14,7 @@ async function fetchProfileById(profileId: string): Promise<Profile> {
   const criteria: SearchCriteria = {
     conditions: [
       {
-        field: 'url',
+        field: 'uri',
         operator: FilterOperator.EQUALS,
         value: profileId,
       },

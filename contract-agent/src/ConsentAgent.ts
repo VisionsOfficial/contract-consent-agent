@@ -90,4 +90,16 @@ export class ConsentAgent extends Agent {
   ): Promise<void> {
     throw new Error('Method not implemented.');
   }
+
+  createProfileForParticipant(participantId: string): Promise<Profile> {
+    throw new Error('Method not implemented.');
+  }
+
+  saveProfile(
+    source: string,
+    criteria: SearchCriteria,
+    profile: Profile,
+  ): Promise<boolean> {
+    throw new Error('Method not implemented.');
+  }
 }
