@@ -1,0 +1,343 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Contract Consent Agent API",
+    "description": "Available routes through the Contract Manager API",
+    "version": "1.0.0"
+  },
+  "host": "8888",
+  "basePath": "/",
+  "paths": {
+    "/profile/:id/services-recommendations": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Endpoint to get services recommendations from a profile.",
+        "description": "Endpoint to get services recommendations from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Services recommendations.",
+            "schema": {
+              "$ref": "#/definitions/ServicesRecommendations"
+            }
+          },
+          "500": {
+            "description": "Internal server error.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/profile/:id/policies-recommendations": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Endpoint to get policies recommendations from a profile.",
+        "description": "Endpoint to get policies recommendations from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Policies recommendations.",
+            "schema": {
+              "$ref": "#/definitions/PoliciesRecommendations"
+            }
+          },
+          "500": {
+            "description": "Internal server error.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/profile/:id/policies-matching": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Endpoint to get policies matching from a profile.",
+        "description": "Endpoint to get policies matching from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching recommendations."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/profile/:id/service-recommendations": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Endpoint to get service recommendations from a profile.",
+        "description": "Endpoint to get service recommendations from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service recommendations."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/profile/:id/contract-matching": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Endpoint to get contract matching from a profile.",
+        "description": "Endpoint to get contract matching from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contract matching."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/profile/:id/configurations": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Endpoint to get configurations from a profile.",
+        "description": "Endpoint to get configurations from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "configurations."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/profile/configurations": {
+      "post": {
+        "tags": ["Profile"],
+        "summary": "Endpoint to add configurations to a profile.",
+        "description": "Endpoint to add configurations to a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "configurations",
+            "in": "body",
+            "description": "Configurations.",
+            "required": true,
+            "type": "any"
+          },
+          {
+            "name": "profileURI",
+            "in": "body",
+            "description": "Profile URI.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configurations added."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/profile/:id/configurations": {
+      "put": {
+        "tags": ["Profile"],
+        "summary": "Endpoint to update configurations from a profile.",
+        "description": "Endpoint to update configurations from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "configurations",
+            "in": "body",
+            "description": "Configurations.",
+            "required": true,
+            "type": "any"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configurations updated."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/profile/:id/configurations": {
+      "delete": {
+        "tags": ["Profile"],
+        "summary": "Endpoint to delete configurations from a profile.",
+        "description": "Endpoint to delete configurations from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configurations deleted."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Policy": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "string"
+        },
+        "description": {
+          "type": "string",
+          "example": "string"
+        },
+        "requestedFields": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "example": "array"
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            }
+          }
+        },
+        "policy": {
+          "type": "string",
+          "example": "object"
+        }
+      }
+    },
+    "ContractPolicy": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "example": "string"
+            }
+          }
+        },
+        "permission": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {}
+          }
+        },
+        "prohibition": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {}
+          }
+        }
+      }
+    },
+    "Signature": {
+      "type": "object",
+      "properties": {
+        "participant": {
+          "type": "string",
+          "example": "string"
+        },
+        "role": {
+          "type": "string",
+          "example": "string"
+        },
+        "signature": {
+          "type": "string",
+          "example": "string"
+        }
+      }
+    }
+  }
+}
