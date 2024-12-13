@@ -190,7 +190,7 @@ var DEFAULT_LOG_PATH = (0, import_path.join)(process.cwd(), "logs");
 var logStream;
 var getLogFileName = () => {
   const timestamp = (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-");
-  return `dpcp-${timestamp}.log`;
+  return `cca-${timestamp}.log`;
 };
 var initDiskLogger = () => {
   try {
