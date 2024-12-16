@@ -89,6 +89,14 @@ export class ContractAgent extends Agent {
   }
 
   /**
+   * Enriches a profile with system recommendations
+   * @throws {ContractAgentError} Method not implemented
+   */
+  protected existingDataCheck(): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  /**
    * Finds profiles across all configured providers
    * @param criteria - Search criteria
    * @returns Promise<Profile[]>

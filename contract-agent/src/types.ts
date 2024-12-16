@@ -26,7 +26,7 @@ export interface ProfileMatching {
 }
 
 export interface ProfileConfigurations {
-  allowRecommendation: boolean;
+  allowRecommendations: boolean;
   allowPolicies?: boolean;
   allowPreferences?: boolean;
 }
@@ -69,7 +69,7 @@ export interface DataProviderConfig {
 
 export interface ProfileDocument {
   _id?: string;
-  uri: string;
+  uri?: string;
   configurations: any;
   recommendations?: any[];
   matching?: any[];

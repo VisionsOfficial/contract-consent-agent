@@ -17,6 +17,7 @@ import {
 import path from 'path';
 
 export interface AgentConfig {
+  existingDataCheck?: boolean;
   dataProviderConfig: DataProviderConfig[];
 }
 
@@ -86,6 +87,8 @@ export abstract class Agent {
     criteria: SearchCriteria,
   ): Promise<Profile[]>;
 
+  protected abstract existingDataCheck(): Promise<void>;
+
   addDataProviders(dataProviders: Provider[]): void {
     if (!dataProviders || dataProviders.length === 0) {
       throw new Error('The dataProviders array cannot be empty.');
@@ -130,6 +133,9 @@ export abstract class Agent {
         );
       }
     }
+    if(this.config.existingDataCheck){
+      await this.existingDataCheck();
+    }
   }
 
   protected loadDefaultConfiguration(): void {
@@ -151,7 +157,6 @@ export abstract class Agent {
     return profile.matching;
   }
 
-
   abstract saveProfile(
     source: string,
     criteria: SearchCriteria,
@@ -169,7 +174,7 @@ export abstract class Agent {
       }
       const profileProvider = this.getDataProvider(Agent.profilesHost);
       const newProfileData = {
-        url: participantId,
+        uri: participantId,
         configurations: {},
         recommendations: [] as unknown,
         matching: [] as unknown,

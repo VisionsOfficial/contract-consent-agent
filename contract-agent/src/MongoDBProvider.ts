@@ -128,6 +128,7 @@ export class MongoDBProvider extends DataProvider {
 
   private static createCollectionProxy(collection: Collection): Collection {
     const interceptor = MongoInterceptor.getInstance();
+
     const handler = {
       get(target: Collection, prop: string | symbol): any {
         const original = target[prop as keyof Collection];

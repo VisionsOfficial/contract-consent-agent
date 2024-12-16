@@ -6,12 +6,13 @@ import {
   PreferencePayload,
   ProfilePayload,
   CAECode,
-  ConsentAgentError,
+  ConsentAgentError, FilterOperator,
 } from './types';
 import { Agent } from './Agent';
 import { DataProvider, DataProviderType } from './DataProvider';
 import { MongoDBProvider } from './MongoDBProvider';
 import { Logger } from './Logger';
+import { ChangeStreamDataProvider } from './ChangeStreamDataProvider';
 
 export class ConsentAgent extends Agent {
   private static instance: ConsentAgent | null = null;
@@ -47,10 +48,9 @@ export class ConsentAgent extends Agent {
    * @returns Instance of ConsentAgent.
    */
   static async retrieveService(
-    dataProviderType: DataProviderType = MongoDBProvider,
+    dataProviderType: DataProviderType = ChangeStreamDataProvider,
     refresh: boolean = false,
   ): Promise<ConsentAgent> {
-    console.log("CONSENT AGENT SERVCIE RETRIEVED")
     try{
       if (!ConsentAgent.instance || refresh) {
         DataProvider.setChildType(dataProviderType);
@@ -85,7 +85,7 @@ export class ConsentAgent extends Agent {
       const results: ProfileDocument[] = await dataProvider.find(criteria);
       return results.map((result) => {
         const profil = {
-          url: result.url,
+          uri: result.uri,
           configurations: result.configurations,
           recommendations: result.recommendations || [],
           matching: result.matching || [],
@@ -113,7 +113,7 @@ export class ConsentAgent extends Agent {
       const dataProvider = this.getDataProvider(source);
       const result: ProfileDocument = await dataProvider.findOne(criteria);
       return new Profile({
-        url: result.url,
+        uri: result.uri,
         configurations: result.configurations,
         recommendations: result.recommendations || [],
         matching: result.matching || [],
@@ -141,7 +141,7 @@ export class ConsentAgent extends Agent {
       const dataProvider = this.getDataProvider(source);
       const result: ProfileDocument = await dataProvider.findOneAndUpdate(criteria, data);
       return new Profile({
-        url: result.url,
+        uri: result.uri,
         configurations: result.configurations,
         recommendations: result.recommendations || [],
         matching: result.matching || [],
@@ -169,7 +169,7 @@ export class ConsentAgent extends Agent {
       const dataProvider = this.getDataProvider(source);
       const result: ProfileDocument = await dataProvider.findOneAndPush(criteria, data);
       return new Profile({
-        url: result.url,
+        uri: result.uri,
         configurations: result.configurations,
         recommendations: result.recommendations || [],
         matching: result.matching || [],
@@ -197,7 +197,7 @@ export class ConsentAgent extends Agent {
       const dataProvider = this.getDataProvider(source);
       const result: ProfileDocument = await dataProvider.findOneAndPull(criteria, data);
       return new Profile({
-        url: result.url,
+        uri: result.uri,
         configurations: result.configurations,
         recommendations: result.recommendations || [],
         matching: result.matching || [],
@@ -219,6 +219,13 @@ export class ConsentAgent extends Agent {
     throw new Error('Method not implemented.');
   }
 
+
+  saveProfile( source: string,
+    criteria: SearchCriteria,
+    profile: Profile,): Promise<boolean>{
+    throw new Error('Method not implemented.');
+  }
+
   /**
    * Enriches a profile with system recommendations.
    * @returns The enriched profile.
@@ -232,15 +239,42 @@ export class ConsentAgent extends Agent {
    * @param data - Data change event
    */
   protected async handleDataInserted(data: DataChangeEvent): Promise<void> {
-    if (data.source === 'users' && data.fullDocument) {
-      try {
-        Logger.info(`Data inserted for source: ${data.source}`);
-      } catch (error) {
-        Logger.error(`Data insertion failed: ${(error as Error).message}`);
-        throw error;
+    if(data.fullDocument && data.fullDocument instanceof Object) {
+      switch(data.source){
+        case 'users': {
+          try {
+            const { _id } = data.fullDocument as any;
+            await this.createProfileForParticipant(_id)
+            Logger.info(`Data inserted for source: ${data.source}`);
+          } catch (error) {
+            Logger.error(`Data insertion failed: ${(error as Error).message}`);
+            throw error;
+          }
+        }
+          break;
+        case 'privacynotices': {
+          try {
+            //update profiles
+            Logger.info(`Data inserted for source: ${data.source}`);
+          } catch (error) {
+            Logger.error(`Data insertion failed: ${(error as Error).message}`);
+            throw error;
+          }
+        }
+          break;
+        case 'consents': {
+          try {
+            //update profiles
+            Logger.info(`Data inserted for source: ${data.source}`);
+          } catch (error) {
+            Logger.error(`Data insertion failed: ${(error as Error).message}`);
+            throw error;
+          }
+        }
+          break;
       }
     } else {
-      Logger.info(`Unhandled data insertion for source: ${data.source}`);
+      Logger.info(`Unhandled data for source: ${data.source}`);
     }
   }
 
@@ -249,15 +283,76 @@ export class ConsentAgent extends Agent {
    * @param data - Data change event.
    */
   protected async handleDataUpdated(data: DataChangeEvent): Promise<void> {
-    throw new Error('Method not implemented.');
+    if(data.fullDocument && data.fullDocument instanceof Object) {
+      switch(data.source){
+        case 'privacynotices': {
+          try {
+            //update profiles
+            Logger.info(`Data inserted for source: ${data.source}`);
+          } catch (error) {
+            Logger.error(`Data insertion failed: ${(error as Error).message}`);
+            throw error;
+          }
+        }
+          break;
+        case 'consents': {
+          try {
+            //update profiles
+            Logger.info(`Data inserted for source: ${data.source}`);
+          } catch (error) {
+            Logger.error(`Data insertion failed: ${(error as Error).message}`);
+            throw error;
+          }
+        }
+          break;
+      }
+    } else {
+      Logger.info(`Unhandled data for source: ${data.source}`);
+    }
   }
 
   /**
    * Handles data deletion events.
    * @param data - Data change event.
    */
-  protected handleDataDeleted(data: DataChangeEvent): void {
-    throw new Error('Method not implemented.');
+  protected async handleDataDeleted(data: DataChangeEvent): Promise<void> {
+    if (data.fullDocument && data.fullDocument instanceof Object) {
+      switch (data.source) {
+        case 'users': {
+          try {
+            const { _id } = data.fullDocument as any;
+            await this.deleteProfileForParticipant(_id)
+            Logger.info(`Data inserted for source: ${data.source}`);
+          } catch (error) {
+            Logger.error(`Data insertion failed: ${(error as Error).message}`);
+            throw error;
+          }
+        }
+          break;
+        case 'privacynotices': {
+          try {
+            //update profiles
+            Logger.info(`Data inserted for source: ${data.source}`);
+          } catch (error) {
+            Logger.error(`Data insertion failed: ${(error as Error).message}`);
+            throw error;
+          }
+        }
+          break;
+        case 'consents': {
+          try {
+            //update profiles
+            Logger.info(`Data inserted for source: ${data.source}`);
+          } catch (error) {
+            Logger.error(`Data insertion failed: ${(error as Error).message}`);
+            throw error;
+          }
+        }
+          break;
+      }
+    } else {
+      Logger.info(`Unhandled data insertion for source: ${data.source}`);
+    }
   }
 
   /**
@@ -273,6 +368,28 @@ export class ConsentAgent extends Agent {
   }
 
   /**
+   * Check the existing data at the Agent initialization
+   */
+  protected async existingDataCheck(
+  ): Promise<void> {
+    const users = await this.getDataProvider('users').findAll();
+    const privacynotices = await this.getDataProvider('privacynotices').findAll();
+    const consents = await this.getDataProvider('consents').findAll();
+    const profiles = await this.getDataProvider('profiles').findAll();
+
+    for(const user of users){
+      const existingProfile = profiles.find((profile) => profile.uri.toString() === user._id.toString());
+
+      if(!existingProfile){
+        await this.createProfileForParticipant(user._id);
+        Logger.info(`Profile created for user - ${user._id}`)
+
+        //Update Profile by analyzing existing privacy notices and consents
+      }
+    }
+  }
+
+  /**
    * Updates recommendations for a profile.
    * @param profile - Profile instance.
    * @param data - Recommendation data to update the profile with.
@@ -284,22 +401,64 @@ export class ConsentAgent extends Agent {
     throw new Error('Method not implemented.');
   }
 
+  /**
+   * Create a profile for a user
+   * @param participantId - The Id of the user
+   * @param allowRecommendations - boolean option to setup configuration of the profile at the creation
+   * @param allowPreferences - boolean option to setup configuration of the profile at the creation
+   */
   public async createProfileForParticipant(
     participantId: string,
+    allowRecommendations?: boolean,
+    allowPreferences?: boolean,
   ): Promise<Profile> {
     try {
       const profileProvider = this.getDataProvider('profiles');
       const newProfileData = {
-        url: participantId,
+        uri: participantId,
         configurations: {
-          allowRecommendation: true,
-          allowPreferences: true,
+          allowRecommendations: allowRecommendations ?? true,
+          allowPreferences: allowPreferences ?? true,
         },
         recommendations: [] as unknown,
         matching: [] as unknown,
+        preference: [] as unknown,
       };
       const profile = await profileProvider.create(newProfileData);
       return new Profile(profile as ProfileJSON);
+    } catch (error) {
+      Logger.error(`Error creating profile: ${(error as Error).message}`);
+      throw new Error('Profile creation failed');
+    }
+  }
+
+  public async deleteProfileForParticipant(
+    participantId: string,
+  ): Promise<Profile> {
+    try {
+      const profileProvider = this.getDataProvider('profiles');
+      const result: ProfileDocument = await profileProvider.findOne({
+        conditions: [
+          {
+            field: 'uri',
+            operator: FilterOperator.EQUALS,
+            value: participantId,
+          },
+        ],
+        threshold: 0,
+      });
+      if(result._id){
+        await profileProvider.delete(result?._id);
+        return new Profile({
+          uri: result.uri,
+          configurations: result.configurations,
+          recommendations: result.recommendations || [],
+          matching: result.matching || [],
+          preference: result.preference || [],
+        });
+      } else {
+        throw new Error('Profile not found');
+      }
     } catch (error) {
       Logger.error(`Error creating profile: ${(error as Error).message}`);
       throw new Error('Profile creation failed');

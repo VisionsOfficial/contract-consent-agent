@@ -27,7 +27,7 @@ export class ConsentAgentRequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileId,
         },
@@ -51,7 +51,7 @@ export class ConsentAgentRequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileId,
         },
@@ -70,7 +70,7 @@ export class ConsentAgentRequestHandler {
 
   /**
    * Return the profile's authorization
-   * @param profileURL - url of the profile
+   * @param profileURL - uri of the profile
    * @return Promise<ProfilePreference[]>
    */
   async getPreferencesFromProfile(profileURL: string): Promise<ProfilePreference[]> {
@@ -78,7 +78,7 @@ export class ConsentAgentRequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileURL,
         },
@@ -96,7 +96,7 @@ export class ConsentAgentRequestHandler {
 
   /**
    * Return the profile's authorization
-   * @param profileURL - url of the profile
+   * @param profileURL - uri of the profile
    * @param {PreferencePayload} data
    * @return Promise<ProfilePreference[]>
    */
@@ -105,7 +105,7 @@ export class ConsentAgentRequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileURL,
         },
@@ -132,7 +132,7 @@ export class ConsentAgentRequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileURL,
         }
@@ -160,7 +160,7 @@ export class ConsentAgentRequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileURL,
         }
@@ -195,7 +195,7 @@ export class ConsentAgentRequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileURL,
         }
@@ -215,7 +215,7 @@ export class ConsentAgentRequestHandler {
 
   /**
    * Return the profile's authorization
-   * @param profileURL - url of the profile
+   * @param profileURL - uri of the profile
    * @return Promise<ProfileConfigurations>
    */
   async getConfigurationsFromProfile(profileURL: string): Promise<ProfileConfigurations> {
@@ -223,7 +223,7 @@ export class ConsentAgentRequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileURL,
         },
@@ -239,15 +239,15 @@ export class ConsentAgentRequestHandler {
     return profiles[0].configurations;
   }
 
-  // Return the profile by url
-  async getProfileByURL(url: string): Promise<any> {
+  // Return the profile by uri
+  async getProfileByURL(uri: string): Promise<any> {
     await this.prepare();
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
-          value: url,
+          value: uri,
         },
       ],
       threshold: 0,
@@ -285,7 +285,7 @@ export class ConsentAgentRequestHandler {
     const criteria: SearchCriteria = {
       conditions: [
         {
-          field: 'url',
+          field: 'uri',
           operator: FilterOperator.EQUALS,
           value: profileURL,
         },

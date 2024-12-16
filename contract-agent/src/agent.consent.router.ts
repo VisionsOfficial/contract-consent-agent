@@ -199,7 +199,7 @@ router.put(
         await consentAgentRequestHandler.updateProfile(
           profileId,
           {
-            url: profileId,
+            uri: profileId,
             configurations
           }
         );
