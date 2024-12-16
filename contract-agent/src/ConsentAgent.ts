@@ -219,13 +219,6 @@ export class ConsentAgent extends Agent {
     throw new Error('Method not implemented.');
   }
 
-
-  saveProfile( source: string,
-    criteria: SearchCriteria,
-    profile: Profile,): Promise<boolean>{
-    throw new Error('Method not implemented.');
-  }
-
   /**
    * Enriches a profile with system recommendations.
    * @returns The enriched profile.
@@ -398,6 +391,15 @@ export class ConsentAgent extends Agent {
     profile: Profile,
     data: unknown,
   ): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
+
+  saveProfile(
+    source: string,
+    criteria: SearchCriteria,
+    profile: Profile,
+  ): Promise<boolean> {
     throw new Error('Method not implemented.');
   }
 

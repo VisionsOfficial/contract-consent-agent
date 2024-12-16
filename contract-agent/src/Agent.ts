@@ -65,11 +65,9 @@ export abstract class Agent {
     const dataProvider = this.dataProviders.find(
       (provider) => provider.source === source,
     )?.provider;
-
     if (!dataProvider) {
       throw new Error(`DataProvider for source '${source}' not found.`);
     }
-
     return dataProvider;
   }
 

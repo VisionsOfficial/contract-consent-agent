@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { EventEmitter } from 'events';
-import { Document, WithId } from 'mongodb';
+import { MongoClient, Collection, Document, WithId } from 'mongodb';
 
 declare const router$1: Router;
 
@@ -145,6 +145,67 @@ declare abstract class Agent {
 }
 
 /**
+ * Represents the log levels for the Logger.
+ * @typedef {'info' | 'warn' | 'error' | 'header'} LogLevel
+ */
+type LogLevel = 'info' | 'warn' | 'error' | 'header';
+/**
+ * Configuration options for the Logger.
+ * @interface LoggerConfig
+ * @property {boolean} [preserveLogs] - If true, logs will be preserved and passed to an external callback.
+ * @property {function(LogLevel, string, string): void} [externalCallback] - A callback function to handle preserved logs.
+ */
+interface LoggerConfig {
+    preserveLogs?: boolean;
+    externalCallback?: (_level: LogLevel, _message: string, _timestamp: string) => void;
+}
+/**
+ * Logger class for logging messages to the console and optionally to disk.
+ */
+declare class Logger {
+    private static noPrint;
+    private static config;
+    /**
+     * Configures the logger with the provided options.
+     * @param {LoggerConfig} config - The configuration settings for the logger.
+     */
+    static configure(config: LoggerConfig): void;
+    /**
+     * Formats a log message with a timestamp and color based on the log level.
+     * @param {LogLevel} level - The log level for the message.
+     * @param {string} message - The message to format.
+     * @returns {string} - The formatted log message.
+     */
+    private static formatMessage;
+    /**
+     * Logs a message with the specified log level.
+     * @param {LogLevel} level - The log level of the message.
+     * @param {string} message - The message to log.
+     */
+    private static log;
+    /**
+     * Logs an informational message.
+     * @param {string | object} message - The message to log, can be a string or an object.
+     */
+    static info(message: string | object): void;
+    /**
+     * Logs a warning message.
+     * @param {string | object} message - The message to log, can be a string or an object.
+     */
+    static warn(message: string | object): void;
+    /**
+     * Logs an error message.
+     * @param {string | object} message - The message to log, can be a string or an object.
+     */
+    static error(message: string | object): void;
+    /**
+     * Logs a header message.
+     * @param {string | object} message - The message to log, can be a string or an object.
+     */
+    static header(message: string | object): void;
+}
+
+/**
  * ContractAgent class handles contract-related operations and profile management
  * @extends Agent
  */
@@ -254,6 +315,8 @@ declare class MongoDBProvider extends DataProvider {
     private dbName;
     private connectionPromise?;
     constructor(config: DataProviderConfig);
+    getClient(): MongoClient | undefined;
+    getCollection(): Collection<Document>;
     private connectToDatabase;
     static disconnectFromDatabase(url: string, dbName: string): Promise<void>;
     ensureReady(): Promise<void>;
@@ -266,4 +329,4 @@ declare class MongoDBProvider extends DataProvider {
     update(criteria: SearchCriteria, data: unknown): Promise<boolean>;
 }
 
-export { ContractAgent, router as ContractAgentRouter, type DataProviderConfig, type FilterCondition, MongoDBProvider, router$1 as NegotiationAgentRouter, Profile, type ProfileConfigurations, type ProfileDocument, type ProfileMatching, type ProfilePolicy, type ProfilePreference, type ProfileRecommendation, type Provider, type SearchCriteria };
+export { Agent, ContractAgent, router as ContractAgentRouter, type DataProviderConfig, type FilterCondition, Logger, MongoDBProvider, router$1 as NegotiationAgentRouter, Profile, type ProfileConfigurations, type ProfileDocument, type ProfileMatching, type ProfilePolicy, type ProfilePreference, type ProfileRecommendation, type Provider, type SearchCriteria };

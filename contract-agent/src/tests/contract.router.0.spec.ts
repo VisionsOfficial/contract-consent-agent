@@ -3,7 +3,7 @@ import request from 'supertest';
 import sinon, { SinonSpy } from 'sinon';
 import { RequestHandler } from '../ContractAgentHandler';
 import { expect } from 'chai';
-import router from '../agent.contract.router';
+import router from '../agent.contract.profile.router';
 import { Agent } from '../Agent';
 
 describe('ContractAgent Router Tests', function () {
@@ -24,17 +24,12 @@ describe('ContractAgent Router Tests', function () {
   app.use('/api', router);
 
   before(async function () {
-    console.log('1');
     Agent.setConfigPath('./mocks/contract-agent.config.json', __filename);
-    console.log('2');
     requestHandler = await RequestHandler.retrieveService();
-    console.log('3');
     const contractAgent = await requestHandler.getContractAgent();
-    console.log('4');
     const profile = await contractAgent.createProfileForParticipant(
       'some-participant-uri',
     );
-    console.log('5');
     profileURI = profile.uri ?? profileURI;
 
     getPoliciesRecommendationFromProfileSpy = sinon.spy(
