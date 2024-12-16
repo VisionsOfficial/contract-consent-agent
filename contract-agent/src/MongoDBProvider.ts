@@ -9,12 +9,7 @@ import {
   MatchKeysAndValues,
 } from 'mongodb';
 import { DataProvider } from './DataProvider';
-import {
-  FilterOperator,
-  SearchCriteria,
-  FilterCondition,
-  DataProviderConfig,
-} from './types';
+import { DataProviderConfig, FilterCondition, FilterOperator, SearchCriteria } from './types';
 import { Logger } from './Logger';
 
 type DocumentChangeHandler = (collectionName: string, document: any) => void;
@@ -336,5 +331,34 @@ export class MongoDBProvider extends DataProvider {
       Logger.error(`Error during document update: ${(error as Error).message}`);
       throw error;
     }
+  }
+
+  async findOne(criteria: SearchCriteria): Promise<any> {
+    const query = this.makeQuery(criteria.conditions);
+    const data = (await this.collection
+      .findOne(query));
+    return data;
+  }
+
+  async findOneAndUpdate(criteria: SearchCriteria, data: any): Promise<any> {
+    const query = this.makeQuery(criteria.conditions);
+    return (await this.collection
+      .findOneAndUpdate(query, { $set: data }, { returnDocument: 'after' }));
+  }
+
+  async findOneAndPush(criteria: SearchCriteria, data: any): Promise<any> {
+    const query = this.makeQuery(criteria.conditions);
+    Object.keys(data).map((key: string) => {
+      data[key].map((element: { _id: ObjectId; }) => element._id = new ObjectId());
+      data[key] = { $each: data[key] };
+    })
+    return (await this.collection
+      .findOneAndUpdate(query, { $push: data }, { returnDocument: 'after' }));
+  }
+
+  async findOneAndPull(criteria: SearchCriteria, data: any): Promise<any> {
+    const query = this.makeQuery(criteria.conditions);
+    return (await this.collection
+      .findOneAndUpdate(query, { $pull: data }, { returnDocument: 'after' }));
   }
 }

@@ -151,13 +151,36 @@ export abstract class Agent {
     return profile.matching;
   }
 
-  abstract createProfileForParticipant(participantId: string): Promise<Profile>;
 
   abstract saveProfile(
     source: string,
     criteria: SearchCriteria,
     profile: Profile,
   ): Promise<boolean>;
+
+  protected async createProfileForParticipant(
+    participantId: string,
+  ): Promise<Profile> {
+    try {
+      if (!Agent.profilesHost) {
+        throw new Error(
+          `Can't create profile for participant "profilesHost" is not set`,
+        );
+      }
+      const profileProvider = this.getDataProvider(Agent.profilesHost);
+      const newProfileData = {
+        url: participantId,
+        configurations: {},
+        recommendations: [] as unknown,
+        matching: [] as unknown,
+      };
+      const profile = await profileProvider.create(newProfileData);
+      return new Profile(profile as ProfileJSON);
+    } catch (error) {
+      Logger.error(`Error creating profile: ${(error as Error).message}`);
+      throw new Error('Profile creation failed');
+    }
+  }
 
   protected abstract updateMatchingForProfile(
     // eslint-disable-next-line no-unused-vars

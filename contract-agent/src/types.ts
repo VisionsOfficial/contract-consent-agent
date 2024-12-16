@@ -1,4 +1,4 @@
-import { DataProvider } from 'DataProvider';
+import { DataProvider } from './DataProvider';
 
 export interface ProfilePolicy {
   policy: string;
@@ -6,14 +6,17 @@ export interface ProfilePolicy {
 }
 
 export interface ProfilePreference {
+  _id?: string;
   policies: ProfilePolicy[];
   ecosystems: string[];
   services: string[];
 }
 export interface ProfileRecommendation {
-  policies: ProfilePolicy[];
-  ecosystemContracts: any[];
-  services: any[];
+  policies?: ProfilePolicy[];
+  ecosystemContracts?: any[];
+  services?: any[];
+  consents?: any[];
+  dataExchanges?: any[];
 }
 
 export interface ProfileMatching {
@@ -24,7 +27,8 @@ export interface ProfileMatching {
 
 export interface ProfileConfigurations {
   allowRecommendation: boolean;
-  allowPolicies: boolean;
+  allowPolicies?: boolean;
+  allowPreferences?: boolean;
 }
 
 export interface SearchCriteria {
@@ -72,6 +76,13 @@ export interface ProfileDocument {
   preference?: any[];
 }
 
+export interface ProfilePayload {
+  configurations?: any;
+  recommendations?: any[];
+  matching?: any[];
+  preference?: any[];
+}
+
 export namespace CAECode {
   export type Type =
     | 'SERVICE_RETRIEVAL_FAILED'
@@ -85,6 +96,11 @@ export namespace CAECode {
 }
 
 export interface ContractAgentError extends Error {
+  code: CAECode.Type;
+  context?: unknown;
+}
+
+export interface ConsentAgentError extends Error {
   code: CAECode.Type;
   context?: unknown;
 }
@@ -111,3 +127,35 @@ export type DataChangeEvent = {
     removedFields?: string[];
   };
 };
+
+export type PreferencePayload = {
+  asDataProvider: {
+    authorizationLevel?: AuthorizationLevelEnum,
+    conditions?: Condition[]
+  };
+  asServiceProvider: {
+    authorizationLevel?: AuthorizationLevelEnum,
+    conditions?: Condition[]
+  };
+}
+
+export type Condition = {
+  time?: TimeCondition,
+  location?: LocationCondition
+}
+
+export type TimeCondition = {
+  dayOfWeek?: string[],
+  startTime?: string,
+  endTime?: string,
+}
+
+export type LocationCondition = {
+  countryCode: string
+}
+
+export enum AuthorizationLevelEnum {
+  NEVER = 'NEVER',
+  ALWAYS = 'ALWAYS',
+  CONDITIONAL = 'CONDITIONAL',
+}

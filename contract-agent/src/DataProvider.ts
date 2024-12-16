@@ -15,6 +15,14 @@ export abstract class DataProvider extends EventEmitter {
   // eslint-disable-next-line no-unused-vars
   abstract find(criteria: SearchCriteria): Promise<[]>;
   // eslint-disable-next-line no-unused-vars
+  abstract findOne(criteria: SearchCriteria): Promise<any>;
+  // eslint-disable-next-line no-unused-vars
+  abstract findOneAndUpdate(criteria: SearchCriteria, data: any): Promise<any>;
+  // eslint-disable-next-line no-unused-vars
+  abstract findOneAndPush(criteria: SearchCriteria, data: any): Promise<any>;
+  // eslint-disable-next-line no-unused-vars
+  abstract findOneAndPull(criteria: SearchCriteria, data: any): Promise<any>;
+  // eslint-disable-next-line no-unused-vars
   abstract create(data: unknown): Promise<unknown>;
   // eslint-disable-next-line no-unused-vars
   abstract delete(id: string): Promise<boolean>;
@@ -45,6 +53,7 @@ export abstract class DataProvider extends EventEmitter {
 
   //
   protected notifyDataChange(eventName: string, data: any): void {
+    console.log("data change")
     this.emit(eventName, data);
   }
 }
