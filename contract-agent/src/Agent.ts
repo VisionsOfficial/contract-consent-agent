@@ -17,6 +17,7 @@ import {
 import path from 'path';
 
 export interface AgentConfig {
+  existingDataCheck?: boolean;
   dataProviderConfig: DataProviderConfig[];
 }
 
@@ -64,11 +65,9 @@ export abstract class Agent {
     const dataProvider = this.dataProviders.find(
       (provider) => provider.source === source,
     )?.provider;
-
     if (!dataProvider) {
       throw new Error(`DataProvider for source '${source}' not found.`);
     }
-
     return dataProvider;
   }
 
@@ -85,6 +84,8 @@ export abstract class Agent {
     // eslint-disable-next-line no-unused-vars
     criteria: SearchCriteria,
   ): Promise<Profile[]>;
+
+  protected abstract existingDataCheck(): Promise<void>;
 
   addDataProviders(dataProviders: Provider[]): void {
     if (!dataProviders || dataProviders.length === 0) {
@@ -130,6 +131,9 @@ export abstract class Agent {
         );
       }
     }
+    if(this.config.existingDataCheck){
+      await this.existingDataCheck();
+    }
   }
 
   protected loadDefaultConfiguration(): void {
@@ -151,13 +155,35 @@ export abstract class Agent {
     return profile.matching;
   }
 
-  abstract createProfileForParticipant(participantId: string): Promise<Profile>;
-
   abstract saveProfile(
     source: string,
     criteria: SearchCriteria,
     profile: Profile,
   ): Promise<boolean>;
+
+  protected async createProfileForParticipant(
+    participantId: string,
+  ): Promise<Profile> {
+    try {
+      if (!Agent.profilesHost) {
+        throw new Error(
+          `Can't create profile for participant "profilesHost" is not set`,
+        );
+      }
+      const profileProvider = this.getDataProvider(Agent.profilesHost);
+      const newProfileData = {
+        uri: participantId,
+        configurations: {},
+        recommendations: [] as unknown,
+        matching: [] as unknown,
+      };
+      const profile = await profileProvider.create(newProfileData);
+      return new Profile(profile as ProfileJSON);
+    } catch (error) {
+      Logger.error(`Error creating profile: ${(error as Error).message}`);
+      throw new Error('Profile creation failed');
+    }
+  }
 
   protected abstract updateMatchingForProfile(
     // eslint-disable-next-line no-unused-vars

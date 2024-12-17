@@ -1,13 +1,4 @@
-import {
-  Collection,
-  Db,
-  Document,
-  WithId,
-  InsertOneResult,
-  MongoClient,
-  ObjectId,
-  MatchKeysAndValues,
-} from 'mongodb';
+import { Collection, Db, Document, InsertOneResult, MatchKeysAndValues, MongoClient, ObjectId, WithId } from 'mongodb';
 import { DataProvider } from './DataProvider';
 import { DataProviderConfig, FilterCondition, FilterOperator, SearchCriteria } from './types';
 import { Logger } from './Logger';
@@ -51,11 +42,11 @@ class MongoInterceptor {
   }
 }
 
-export class MongoDBProvider extends DataProvider {
+export class ChangeStreamDataProvider extends DataProvider {
   private static connections: Map<
-    string,
-    { db: Db; client: MongoClient } | undefined
-  > = new Map();
+        string,
+        { db: Db; client: MongoClient } | undefined
+    > = new Map();
   private db?: Db;
   private client?: MongoClient;
   private collection!: Collection<Document>;
@@ -68,20 +59,13 @@ export class MongoDBProvider extends DataProvider {
     this.connectionPromise = this.connectToDatabase(config.url);
   }
 
-  getClient(): MongoClient | undefined {
-    return this.client;
-  }
-
-  getCollection(): Collection<Document> {
-    return this.collection;
-  }
-
   private async connectToDatabase(url: string): Promise<Db> {
     if (!url) {
       throw new Error('Database URL is required');
     }
+
     const connectionKey = `${url}:${this.dbName}`;
-    const existingConnection = MongoDBProvider.connections.get(connectionKey);
+    const existingConnection = ChangeStreamDataProvider.connections.get(connectionKey);
     if (existingConnection) {
       Logger.info('Reusing existing MongoDB connection');
       this.db = existingConnection.db;
@@ -97,7 +81,7 @@ export class MongoDBProvider extends DataProvider {
       this.db = db;
       this.client = client;
 
-      MongoDBProvider.connections.set(connectionKey, { db, client });
+      ChangeStreamDataProvider.connections.set(connectionKey, { db, client });
       return db;
     } catch (error) {
       Logger.error(`Error connecting to MongoDB: ${(error as Error).message}`);
@@ -110,12 +94,12 @@ export class MongoDBProvider extends DataProvider {
     dbName: string,
   ): Promise<void> {
     const connectionKey = `${url}:${dbName}`;
-    const existingConnection = MongoDBProvider.connections.get(connectionKey);
+    const existingConnection = ChangeStreamDataProvider.connections.get(connectionKey);
 
     if (existingConnection) {
       try {
         await existingConnection.client.close();
-        MongoDBProvider.connections.set(connectionKey, undefined);
+        ChangeStreamDataProvider.connections.set(connectionKey, undefined);
         Logger.info(`MongoDB connection for ${connectionKey} closed`);
       } catch (error) {
         Logger.error(`Error during disconnect: ${(error as Error).message}`);
@@ -127,8 +111,8 @@ export class MongoDBProvider extends DataProvider {
 
   async ensureReady(): Promise<void> {
     await this.connectionPromise;
-    this.collection = MongoDBProvider.createCollectionProxy(
-      this.db!.collection(this.dataSource),
+    this.collection = ChangeStreamDataProvider.createCollectionProxy(
+            this.db!.collection(this.dataSource),
     );
     this.setupCallbacks();
   }
@@ -136,109 +120,34 @@ export class MongoDBProvider extends DataProvider {
   private static createCollectionProxy(collection: Collection): Collection {
     const interceptor = MongoInterceptor.getInstance();
 
-    const handler = {
-      get(target: Collection, prop: string | symbol): any {
-        const original = target[prop as keyof Collection];
-        if (typeof original !== 'function') return original;
-        const cursorMethods = ['find', 'aggregate'];
-        if (cursorMethods.includes(prop as string)) {
-          return function (this: Collection, ...args: any[]) {
-            return (original as Function).call(target, ...args);
-          };
-        }
-        return async function (this: any, ...args: any[]) {
-          const method = original as (...args: any[]) => Promise<any>;
-          const result = await method.apply(target, args);
-          if (['insertOne', 'save'].includes(prop as string)) {
-            interceptor.notifyCallbacks('insert', collection.collectionName, {
-              fullDocument: args[0],
-              insertedId: result.insertedId,
-              acknowledged: result.acknowledged,
-            });
-          } else if (prop === 'insertMany') {
-            interceptor.notifyCallbacks('insert', collection.collectionName, {
-              fullDocuments: args[0],
-              insertedIds: result.insertedIds,
-              acknowledged: result.acknowledged,
-            });
-          } else if (
-            [
-              'updateOne',
-              'updateMany',
-              'replaceOne',
-              'findOneAndUpdate',
-              'findOneAndReplace',
-            ].includes(prop as string)
-          ) {
-            interceptor.notifyCallbacks('update', collection.collectionName, {
-              filter: args[0],
-              update: args[1],
-              options: args[2],
-              result,
-            });
-          } else if (prop === 'bulkWrite') {
-            const operations = args[0];
-            operations.forEach((op: any) => {
-              if (op.insertOne) {
-                interceptor.notifyCallbacks(
-                  'insert',
-                  collection.collectionName,
-                  {
-                    fullDocument: op.insertOne.document,
-                    result,
-                  },
-                );
-              } else if (op.updateOne || op.updateMany) {
-                interceptor.notifyCallbacks(
-                  'update',
-                  collection.collectionName,
-                  {
-                    filter: op.updateOne?.filter || op.updateMany?.filter,
-                    update: op.updateOne?.update || op.updateMany?.update,
-                    result,
-                  },
-                );
-              } else if (op.deleteOne || op.deleteMany) {
-                interceptor.notifyCallbacks(
-                  'delete',
-                  collection.collectionName,
-                  {
-                    filter: op.deleteOne?.filter || op.deleteMany?.filter,
-                    result,
-                  },
-                );
-              } else if (op.replaceOne) {
-                interceptor.notifyCallbacks(
-                  'update',
-                  collection.collectionName,
-                  {
-                    filter: op.replaceOne.filter,
-                    replacement: op.replaceOne.replacement,
-                    result,
-                  },
-                );
-              }
-            });
-          } else if (
-            ['deleteOne', 'deleteMany', 'findOneAndDelete'].includes(
-              prop as string,
-            )
-          ) {
-            interceptor.notifyCallbacks('delete', collection.collectionName, {
-              filter: args[0],
-              options: args[1],
-              result,
-            });
-          }
-          return result;
-        };
-      },
-    };
-    return new Proxy(collection, handler);
-  }
-  /*
-  private static createCollectionProxy(collection: Collection): Collection {
-    const interceptor = MongoInterceptor.getInstance();
+    const changeStream = collection.watch();
+    // Listen for change events
+    changeStream.on('change', (change) => {
+      // Handle different types of changes
+      switch (change.operationType) {
+        case 'insert':
+          interceptor.notifyCallbacks('insert', collection.collectionName, {
+            fullDocument: change.fullDocument,
+            insertedId: change.documentKey,
+            acknowledged: change.ns,
+          });
+          break;
+        case 'update':
+          interceptor.notifyCallbacks('update', collection.collectionName, {
+            filter: change.documentKey,
+            update: change.updateDescription,
+            change,
+          });
+          break;
+        case 'delete':
+          interceptor.notifyCallbacks('delete', collection.collectionName, {
+            filter: change.documentKey,
+            change,
+          });
+          break;
+      }
+    });
+
     const handler = {
       get(target: Collection, prop: string | symbol): any {
         const original = target[prop as keyof Collection];
@@ -256,31 +165,6 @@ export class MongoDBProvider extends DataProvider {
           const method = original as (...args: any[]) => Promise<any>;
           const result = await method.apply(target, args);
 
-          if (prop === 'insertOne') {
-            interceptor.notifyCallbacks('insert', collection.collectionName, {
-              fullDocument: args[0],
-              insertedId: result.insertedId,
-              acknowledged: result.acknowledged,
-            });
-          } else if (prop === 'insertMany') {
-            interceptor.notifyCallbacks('insert', collection.collectionName, {
-              fullDocuments: args[0],
-              insertedIds: result.insertedIds,
-              acknowledged: result.acknowledged,
-            });
-          } else if (prop === 'updateOne' || prop === 'updateMany') {
-            interceptor.notifyCallbacks('update', collection.collectionName, {
-              filter: args[0],
-              update: args[1],
-              result,
-            });
-          } else if (prop === 'deleteOne' || prop === 'deleteMany') {
-            interceptor.notifyCallbacks('delete', collection.collectionName, {
-              filter: args[0],
-              result,
-            });
-          }
-
           return result;
         };
       },
@@ -288,7 +172,7 @@ export class MongoDBProvider extends DataProvider {
 
     return new Proxy(collection, handler);
   }
-*/
+
   private setupCallbacks(): void {
     const interceptor = MongoInterceptor.getInstance();
 
@@ -372,7 +256,7 @@ export class MongoDBProvider extends DataProvider {
   async create(data: Document): Promise<WithId<Document>> {
     try {
       const result: InsertOneResult<Document> =
-        await this.collection.insertOne(data);
+                await this.collection.insertOne(data);
       if (!result.acknowledged) {
         throw new Error('Document insertion was not acknowledged');
       }
@@ -442,6 +326,11 @@ export class MongoDBProvider extends DataProvider {
       Logger.error(`Error during document update: ${(error as Error).message}`);
       throw error;
     }
+  }
+
+  async findAll(): Promise<any> {
+    return (this.collection
+      .find().toArray());
   }
 
   async findOne(criteria: SearchCriteria): Promise<any> {

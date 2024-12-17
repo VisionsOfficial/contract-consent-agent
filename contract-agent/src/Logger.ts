@@ -133,7 +133,7 @@ let logStream: WriteStream;
  */
 const getLogFileName = () => {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  return `dpcp-${timestamp}.log`;
+  return `cca-${timestamp}.log`;
 };
 
 /**

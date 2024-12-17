@@ -15,7 +15,7 @@ export type ProfileJSON = Omit<
 
 export class Profile {
   _id?: string;
-  uri: string;
+  uri?: string;
   configurations: ProfileConfigurations;
   recommendations: ProfileRecommendation[];
   matching: ProfileMatching[];

@@ -14,6 +14,15 @@ export abstract class DataProvider extends EventEmitter {
 
   // eslint-disable-next-line no-unused-vars
   abstract find(criteria: SearchCriteria): Promise<[]>;
+  abstract findAll(): Promise<any[]>;
+  // eslint-disable-next-line no-unused-vars
+  abstract findOne(criteria: SearchCriteria): Promise<any>;
+  // eslint-disable-next-line no-unused-vars
+  abstract findOneAndUpdate(criteria: SearchCriteria, data: any): Promise<any>;
+  // eslint-disable-next-line no-unused-vars
+  abstract findOneAndPush(criteria: SearchCriteria, data: any): Promise<any>;
+  // eslint-disable-next-line no-unused-vars
+  abstract findOneAndPull(criteria: SearchCriteria, data: any): Promise<any>;
   // eslint-disable-next-line no-unused-vars
   abstract create(data: unknown): Promise<unknown>;
   // eslint-disable-next-line no-unused-vars
