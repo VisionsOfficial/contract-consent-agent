@@ -319,7 +319,7 @@ declare class MongoDBProvider extends DataProvider {
     getCollection(): Collection<Document>;
     private connectToDatabase;
     static disconnectFromDatabase(url: string, dbName: string): Promise<void>;
-    ensureReady(): Promise<void>;
+    ensureReady(collection?: Collection<Document>): Promise<void>;
     private static createCollectionProxy;
     private setupCallbacks;
     protected makeQuery(conditions: FilterCondition[]): Record<string, any>;

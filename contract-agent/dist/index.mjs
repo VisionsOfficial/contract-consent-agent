@@ -597,11 +597,11 @@ var _MongoDBProvider = class _MongoDBProvider extends DataProvider {
       }
     });
   }
-  ensureReady() {
+  ensureReady(collection) {
     return __async(this, null, function* () {
       yield this.connectionPromise;
       this.collection = _MongoDBProvider.createCollectionProxy(
-        this.db.collection(this.dataSource)
+        collection || this.db.collection(this.dataSource)
       );
       this.setupCallbacks();
     });
@@ -707,59 +707,6 @@ var _MongoDBProvider = class _MongoDBProvider extends DataProvider {
     };
     return new Proxy(collection, handler);
   }
-  /*
-    private static createCollectionProxy(collection: Collection): Collection {
-      const interceptor = MongoInterceptor.getInstance();
-      const handler = {
-        get(target: Collection, prop: string | symbol): any {
-          const original = target[prop as keyof Collection];
-          if (typeof original !== 'function') return original;
-  
-          const nonAsyncMethods = ['find', 'aggregate'];
-  
-          if (nonAsyncMethods.includes(prop as string)) {
-            return function (this: Collection, ...args: any[]) {
-              return (original as Function).call(target, ...args);
-            };
-          }
-  
-          return async function (this: any, ...args: any[]) {
-            const method = original as (...args: any[]) => Promise<any>;
-            const result = await method.apply(target, args);
-  
-            if (prop === 'insertOne') {
-              interceptor.notifyCallbacks('insert', collection.collectionName, {
-                fullDocument: args[0],
-                insertedId: result.insertedId,
-                acknowledged: result.acknowledged,
-              });
-            } else if (prop === 'insertMany') {
-              interceptor.notifyCallbacks('insert', collection.collectionName, {
-                fullDocuments: args[0],
-                insertedIds: result.insertedIds,
-                acknowledged: result.acknowledged,
-              });
-            } else if (prop === 'updateOne' || prop === 'updateMany') {
-              interceptor.notifyCallbacks('update', collection.collectionName, {
-                filter: args[0],
-                update: args[1],
-                result,
-              });
-            } else if (prop === 'deleteOne' || prop === 'deleteMany') {
-              interceptor.notifyCallbacks('delete', collection.collectionName, {
-                filter: args[0],
-                result,
-              });
-            }
-  
-            return result;
-          };
-        },
-      };
-  
-      return new Proxy(collection, handler);
-    }
-  */
   setupCallbacks() {
     const interceptor = MongoInterceptor.getInstance();
     interceptor.addCallback("insert", (collectionName, data) => {
