@@ -49,17 +49,31 @@ class MongooseInterceptor {
 
 export class MongooseProvider extends DataProvider {
   private static connections: Map<string, Connection | undefined> = new Map();
+  private static externalModels: Map<string, Model<Document> | Schema> =
+    new Map();
   private connection?: Connection;
   private model!: Model<any>;
   private dbName: string;
   private connectionPromise?: Promise<Connection>;
-  private externalModel?: Model<Document>;
-  private externalSchema?: Schema;
 
   constructor(config: DataProviderConfig) {
     super(config.source);
     this.dbName = config.dbName;
     this.connectionPromise = this.connectToDatabase(config.url);
+  }
+
+  static setCollectionModel(
+    source: string,
+    model: Model<Document> | Schema,
+  ): void {
+    MongooseProvider.externalModels.set(source, model);
+    Logger.info(`External model set for collection: ${source}`);
+  }
+
+  static getCollectionModel(
+    source: string,
+  ): Model<Document> | Schema | undefined {
+    return MongooseProvider.externalModels.get(source);
   }
 
   private async connectToDatabase(url: string): Promise<Connection> {
@@ -112,41 +126,43 @@ export class MongooseProvider extends DataProvider {
     }
   }
 
-  setCollection(model: Model<Document> | Schema): void {
-    if ('aggregate' in model) {
-      this.externalModel = model as Model<Document>;
-    } else if (model instanceof Schema) {
-      this.externalSchema = model;
-      this.externalModel = undefined;
-    }
-  }
-
   async ensureReady(): Promise<void> {
     await this.connectionPromise;
-    if (this.externalModel) {
-      this.model = this.externalModel;
+    const externalModel = MongooseProvider.getCollectionModel(this.dataSource);
+
+    if (externalModel && 'aggregate' in externalModel) {
+      this.model = externalModel as Model<Document>;
     } else {
       this.model = this.connection!.model(
         this.dataSource,
-        this.externalSchema || new Schema({}, { strict: false }),
+        (externalModel as Schema) || new Schema({}, { strict: false }),
       );
     }
     this.setupHooks();
   }
 
   private setupHooks(): void {
-    const interceptor = MongooseInterceptor.getInstance();
-
-    this.model.schema.post('save', function (doc: Document) {
-      interceptor.notifyCallbacks('insert', this.collection.name, doc);
+    this.model.schema.post('save', (doc: Document) => {
+      this.notifyDataChange('dataInserted', {
+        source: this.dataSource,
+        fullDocument: doc,
+      });
     });
 
-    this.model.schema.post('updateOne', function (doc: Document) {
-      interceptor.notifyCallbacks('update', this.model.collection.name, doc);
+    this.model.schema.post('updateOne', (doc: Document) => {
+      this.notifyDataChange('dataUpdated', {
+        source: this.dataSource,
+        updateDescription: {
+          updatedFields: doc,
+        },
+      });
     });
 
-    this.model.schema.post('deleteOne', function (doc: Document) {
-      interceptor.notifyCallbacks('delete', this.model.collection.name, doc);
+    this.model.schema.post('deleteOne', (doc: Document) => {
+      this.notifyDataChange('dataDeleted', {
+        source: this.dataSource,
+        documentKey: { _id: doc._id },
+      });
     });
   }
 

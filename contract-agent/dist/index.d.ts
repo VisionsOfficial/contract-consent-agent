@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { EventEmitter } from 'events';
 import { MongoClient, Collection, Document, WithId } from 'mongodb';
+import { Model, Document as Document$1, Schema } from 'mongoose';
 
 declare const router$1: Router;
 
@@ -329,4 +330,25 @@ declare class MongoDBProvider extends DataProvider {
     update(criteria: SearchCriteria, data: unknown): Promise<boolean>;
 }
 
-export { Agent, ContractAgent, router as ContractAgentRouter, type DataProviderConfig, type FilterCondition, Logger, MongoDBProvider, router$1 as NegotiationAgentRouter, Profile, type ProfileConfigurations, type ProfileDocument, type ProfileMatching, type ProfilePolicy, type ProfilePreference, type ProfileRecommendation, type Provider, type SearchCriteria };
+declare class MongooseProvider extends DataProvider {
+    private static connections;
+    private static externalModels;
+    private connection?;
+    private model;
+    private dbName;
+    private connectionPromise?;
+    constructor(config: DataProviderConfig);
+    static setCollectionModel(source: string, model: Model<Document$1> | Schema): void;
+    static getCollectionModel(source: string): Model<Document$1> | Schema | undefined;
+    private connectToDatabase;
+    static disconnectFromDatabase(url: string, dbName: string): Promise<void>;
+    ensureReady(): Promise<void>;
+    private setupHooks;
+    protected makeQuery(conditions: FilterCondition[]): Record<string, any>;
+    create(data: Document$1): Promise<Document$1>;
+    delete(id: string): Promise<boolean>;
+    find(criteria: SearchCriteria): Promise<[]>;
+    update(criteria: SearchCriteria, data: unknown): Promise<boolean>;
+}
+
+export { Agent, ContractAgent, router as ContractAgentRouter, type DataProviderConfig, type FilterCondition, Logger, MongoDBProvider, MongooseProvider, router$1 as NegotiationAgentRouter, Profile, type ProfileConfigurations, type ProfileDocument, type ProfileMatching, type ProfilePolicy, type ProfilePreference, type ProfileRecommendation, type Provider, type SearchCriteria };

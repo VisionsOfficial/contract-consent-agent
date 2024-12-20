@@ -84,6 +84,7 @@ __export(src_exports, {
   ContractAgentRouter: () => agent_contract_profile_router_default,
   Logger: () => Logger,
   MongoDBProvider: () => MongoDBProvider,
+  MongooseProvider: () => MongooseProvider,
   NegotiationAgentRouter: () => agent_contract_negotation_router_default,
   Profile: () => Profile
 });
@@ -2010,6 +2011,214 @@ router2.delete(
   })
 );
 var agent_contract_profile_router_default = router2;
+
+// src/MongooseProvider.ts
+var import_mongoose = __toESM(require("mongoose"));
+var _MongooseProvider = class _MongooseProvider extends DataProvider {
+  constructor(config) {
+    super(config.source);
+    this.dbName = config.dbName;
+    this.connectionPromise = this.connectToDatabase(config.url);
+  }
+  static setCollectionModel(source, model) {
+    _MongooseProvider.externalModels.set(source, model);
+    Logger.info(`External model set for collection: ${source}`);
+  }
+  static getCollectionModel(source) {
+    return _MongooseProvider.externalModels.get(source);
+  }
+  connectToDatabase(url) {
+    return __async(this, null, function* () {
+      if (!url) {
+        throw new Error("Database URL is required");
+      }
+      const connectionKey = `${url}:${this.dbName}`;
+      const existingConnection = _MongooseProvider.connections.get(connectionKey);
+      if (existingConnection) {
+        Logger.info("Reusing existing Mongoose connection");
+        this.connection = existingConnection;
+        return this.connection;
+      }
+      try {
+        const connection = yield import_mongoose.default.createConnection(url, {
+          dbName: this.dbName
+        }).asPromise();
+        Logger.info("Mongoose connected successfully");
+        this.connection = connection;
+        _MongooseProvider.connections.set(connectionKey, connection);
+        return connection;
+      } catch (error) {
+        Logger.error(`Error connecting to Mongoose: ${error.message}`);
+        throw error;
+      }
+    });
+  }
+  static disconnectFromDatabase(url, dbName) {
+    return __async(this, null, function* () {
+      const connectionKey = `${url}:${dbName}`;
+      const existingConnection = _MongooseProvider.connections.get(connectionKey);
+      if (existingConnection) {
+        try {
+          yield existingConnection.close();
+          _MongooseProvider.connections.set(connectionKey, void 0);
+          Logger.info(`Mongoose connection for ${connectionKey} closed`);
+        } catch (error) {
+          Logger.error(`Error during disconnect: ${error.message}`);
+        }
+      } else {
+        Logger.warn(`No active connection found for ${connectionKey}`);
+      }
+    });
+  }
+  ensureReady() {
+    return __async(this, null, function* () {
+      yield this.connectionPromise;
+      const externalModel = _MongooseProvider.getCollectionModel(this.dataSource);
+      if (externalModel && "aggregate" in externalModel) {
+        this.model = externalModel;
+      } else {
+        this.model = this.connection.model(
+          this.dataSource,
+          externalModel || new import_mongoose.Schema({}, { strict: false })
+        );
+      }
+      this.setupHooks();
+    });
+  }
+  setupHooks() {
+    this.model.schema.post("save", (doc) => {
+      this.notifyDataChange("dataInserted", {
+        source: this.dataSource,
+        fullDocument: doc
+      });
+    });
+    this.model.schema.post("updateOne", (doc) => {
+      this.notifyDataChange("dataUpdated", {
+        source: this.dataSource,
+        updateDescription: {
+          updatedFields: doc
+        }
+      });
+    });
+    this.model.schema.post("deleteOne", (doc) => {
+      this.notifyDataChange("dataDeleted", {
+        source: this.dataSource,
+        documentKey: { _id: doc._id }
+      });
+    });
+  }
+  makeQuery(conditions) {
+    return conditions.reduce((query, condition) => {
+      switch (condition.operator) {
+        case "IN" /* IN */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: { $in: condition.value }
+          });
+        case "EQUALS" /* EQUALS */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: condition.value
+          });
+        case "GT" /* GT */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: { $gt: condition.value }
+          });
+        case "LT" /* LT */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: { $lt: condition.value }
+          });
+        case "CONTAINS" /* CONTAINS */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: {
+              $in: Array.isArray(condition.value) ? condition.value : [condition.value]
+            }
+          });
+        case "REGEX" /* REGEX */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: {
+              $in: Array.isArray(condition.value) ? condition.value.map((val) => new RegExp(val, "i")) : [new RegExp(condition.value, "i")]
+            }
+          });
+        default:
+          throw new Error(`Unsupported operator: ${condition.operator}`);
+      }
+    }, {});
+  }
+  create(data) {
+    return __async(this, null, function* () {
+      try {
+        const result = yield this.model.create(data);
+        return result;
+      } catch (error) {
+        Logger.info(
+          `Error during document insertion: ${error.message}`
+        );
+        throw error;
+      }
+    });
+  }
+  delete(id) {
+    return __async(this, null, function* () {
+      try {
+        const result = yield this.model.deleteOne({
+          _id: new import_mongoose.default.Types.ObjectId(id)
+        });
+        if (result.deletedCount === 0) {
+          Logger.warn(`No document found with id: ${id}`);
+          return false;
+        }
+        Logger.info(`Document with id: ${id} successfully deleted`);
+        return true;
+      } catch (error) {
+        Logger.error(
+          `Error during document deletion: ${error.message}`
+        );
+        throw error;
+      }
+    });
+  }
+  find(criteria) {
+    return __async(this, null, function* () {
+      const query = this.makeQuery(criteria.conditions);
+      const data = yield this.model.find(query).limit(criteria.limit || 0).exec();
+      return data.map((item) => {
+        if (item._id) {
+          const _a = item.toObject(), { _id } = _a, rest = __objRest(_a, ["_id"]);
+          return __spreadValues({
+            _id: _id.toString()
+          }, rest);
+        }
+        return item.toObject();
+      });
+    });
+  }
+  update(criteria, data) {
+    return __async(this, null, function* () {
+      try {
+        const updateData = data;
+        const query = this.makeQuery(criteria.conditions);
+        const result = yield this.model.updateOne(query, {
+          $set: updateData
+        }).exec();
+        if (result.matchedCount === 0) {
+          Logger.warn(`No document found matching the criteria`);
+          return false;
+        }
+        if (result.modifiedCount === 0) {
+          Logger.info(`No changes made to document`);
+          return false;
+        }
+        Logger.info(`Document successfully updated`);
+        return true;
+      } catch (error) {
+        Logger.error(`Error during document update: ${error.message}`);
+        throw error;
+      }
+    });
+  }
+};
+_MongooseProvider.connections = /* @__PURE__ */ new Map();
+_MongooseProvider.externalModels = /* @__PURE__ */ new Map();
+var MongooseProvider = _MongooseProvider;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   Agent,
@@ -2017,6 +2226,7 @@ var agent_contract_profile_router_default = router2;
   ContractAgentRouter,
   Logger,
   MongoDBProvider,
+  MongooseProvider,
   NegotiationAgentRouter,
   Profile
 });
