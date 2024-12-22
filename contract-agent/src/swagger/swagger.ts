@@ -5,12 +5,26 @@ const doc = {
     title: 'Contract Consent Agent API',
     description: 'Availables routes through the Contract Consent Agent API',
   },
-  host: `8888`,
-  schemes: ['http']
+  servers: [
+    {
+      url: 'http://localhost:8888',
+    },
+  ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+      },
+    },
+  },
 };
-const outputFile: string = './swagger.json';
-const endpointsFiles: string[] = [
-  '',
+const outputFile = './swagger_output.json';
+const endpointsFiles = ['./negotiation.swagger.ts',
+  './preference.swagger.ts',
+  './profile.swagger.ts',
 ];
-const swagger = swaggerAutogen();
-swagger(outputFile, endpointsFiles, doc);
+
+swaggerAutogen()(outputFile, endpointsFiles, doc).then(() => {
+  console.log('Swagger documentation has been generated');
+});
