@@ -18,10 +18,10 @@ export class RecommendationService {
       const contract: Contract = data as Contract;
 
       const newPolicyDescriptions =
-        this.collectPolicyDescriptionsForParticipant(contract, profile.uri);
+        this.collectPolicyDescriptionsForParticipant(contract, profile.uri ?? '');
       const newServiceOfferings = this.collectServiceOfferingsForParticipant(
         contract,
-        profile.uri,
+        profile.uri ?? '',
       );
       const contractId = contract._id;
 
@@ -54,9 +54,9 @@ export class RecommendationService {
 
       if (
         contractId &&
-        !recommendation.ecosystemContracts.includes(contractId)
+        !recommendation?.ecosystemContracts?.includes(contractId)
       ) {
-        recommendation.ecosystemContracts.push(contractId);
+        recommendation?.ecosystemContracts?.push(contractId);
       }
 
       newServiceOfferings.forEach((newServiceOffering) => {
