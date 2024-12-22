@@ -271,7 +271,7 @@ export class RequestHandler {
     }
     const profile: Profile = profiles[0];
     profile.configurations = {
-      allowRecommendation: false,
+      allowRecommendations: false,
       allowPolicies: false,
     };
     await this.contractAgent.saveProfile(this.profilesHost, criteria, profile);
