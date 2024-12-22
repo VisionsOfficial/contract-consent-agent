@@ -146,7 +146,7 @@
     required: true,
     schema: {
         type: 'object',
-        additionalProperties: true // Adjust this based on your actual schema
+        additionalProperties: true
     }
 }
 #swagger.parameters['profileURI'] = {
@@ -181,7 +181,7 @@
     required: true,
     schema: {
         type: 'object',
-        additionalProperties: true // Adjust this based on your actual schema
+        additionalProperties: true
     }
 }
 #swagger.responses[200] = {

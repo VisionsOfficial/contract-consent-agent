@@ -16,7 +16,7 @@
     required: true,
     schema: {
         type: 'object',
-        additionalProperties: true // Adjust this based on your actual schema
+        additionalProperties: true
     }
 }
 #swagger.responses[200] = {
@@ -45,7 +45,7 @@
     required: true,
     schema: {
         type: 'object',
-        additionalProperties: true // Adjust this based on your actual schema
+        additionalProperties: true 
     }
 }
 #swagger.responses[200] = {
@@ -74,7 +74,7 @@
     required: true,
     schema: {
         type: 'object',
-        additionalProperties: true // Adjust this based on your actual schema
+        additionalProperties: true 
     }
 }
 #swagger.responses[200] = {
@@ -88,7 +88,7 @@
 // #swagger.start
 /*
 #swagger.tags = ['Negotiation']
-#swagger.path = '/negotiation/contract/negotiatiate'
+#swagger.path = '/negotiation/contract/negotiate'
 #swagger.method = 'post'
 #swagger.description = 'Endpoint to negotiate a contract.'
 #swagger.parameters['profileId'] = {
@@ -103,7 +103,7 @@
     required: true,
     schema: {
         type: 'object',
-        additionalProperties: true // Adjust this based on your actual schema
+        additionalProperties: true 
     }
 }
 #swagger.responses[200] = {
@@ -132,7 +132,7 @@
     required: true,
     schema: {
         type: 'object',
-        additionalProperties: true // Adjust this based on your actual schema
+        additionalProperties: true
     }
 }
 #swagger.responses[200] = {
