@@ -2045,10 +2045,11 @@ var import_mongoose2 = __toESM(require("mongoose"));
 var _MongooseProvider = class _MongooseProvider extends DataProvider {
   constructor(config) {
     super(config.source);
+    this.mongoosePromise = null;
+    this.mongoosePromiseResolve = null;
     this.dbName = config.dbName;
-    this.connectionPromise = import_mongoose2.default.connect(config.url).then(() => {
-      Logger.info("Mongoose connected successfully");
-    });
+    this.url = config.url;
+    this.mongooseConnected = false;
     _MongooseProvider.instances.set(config.source, this);
   }
   static setCollectionModel(source, schema) {
@@ -2098,9 +2099,45 @@ var _MongooseProvider = class _MongooseProvider extends DataProvider {
   static getCollectionSchema(source) {
     return _MongooseProvider.externalModels.get(source);
   }
+  createMongoosePromise() {
+    if (!this.mongoosePromise) {
+      this.mongoosePromise = new Promise((resolve) => {
+        this.mongoosePromiseResolve = resolve;
+      });
+    }
+    return this.mongoosePromise;
+  }
+  getMongoosePromise() {
+    return this.mongoosePromise || this.createMongoosePromise();
+  }
   ensureReady() {
     return __async(this, null, function* () {
-      yield this.connectionPromise;
+      if (
+        /*!this.mongooseConnected || */
+        import_mongoose2.default.connection.readyState !== 1
+      ) {
+        Logger.info("Connecting to Mongoose...");
+        try {
+          if (import_mongoose2.default.connection.readyState === 0) {
+            yield import_mongoose2.default.connect(this.url + "/" + this.dbName, {
+              retryWrites: true,
+              serverSelectionTimeoutMS: 5e3,
+              family: 4
+            });
+          }
+          if (this.mongoosePromiseResolve) {
+            this.mongoosePromiseResolve();
+          }
+          import_mongoose2.default.connection.on("disconnected", () => {
+            Logger.warn("Mongoose disconnected");
+          });
+        } catch (error) {
+          Logger.error(
+            `Error during Mongoose connection: ${error.message}`
+          );
+          throw error;
+        }
+      }
       const schema = _MongooseProvider.getCollectionSchema(this.dataSource);
       if (schema) {
         try {
@@ -2187,11 +2224,7 @@ var _MongooseProvider = class _MongooseProvider extends DataProvider {
   }
   create(data) {
     return __async(this, null, function* () {
-      var _a;
       try {
-        if (!this.model || !((_a = this.connection) == null ? void 0 : _a.readyState)) {
-          yield this.ensureReady();
-        }
         return yield this.model.create(data);
       } catch (error) {
         Logger.error(

@@ -57,13 +57,17 @@ export class MongooseProvider extends DataProvider {
   private model!: Model<any>;
   private dbName: string;
   private connectionPromise?: Promise<void>;
+  private url: string;
+  private mongooseConnected: boolean;
+
+  private mongoosePromise: Promise<void> | null = null;
+  private mongoosePromiseResolve: (() => void) | null = null;
 
   constructor(config: DataProviderConfig) {
     super(config.source);
     this.dbName = config.dbName;
-    this.connectionPromise = mongoose.connect(config.url).then(() => {
-      Logger.info('Mongoose connected successfully');
-    });
+    this.url = config.url;
+    this.mongooseConnected = false;
     MongooseProvider.instances.set(config.source, this);
   }
 
@@ -123,8 +127,46 @@ export class MongooseProvider extends DataProvider {
     return MongooseProvider.externalModels.get(source);
   }
 
+  private createMongoosePromise() {
+    if (!this.mongoosePromise) {
+      this.mongoosePromise = new Promise((resolve) => {
+        this.mongoosePromiseResolve = resolve;
+      });
+    }
+    return this.mongoosePromise;
+  }
+
+  public getMongoosePromise(): Promise<void> {
+    return this.mongoosePromise || this.createMongoosePromise();
+  }
+
   async ensureReady(): Promise<void> {
-    await this.connectionPromise;
+    if (/*!this.mongooseConnected || */ mongoose.connection.readyState !== 1) {
+      Logger.info('Connecting to Mongoose...');
+      try {
+        if (mongoose.connection.readyState === 0) {
+          await mongoose.connect(this.url + '/' + this.dbName, {
+            retryWrites: true,
+            serverSelectionTimeoutMS: 5000,
+            family: 4,
+          });
+        }
+        //this.mongooseConnected = true;
+        if (this.mongoosePromiseResolve) {
+          this.mongoosePromiseResolve();
+        }
+        mongoose.connection.on('disconnected', () => {
+          //this.mongooseConnected = false;
+          Logger.warn('Mongoose disconnected');
+        });
+      } catch (error) {
+        //this.mongooseConnected = false;
+        Logger.error(
+          `Error during Mongoose connection: ${(error as Error).message}`,
+        );
+        throw error;
+      }
+    }
 
     const schema = MongooseProvider.getCollectionSchema(this.dataSource);
     if (schema) {
@@ -134,12 +176,6 @@ export class MongooseProvider extends DataProvider {
         this.model = mongoose.model(this.dataSource, schema);
       }
     } else {
-      /*
-      this.model = mongoose.model(
-        this.dataSource,
-        new Schema({}, { strict: false }),
-      );
-      */
       this.model = mongoose.model(this.dataSource, ProfileSchema);
     }
   }
@@ -233,9 +269,11 @@ export class MongooseProvider extends DataProvider {
 
   async create(data: Document): Promise<Document> {
     try {
+      /*
       if (!this.model || !this.connection?.readyState) {
         await this.ensureReady();
       }
+      */
       return await this.model.create(data);
     } catch (error) {
       Logger.error(
