@@ -1,4 +1,29 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
+import { MongooseProvider } from '../../MongooseProvider';
+
+export interface IContract extends Document {
+  uid: string;
+  profile: string;
+  ecosystem: string;
+  orchestrator: string;
+  members: {
+    participant: string;
+    role: string;
+    signature: string;
+    date?: Date;
+  }[];
+  serviceOfferings: {
+    participant: string;
+    serviceOffering: string;
+    policies: any[];
+  }[];
+  rolesAndObligations: any[];
+  purpose: any[];
+  revokedMembers: any[];
+  status: 'signed' | 'revoked' | 'pending';
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
 // Ecosystem Contract Model / Dataspace User Case
 const PurposeSchema = new Schema({
@@ -125,4 +150,31 @@ const ContractSchema: Schema = new Schema(
   },
 );
 
-export default mongoose.model<mongoose.Document>('Contract', ContractSchema);
+// export default mongoose.model<IContract>('Contract', ContractSchema);
+
+const config = {
+  useProvider: true,
+};
+
+let contractModelInstance: Model<IContract> | null = null;
+
+export default {
+  schema: ContractSchema,
+  getModel: async (): Promise<Model<IContract>> => {
+    if (!contractModelInstance) {
+      MongooseProvider.setCollectionModel<IContract>(
+        'contracts',
+        ContractSchema,
+      );
+      try {
+        contractModelInstance = mongoose.model<IContract>('Contract');
+      } catch {
+        contractModelInstance = mongoose.model<IContract>(
+          'Contract',
+          ContractSchema,
+        );
+      }
+    }
+    return contractModelInstance;
+  },
+};

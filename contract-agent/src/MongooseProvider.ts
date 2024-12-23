@@ -7,6 +7,7 @@ import {
   DataProviderConfig,
 } from './types';
 import { Logger } from './Logger';
+import { setTimeout, clearTimeout } from 'timers';
 
 type DocumentChangeHandler = (collectionName: string, document: any) => void;
 
@@ -49,99 +50,97 @@ class MongooseInterceptor {
 
 export class MongooseProvider extends DataProvider {
   private static connections: Map<string, Connection | undefined> = new Map();
-  private static externalModels: Map<string, Model<Document> | Schema> =
-    new Map();
+  private static externalModels: Map<string, Schema> = new Map();
+  private static instances: Map<string, MongooseProvider> = new Map();
   private connection?: Connection;
   private model!: Model<any>;
   private dbName: string;
-  private connectionPromise?: Promise<Connection>;
+  private connectionPromise?: Promise<void>;
 
   constructor(config: DataProviderConfig) {
     super(config.source);
     this.dbName = config.dbName;
-    this.connectionPromise = this.connectToDatabase(config.url);
-  }
-
-  static setCollectionModel(
-    source: string,
-    model: Model<Document> | Schema,
-  ): void {
-    MongooseProvider.externalModels.set(source, model);
-    Logger.info(`External model set for collection: ${source}`);
-  }
-
-  static getCollectionModel(
-    source: string,
-  ): Model<Document> | Schema | undefined {
-    return MongooseProvider.externalModels.get(source);
-  }
-
-  private async connectToDatabase(url: string): Promise<Connection> {
-    if (!url) {
-      throw new Error('Database URL is required');
-    }
-    const connectionKey = `${url}:${this.dbName}`;
-    const existingConnection = MongooseProvider.connections.get(connectionKey);
-    if (existingConnection) {
-      Logger.info('Reusing existing Mongoose connection');
-      this.connection = existingConnection;
-      return this.connection;
-    }
-
-    try {
-      const connection = await mongoose
-        .createConnection(url, {
-          dbName: this.dbName,
-        })
-        .asPromise();
-
+    this.connectionPromise = mongoose.connect(config.url).then(() => {
       Logger.info('Mongoose connected successfully');
-      this.connection = connection;
-
-      MongooseProvider.connections.set(connectionKey, connection);
-      return connection;
-    } catch (error) {
-      Logger.error(`Error connecting to Mongoose: ${(error as Error).message}`);
-      throw error;
-    }
+    });
+    MongooseProvider.instances.set(config.source, this);
   }
 
-  public static async disconnectFromDatabase(
-    url: string,
-    dbName: string,
-  ): Promise<void> {
-    const connectionKey = `${url}:${dbName}`;
-    const existingConnection = MongooseProvider.connections.get(connectionKey);
-
-    if (existingConnection) {
-      try {
-        await existingConnection.close();
-        MongooseProvider.connections.set(connectionKey, undefined);
-        Logger.info(`Mongoose connection for ${connectionKey} closed`);
-      } catch (error) {
-        Logger.error(`Error during disconnect: ${(error as Error).message}`);
+  static setCollectionModel<T extends Document>(
+    source: string,
+    schema: Schema,
+  ): void {
+    schema.post('save', (doc: Document) => {
+      const provider = MongooseProvider.instances.get(source);
+      if (provider) {
+        provider.notifyDataChange('dataInserted', {
+          source,
+          fullDocument: doc,
+        });
       }
-    } else {
-      Logger.warn(`No active connection found for ${connectionKey}`);
-    }
+    });
+
+    schema.post('insertMany', (docs: Document[]) => {
+      const provider = MongooseProvider.instances.get(source);
+      if (provider) {
+        docs.forEach((doc) => {
+          provider.notifyDataChange('dataInserted', {
+            source,
+            fullDocument: doc,
+          });
+        });
+      }
+    });
+
+    schema.post(['updateOne', 'findOneAndUpdate'], (doc: Document) => {
+      const provider = MongooseProvider.instances.get(source);
+      if (provider) {
+        provider.notifyDataChange('dataUpdated', {
+          source,
+          updateDescription: {
+            updatedFields: doc,
+          },
+        });
+      }
+    });
+
+    schema.post(['deleteOne', 'findOneAndDelete'], (doc: Document) => {
+      const provider = MongooseProvider.instances.get(source);
+      if (provider) {
+        provider.notifyDataChange('dataDeleted', {
+          source,
+          documentKey: { _id: doc._id },
+        });
+      }
+    });
+
+    MongooseProvider.externalModels.set(source, schema);
+    Logger.info(`External schema set for collection: ${source}`);
+  }
+
+  static getCollectionSchema(source: string): Schema | undefined {
+    return MongooseProvider.externalModels.get(source);
   }
 
   async ensureReady(): Promise<void> {
     await this.connectionPromise;
-    const externalModel = MongooseProvider.getCollectionModel(this.dataSource);
 
-    if (externalModel && 'aggregate' in externalModel) {
-      this.model = externalModel as Model<Document>;
+    const schema = MongooseProvider.getCollectionSchema(this.dataSource);
+    if (schema) {
+      try {
+        this.model = mongoose.model(this.dataSource);
+      } catch {
+        this.model = mongoose.model(this.dataSource, schema);
+      }
     } else {
-      this.model = this.connection!.model(
+      this.model = mongoose.model(
         this.dataSource,
-        (externalModel as Schema) || new Schema({}, { strict: false }),
+        new Schema({}, { strict: false }),
       );
     }
-    this.setupHooks();
   }
 
-  private setupHooks(): void {
+  setupHooks(): void {
     this.model.schema.post('save', (doc: Document) => {
       this.notifyDataChange('dataInserted', {
         source: this.dataSource,
@@ -149,21 +148,36 @@ export class MongooseProvider extends DataProvider {
       });
     });
 
-    this.model.schema.post('updateOne', (doc: Document) => {
-      this.notifyDataChange('dataUpdated', {
-        source: this.dataSource,
-        updateDescription: {
-          updatedFields: doc,
-        },
+    this.model.schema.post('insertMany', (docs: Document[]) => {
+      docs.forEach((doc) => {
+        this.notifyDataChange('dataInserted', {
+          source: this.dataSource,
+          fullDocument: doc,
+        });
       });
     });
 
-    this.model.schema.post('deleteOne', (doc: Document) => {
-      this.notifyDataChange('dataDeleted', {
-        source: this.dataSource,
-        documentKey: { _id: doc._id },
-      });
-    });
+    this.model.schema.post(
+      ['updateOne', 'findOneAndUpdate'],
+      (doc: Document) => {
+        this.notifyDataChange('dataUpdated', {
+          source: this.dataSource,
+          updateDescription: {
+            updatedFields: doc,
+          },
+        });
+      },
+    );
+
+    this.model.schema.post(
+      ['deleteOne', 'findOneAndDelete'],
+      (doc: Document) => {
+        this.notifyDataChange('dataDeleted', {
+          source: this.dataSource,
+          documentKey: { _id: doc._id },
+        });
+      },
+    );
   }
 
   protected makeQuery(conditions: FilterCondition[]): Record<string, any> {
@@ -215,10 +229,12 @@ export class MongooseProvider extends DataProvider {
 
   async create(data: Document): Promise<Document> {
     try {
-      const result = await this.model.create(data);
-      return result;
+      if (!this.model || !this.connection?.readyState) {
+        await this.ensureReady();
+      }
+      return await this.model.create(data);
     } catch (error) {
-      Logger.info(
+      Logger.error(
         `Error during document insertion: ${(error as Error).message}`,
       );
       throw error;
