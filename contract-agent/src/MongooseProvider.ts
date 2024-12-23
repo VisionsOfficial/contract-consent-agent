@@ -8,6 +8,7 @@ import {
 } from './types';
 import { Logger } from './Logger';
 import { setTimeout, clearTimeout } from 'timers';
+import { ProfileSchema } from './Profile';
 
 type DocumentChangeHandler = (collectionName: string, document: any) => void;
 
@@ -133,10 +134,13 @@ export class MongooseProvider extends DataProvider {
         this.model = mongoose.model(this.dataSource, schema);
       }
     } else {
+      /*
       this.model = mongoose.model(
         this.dataSource,
         new Schema({}, { strict: false }),
       );
+      */
+      this.model = mongoose.model(this.dataSource, ProfileSchema);
     }
   }
 

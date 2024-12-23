@@ -143,7 +143,9 @@ export class ContractAgent extends Agent {
    */
   private async updateProfilesForMembers(contract: Contract): Promise<void> {
     for (const member of contract.members) {
-      await this.updateProfile(member.participant, contract);
+      if (member?.participant?.length) {
+        await this.updateProfile(member.participant, contract);
+      }
     }
   }
 
@@ -155,7 +157,9 @@ export class ContractAgent extends Agent {
     contract: Contract,
   ): Promise<void> {
     for (const offering of contract.serviceOfferings) {
-      await this.updateProfile(offering.participant, contract);
+      if (offering?.participant?.length) {
+        await this.updateProfile(offering.participant, contract);
+      }
     }
   }
 
@@ -166,7 +170,9 @@ export class ContractAgent extends Agent {
   private async updateProfileForOrchestrator(
     contract: Contract,
   ): Promise<void> {
-    await this.updateProfile(contract.orchestrator, contract);
+    if (contract?.orchestrator?.length) {
+      await this.updateProfile(contract.orchestrator, contract);
+    }
   }
 
   /**
