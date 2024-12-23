@@ -38,8 +38,42 @@ describe('ContractAgent with MongooseProvider', function () {
     ]);
   });
 
-  it('should initialize correctly and trigger handleDataInserted', async function () {
+  it('should initialize correctly and trigger handleDataInserted via create', async function () {
     await model.create({
+      ecosystem: 'test-ecosystem',
+      serviceOfferings: [
+        {
+          participant: 'test-participant',
+          serviceOffering: 'allowed-service',
+          policies: [
+            {
+              description: 'allowed-policy',
+              permission: [],
+              prohibition: [],
+            },
+          ],
+        },
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      members: [],
+      orchestrator: '',
+      purpose: [],
+      revokedMembers: [],
+      rolesAndObligations: [],
+    });
+
+    await delay(100);
+    await new Promise(setImmediate);
+
+    sinon.assert.calledOnce(updateProfileFromContractChangeSpy);
+  });
+
+  it('should initialize correctly and trigger handleDataInserted via save', async function () {
+    const contract = new model();
+    updateProfileFromContractChangeSpy.resetHistory();
+
+    await contract.save({
       ecosystem: 'test-ecosystem',
       serviceOfferings: [
         {
