@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { EventEmitter } from 'events';
 import { MongoClient, Collection, Document, WithId } from 'mongodb';
-import { Model, Document as Document$1, Schema } from 'mongoose';
+import { Document as Document$1, Schema } from 'mongoose';
 
 declare const router$1: Router;
 
@@ -212,6 +212,7 @@ declare class Logger {
  */
 declare class ContractAgent extends Agent {
     private static instance;
+    _uid: string;
     private constructor();
     /**
      * Prepares the ContractAgent instance by loading configuration and setting up providers
@@ -333,17 +334,16 @@ declare class MongoDBProvider extends DataProvider {
 declare class MongooseProvider extends DataProvider {
     private static connections;
     private static externalModels;
+    private static instances;
     private connection?;
     private model;
     private dbName;
     private connectionPromise?;
     constructor(config: DataProviderConfig);
-    static setCollectionModel(source: string, model: Model<Document$1> | Schema): void;
-    static getCollectionModel(source: string): Model<Document$1> | Schema | undefined;
-    private connectToDatabase;
-    static disconnectFromDatabase(url: string, dbName: string): Promise<void>;
+    static setCollectionModel<T extends Document$1>(source: string, schema: Schema): void;
+    static getCollectionSchema(source: string): Schema | undefined;
     ensureReady(): Promise<void>;
-    private setupHooks;
+    setupHooks(): void;
     protected makeQuery(conditions: FilterCondition[]): Record<string, any>;
     create(data: Document$1): Promise<Document$1>;
     delete(id: string): Promise<boolean>;

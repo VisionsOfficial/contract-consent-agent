@@ -359,6 +359,7 @@ var NegotiationService = class _NegotiationService {
 };
 
 // src/Profile.ts
+var import_mongoose = __toESM(require("mongoose"));
 var Profile = class {
   constructor({
     _id,
@@ -376,6 +377,22 @@ var Profile = class {
     this.preference = preference;
   }
 };
+var ProfileSchema = new import_mongoose.Schema(
+  {
+    uri: { type: String, required: true },
+    configurations: { type: import_mongoose.Schema.Types.Mixed, required: true },
+    recommendations: { type: [import_mongoose.Schema.Types.Mixed], default: [] },
+    matching: { type: [import_mongoose.Schema.Types.Mixed], default: [] },
+    preference: { type: [import_mongoose.Schema.Types.Mixed], default: [] }
+  },
+  {
+    timestamps: true
+  }
+);
+var ProfileModel = import_mongoose.default.model(
+  "Profile",
+  ProfileSchema
+);
 
 // src/Contract.ts
 var Contract = class {
@@ -1064,9 +1081,11 @@ var RecommendationService = class _RecommendationService {
 };
 
 // src/ContractAgent.ts
+var import_crypto = require("crypto");
 var _ContractAgent = class _ContractAgent extends Agent {
   constructor() {
     super();
+    this._uid = (0, import_crypto.randomUUID)();
   }
   /**
    * Prepares the ContractAgent instance by loading configuration and setting up providers
@@ -1173,8 +1192,11 @@ var _ContractAgent = class _ContractAgent extends Agent {
    */
   updateProfilesForMembers(contract) {
     return __async(this, null, function* () {
+      var _a;
       for (const member of contract.members) {
-        yield this.updateProfile(member.participant, contract);
+        if ((_a = member == null ? void 0 : member.participant) == null ? void 0 : _a.length) {
+          yield this.updateProfile(member.participant, contract);
+        }
       }
     });
   }
@@ -1184,8 +1206,11 @@ var _ContractAgent = class _ContractAgent extends Agent {
    */
   updateProfilesForServiceOfferings(contract) {
     return __async(this, null, function* () {
+      var _a;
       for (const offering of contract.serviceOfferings) {
-        yield this.updateProfile(offering.participant, contract);
+        if ((_a = offering == null ? void 0 : offering.participant) == null ? void 0 : _a.length) {
+          yield this.updateProfile(offering.participant, contract);
+        }
       }
     });
   }
@@ -1195,7 +1220,10 @@ var _ContractAgent = class _ContractAgent extends Agent {
    */
   updateProfileForOrchestrator(contract) {
     return __async(this, null, function* () {
-      yield this.updateProfile(contract.orchestrator, contract);
+      var _a;
+      if ((_a = contract == null ? void 0 : contract.orchestrator) == null ? void 0 : _a.length) {
+        yield this.updateProfile(contract.orchestrator, contract);
+      }
     });
   }
   /**
@@ -2013,76 +2041,76 @@ router2.delete(
 var agent_contract_profile_router_default = router2;
 
 // src/MongooseProvider.ts
-var import_mongoose = __toESM(require("mongoose"));
+var import_mongoose2 = __toESM(require("mongoose"));
 var _MongooseProvider = class _MongooseProvider extends DataProvider {
   constructor(config) {
     super(config.source);
     this.dbName = config.dbName;
-    this.connectionPromise = this.connectToDatabase(config.url);
+    this.connectionPromise = import_mongoose2.default.connect(config.url).then(() => {
+      Logger.info("Mongoose connected successfully");
+    });
+    _MongooseProvider.instances.set(config.source, this);
   }
-  static setCollectionModel(source, model) {
-    _MongooseProvider.externalModels.set(source, model);
-    Logger.info(`External model set for collection: ${source}`);
+  static setCollectionModel(source, schema) {
+    schema.post("save", (doc) => {
+      const provider = _MongooseProvider.instances.get(source);
+      if (provider) {
+        provider.notifyDataChange("dataInserted", {
+          source,
+          fullDocument: doc
+        });
+      }
+    });
+    schema.post("insertMany", (docs) => {
+      const provider = _MongooseProvider.instances.get(source);
+      if (provider) {
+        docs.forEach((doc) => {
+          provider.notifyDataChange("dataInserted", {
+            source,
+            fullDocument: doc
+          });
+        });
+      }
+    });
+    schema.post(["updateOne", "findOneAndUpdate"], (doc) => {
+      const provider = _MongooseProvider.instances.get(source);
+      if (provider) {
+        provider.notifyDataChange("dataUpdated", {
+          source,
+          updateDescription: {
+            updatedFields: doc
+          }
+        });
+      }
+    });
+    schema.post(["deleteOne", "findOneAndDelete"], (doc) => {
+      const provider = _MongooseProvider.instances.get(source);
+      if (provider) {
+        provider.notifyDataChange("dataDeleted", {
+          source,
+          documentKey: { _id: doc._id }
+        });
+      }
+    });
+    _MongooseProvider.externalModels.set(source, schema);
+    Logger.info(`External schema set for collection: ${source}`);
   }
-  static getCollectionModel(source) {
+  static getCollectionSchema(source) {
     return _MongooseProvider.externalModels.get(source);
-  }
-  connectToDatabase(url) {
-    return __async(this, null, function* () {
-      if (!url) {
-        throw new Error("Database URL is required");
-      }
-      const connectionKey = `${url}:${this.dbName}`;
-      const existingConnection = _MongooseProvider.connections.get(connectionKey);
-      if (existingConnection) {
-        Logger.info("Reusing existing Mongoose connection");
-        this.connection = existingConnection;
-        return this.connection;
-      }
-      try {
-        const connection = yield import_mongoose.default.createConnection(url, {
-          dbName: this.dbName
-        }).asPromise();
-        Logger.info("Mongoose connected successfully");
-        this.connection = connection;
-        _MongooseProvider.connections.set(connectionKey, connection);
-        return connection;
-      } catch (error) {
-        Logger.error(`Error connecting to Mongoose: ${error.message}`);
-        throw error;
-      }
-    });
-  }
-  static disconnectFromDatabase(url, dbName) {
-    return __async(this, null, function* () {
-      const connectionKey = `${url}:${dbName}`;
-      const existingConnection = _MongooseProvider.connections.get(connectionKey);
-      if (existingConnection) {
-        try {
-          yield existingConnection.close();
-          _MongooseProvider.connections.set(connectionKey, void 0);
-          Logger.info(`Mongoose connection for ${connectionKey} closed`);
-        } catch (error) {
-          Logger.error(`Error during disconnect: ${error.message}`);
-        }
-      } else {
-        Logger.warn(`No active connection found for ${connectionKey}`);
-      }
-    });
   }
   ensureReady() {
     return __async(this, null, function* () {
       yield this.connectionPromise;
-      const externalModel = _MongooseProvider.getCollectionModel(this.dataSource);
-      if (externalModel && "aggregate" in externalModel) {
-        this.model = externalModel;
+      const schema = _MongooseProvider.getCollectionSchema(this.dataSource);
+      if (schema) {
+        try {
+          this.model = import_mongoose2.default.model(this.dataSource);
+        } catch (e) {
+          this.model = import_mongoose2.default.model(this.dataSource, schema);
+        }
       } else {
-        this.model = this.connection.model(
-          this.dataSource,
-          externalModel || new import_mongoose.Schema({}, { strict: false })
-        );
+        this.model = import_mongoose2.default.model(this.dataSource, ProfileSchema);
       }
-      this.setupHooks();
     });
   }
   setupHooks() {
@@ -2092,20 +2120,34 @@ var _MongooseProvider = class _MongooseProvider extends DataProvider {
         fullDocument: doc
       });
     });
-    this.model.schema.post("updateOne", (doc) => {
-      this.notifyDataChange("dataUpdated", {
-        source: this.dataSource,
-        updateDescription: {
-          updatedFields: doc
-        }
+    this.model.schema.post("insertMany", (docs) => {
+      docs.forEach((doc) => {
+        this.notifyDataChange("dataInserted", {
+          source: this.dataSource,
+          fullDocument: doc
+        });
       });
     });
-    this.model.schema.post("deleteOne", (doc) => {
-      this.notifyDataChange("dataDeleted", {
-        source: this.dataSource,
-        documentKey: { _id: doc._id }
-      });
-    });
+    this.model.schema.post(
+      ["updateOne", "findOneAndUpdate"],
+      (doc) => {
+        this.notifyDataChange("dataUpdated", {
+          source: this.dataSource,
+          updateDescription: {
+            updatedFields: doc
+          }
+        });
+      }
+    );
+    this.model.schema.post(
+      ["deleteOne", "findOneAndDelete"],
+      (doc) => {
+        this.notifyDataChange("dataDeleted", {
+          source: this.dataSource,
+          documentKey: { _id: doc._id }
+        });
+      }
+    );
   }
   makeQuery(conditions) {
     return conditions.reduce((query, condition) => {
@@ -2145,11 +2187,14 @@ var _MongooseProvider = class _MongooseProvider extends DataProvider {
   }
   create(data) {
     return __async(this, null, function* () {
+      var _a;
       try {
-        const result = yield this.model.create(data);
-        return result;
+        if (!this.model || !((_a = this.connection) == null ? void 0 : _a.readyState)) {
+          yield this.ensureReady();
+        }
+        return yield this.model.create(data);
       } catch (error) {
-        Logger.info(
+        Logger.error(
           `Error during document insertion: ${error.message}`
         );
         throw error;
@@ -2160,7 +2205,7 @@ var _MongooseProvider = class _MongooseProvider extends DataProvider {
     return __async(this, null, function* () {
       try {
         const result = yield this.model.deleteOne({
-          _id: new import_mongoose.default.Types.ObjectId(id)
+          _id: new import_mongoose2.default.Types.ObjectId(id)
         });
         if (result.deletedCount === 0) {
           Logger.warn(`No document found with id: ${id}`);
@@ -2218,6 +2263,7 @@ var _MongooseProvider = class _MongooseProvider extends DataProvider {
 };
 _MongooseProvider.connections = /* @__PURE__ */ new Map();
 _MongooseProvider.externalModels = /* @__PURE__ */ new Map();
+_MongooseProvider.instances = /* @__PURE__ */ new Map();
 var MongooseProvider = _MongooseProvider;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
