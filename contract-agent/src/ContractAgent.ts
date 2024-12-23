@@ -15,6 +15,7 @@ import { DataProvider, DataProviderType } from './DataProvider';
 import { MongoDBProvider } from './MongoDBProvider';
 import { MatchingService } from './MatchingService';
 import { RecommendationService } from './RecommendationService';
+import { randomUUID } from 'crypto';
 
 /**
  * ContractAgent class handles contract-related operations and profile management
@@ -22,9 +23,11 @@ import { RecommendationService } from './RecommendationService';
  */
 export class ContractAgent extends Agent {
   private static instance: ContractAgent | null = null;
+  public _uid: string;
 
   private constructor() {
     super();
+    this._uid = randomUUID();
   }
 
   /**
