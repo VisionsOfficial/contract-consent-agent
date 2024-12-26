@@ -77,8 +77,8 @@ var __async = (__this, __arguments, generator) => {
 };
 
 // src/index.ts
-var src_exports = {};
-__export(src_exports, {
+var index_exports = {};
+__export(index_exports, {
   Agent: () => Agent,
   ContractAgent: () => ContractAgent,
   ContractAgentRouter: () => agent_contract_profile_router_default,
@@ -88,7 +88,7 @@ __export(src_exports, {
   NegotiationAgentRouter: () => agent_contract_negotation_router_default,
   Profile: () => Profile
 });
-module.exports = __toCommonJS(src_exports);
+module.exports = __toCommonJS(index_exports);
 
 // src/agent.contract.negotation.router.ts
 var import_express = __toESM(require("express"));
