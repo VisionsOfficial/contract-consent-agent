@@ -1181,10 +1181,16 @@ var _ContractAgent = class _ContractAgent extends Agent {
       if (!contract) {
         throw new Error("Contract is undefined");
       }
+      Logger.info("updating profiles for members...");
       yield this.updateProfilesForMembers(contract);
+      Logger.info("updating profiles for offerings...");
       yield this.updateProfilesForServiceOfferings(contract);
+      Logger.info("updating profiles for orchestrator...");
       yield this.updateProfileForOrchestrator(contract);
+      this.signalUpdate();
     });
+  }
+  signalUpdate() {
   }
   /**
    * Updates profiles for all contract members
@@ -1192,11 +1198,16 @@ var _ContractAgent = class _ContractAgent extends Agent {
    */
   updateProfilesForMembers(contract) {
     return __async(this, null, function* () {
-      var _a;
+      var _a, _b;
       for (const member of contract.members) {
         if ((_a = member == null ? void 0 : member.participant) == null ? void 0 : _a.length) {
           yield this.updateProfile(member.participant, contract);
         }
+      }
+      if (!((_b = contract == null ? void 0 : contract.members) == null ? void 0 : _b.length)) {
+        Logger.warn("no members found, 0 profile updated");
+      } else {
+        Logger.info(`${contract.members.length} profiles found for members`);
       }
     });
   }
@@ -1206,11 +1217,21 @@ var _ContractAgent = class _ContractAgent extends Agent {
    */
   updateProfilesForServiceOfferings(contract) {
     return __async(this, null, function* () {
-      var _a;
-      for (const offering of contract.serviceOfferings) {
+      var _a, _b;
+      const uniqueParticipants = /* @__PURE__ */ new Set();
+      for (const offering of contract.serviceOfferings || []) {
         if ((_a = offering == null ? void 0 : offering.participant) == null ? void 0 : _a.length) {
+          uniqueParticipants.add(offering.participant);
           yield this.updateProfile(offering.participant, contract);
         }
+      }
+      const offeringsCount = ((_b = contract.serviceOfferings) == null ? void 0 : _b.length) || 0;
+      if (!offeringsCount) {
+        Logger.warn("no service offerings found, 0 profile updated");
+      } else {
+        Logger.info(
+          `${offeringsCount} service offerings with ${uniqueParticipants.size} unique participants processed`
+        );
       }
     });
   }
@@ -1223,6 +1244,9 @@ var _ContractAgent = class _ContractAgent extends Agent {
       var _a;
       if ((_a = contract == null ? void 0 : contract.orchestrator) == null ? void 0 : _a.length) {
         yield this.updateProfile(contract.orchestrator, contract);
+        Logger.info("Profile updated for orchestrator");
+      } else {
+        Logger.warn("no orchestrator found, 0 profile updated");
       }
     });
   }

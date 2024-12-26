@@ -243,6 +243,7 @@ declare class ContractAgent extends Agent {
      * @returns Promise<void>
      */
     private updateProfileFromContractChange;
+    signalUpdate(): void;
     /**
      * Updates profiles for all contract members
      * @param contract - Contract instance
