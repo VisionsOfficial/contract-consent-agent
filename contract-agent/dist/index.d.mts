@@ -340,13 +340,11 @@ declare class MongooseProvider extends DataProvider {
     private dbName;
     private connectionPromise?;
     private url;
-    private mongooseConnected;
     private mongoosePromise;
     private mongoosePromiseResolve;
     constructor(config: DataProviderConfig);
     static setCollectionModel<T extends Document$1>(source: string, schema: Schema): void;
     static getCollectionSchema(source: string): Schema | undefined;
-    private createMongoosePromise;
     getMongoosePromise(): Promise<void>;
     ensureReady(): Promise<void>;
     setupHooks(): void;

@@ -58,16 +58,17 @@ export class MongooseProvider extends DataProvider {
   private dbName: string;
   private connectionPromise?: Promise<void>;
   private url: string;
-  private mongooseConnected: boolean;
 
-  private mongoosePromise: Promise<void> | null = null;
+  private mongoosePromise: Promise<void>;
   private mongoosePromiseResolve: (() => void) | null = null;
 
   constructor(config: DataProviderConfig) {
     super(config.source);
     this.dbName = config.dbName;
     this.url = config.url;
-    this.mongooseConnected = false;
+    this.mongoosePromise = new Promise((resolve) => {
+      this.mongoosePromiseResolve = resolve;
+    });
     MongooseProvider.instances.set(config.source, this);
   }
 
@@ -127,21 +128,12 @@ export class MongooseProvider extends DataProvider {
     return MongooseProvider.externalModels.get(source);
   }
 
-  private createMongoosePromise() {
-    if (!this.mongoosePromise) {
-      this.mongoosePromise = new Promise((resolve) => {
-        this.mongoosePromiseResolve = resolve;
-      });
-    }
+  public getMongoosePromise(): Promise<void> {
     return this.mongoosePromise;
   }
 
-  public getMongoosePromise(): Promise<void> {
-    return this.mongoosePromise || this.createMongoosePromise();
-  }
-
   async ensureReady(): Promise<void> {
-    if (/*!this.mongooseConnected || */ mongoose.connection.readyState !== 1) {
+    if (mongoose.connection.readyState !== 1) {
       Logger.info('Connecting to Mongoose...');
       try {
         if (mongoose.connection.readyState === 0) {
@@ -150,17 +142,16 @@ export class MongooseProvider extends DataProvider {
             serverSelectionTimeoutMS: 5000,
             family: 4,
           });
-        }
-        //this.mongooseConnected = true;
-        if (this.mongoosePromiseResolve) {
-          this.mongoosePromiseResolve();
+          if (this.mongoosePromiseResolve) {
+            this.mongoosePromiseResolve();
+          } else {
+            throw new Error('Mongoose promise undefined');
+          }
         }
         mongoose.connection.on('disconnected', () => {
-          //this.mongooseConnected = false;
           Logger.warn('Mongoose disconnected');
         });
       } catch (error) {
-        //this.mongooseConnected = false;
         Logger.error(
           `Error during Mongoose connection: ${(error as Error).message}`,
         );

@@ -2008,11 +2008,12 @@ import mongoose2 from "mongoose";
 var _MongooseProvider = class _MongooseProvider extends DataProvider {
   constructor(config) {
     super(config.source);
-    this.mongoosePromise = null;
     this.mongoosePromiseResolve = null;
     this.dbName = config.dbName;
     this.url = config.url;
-    this.mongooseConnected = false;
+    this.mongoosePromise = new Promise((resolve) => {
+      this.mongoosePromiseResolve = resolve;
+    });
     _MongooseProvider.instances.set(config.source, this);
   }
   static setCollectionModel(source, schema) {
@@ -2062,23 +2063,12 @@ var _MongooseProvider = class _MongooseProvider extends DataProvider {
   static getCollectionSchema(source) {
     return _MongooseProvider.externalModels.get(source);
   }
-  createMongoosePromise() {
-    if (!this.mongoosePromise) {
-      this.mongoosePromise = new Promise((resolve) => {
-        this.mongoosePromiseResolve = resolve;
-      });
-    }
-    return this.mongoosePromise;
-  }
   getMongoosePromise() {
-    return this.mongoosePromise || this.createMongoosePromise();
+    return this.mongoosePromise;
   }
   ensureReady() {
     return __async(this, null, function* () {
-      if (
-        /*!this.mongooseConnected || */
-        mongoose2.connection.readyState !== 1
-      ) {
+      if (mongoose2.connection.readyState !== 1) {
         Logger.info("Connecting to Mongoose...");
         try {
           if (mongoose2.connection.readyState === 0) {
@@ -2087,9 +2077,11 @@ var _MongooseProvider = class _MongooseProvider extends DataProvider {
               serverSelectionTimeoutMS: 5e3,
               family: 4
             });
-          }
-          if (this.mongoosePromiseResolve) {
-            this.mongoosePromiseResolve();
+            if (this.mongoosePromiseResolve) {
+              this.mongoosePromiseResolve();
+            } else {
+              throw new Error("Mongoose promise undefined");
+            }
           }
           mongoose2.connection.on("disconnected", () => {
             Logger.warn("Mongoose disconnected");
