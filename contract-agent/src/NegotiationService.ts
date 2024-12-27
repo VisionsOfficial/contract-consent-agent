@@ -24,7 +24,7 @@ export class NegotiationService {
    * @returns {boolean} - True if acceptable, otherwise false.
    */
   isPolicyAcceptable(profile: Profile, policy: Policy): boolean {
-    if (profile.configurations.allowPolicies === false) {
+    if (profile?.configurations?.allowPolicies === false) {
       Logger.info('Policies are not allowed by the profile configurations.');
       return false;
     }
@@ -76,7 +76,7 @@ export class NegotiationService {
   /**
    * Determines if a contract can be accepted by the profile.
    * A contract is acceptable if:
-   * - Its status is 'active'.
+   * - Its status is 'active' or 'signed'.
    * - All its service offerings and their policies are acceptable.
    *
    * @param {Profile} profile - The profile to evaluate.
@@ -84,7 +84,7 @@ export class NegotiationService {
    * @returns {boolean} - True if acceptable, otherwise false.
    */
   canAcceptContract(profile: Profile, contract: Contract): boolean {
-    if (contract.status !== 'active') {
+    if (contract.status !== 'active' && contract.status !== 'signed') {
       Logger.info('Contract is not active.');
       return false;
     }
