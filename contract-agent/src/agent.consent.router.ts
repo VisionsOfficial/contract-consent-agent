@@ -1,13 +1,45 @@
 import express, { Request, Response } from 'express';
 import { ConsentAgentRequestHandler } from './ConsentAgentHandler';
-import { ProfileConfigurations } from './types';
+import { PreferencePayload, ProfileConfigurations } from './types';
 const router = express.Router();
 
 const consentAgentRequestHandler = new ConsentAgentRequestHandler();
 
 /**
- * @param {Request} req
- * @param {Response} res
+ * Handles the request to check if the preferences match the params.
+ * 
+ * @param {Request} req - The incoming request object.
+ * @param {Response} res - The response object to send back to the client.
+ */
+router.get(
+  '/:profileId/preferences/match',
+  async (req: Request, res: Response) => {
+    try {
+      const { profileId } = req.params;
+      const { category, participant, location, asDataProvider, asServiceProvider } = req.query;
+
+      const service =
+            await consentAgentRequestHandler.checkPreferenceMatch({
+              profileId,
+              category: category?.toString(),
+              participant: participant?.toString(),
+              location: location?.toString(),
+              asDataProvider: asDataProvider === 'true',
+              asServiceProvider: asServiceProvider === 'true'
+            });
+
+      res.json(service);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  },
+);
+
+/**
+ * This function handles the request for consent recommendations.
+ * 
+ * @param {Request} req - The request object.
+ * @param {Response} res - The response object.
  */
 router.get(
   '/:profileId/recommendations/consent',
@@ -27,6 +59,8 @@ router.get(
 );
 
 /**
+ * Get the data exchanges of a profile
+ * 
  * @param {Request} req
  * @param {Response} res
  */
@@ -49,6 +83,7 @@ router.get(
 
 /**
  * Get the preferences of a profile
+ * 
  * @param {Request} req
  * @param {Response} res
  */
@@ -71,6 +106,7 @@ router.get(
 
 /**
  * Get the preference by ID of a profile
+ * 
  * @param {Request} req
  * @param {Response} res
  */
@@ -93,8 +129,10 @@ router.get(
 );
 
 /**
- * @param {Request} req
- * @param {Response} res
+ * Adds a new preference to a profile.
+ * 
+ * @param {Request} req - The incoming request object.
+ * @param {Response} res - The response object to send back to the client.
  */
 router.post(
   '/:profileId/preferences',
@@ -102,6 +140,10 @@ router.post(
     try {
       const { profileId } = req.params;
       const { preference } = req.body;
+      
+      if (!preference.every((p: PreferencePayload) => p.participant || p.category)) {
+        throw new Error('Each preference must contain at least the field participant or category');
+      }
 
       const service =
             await consentAgentRequestHandler.addPreferenceToProfile(
@@ -116,8 +158,10 @@ router.post(
 );
 
 /**
- * @param {Request} req
- * @param {Response} res
+ * Handles the update of a specific preference within a profile.
+ * 
+ * @param {Request} req - The incoming request object.
+ * @param {Response} res - The response object to send back to the client.
  */
 router.put(
   '/:profileId/preferences/:preferenceId',
@@ -140,8 +184,10 @@ router.put(
 );
 
 /**
- * @param {Request} req
- * @param {Response} res
+ * Handles the deletion of a specific preference from a profile.
+ * 
+ * @param {Request} req - The incoming request object.
+ * @param {Response} res - The response object to send back to the client.
  */
 router.delete(
   '/:profileId/preferences/:preferenceId',
@@ -163,6 +209,7 @@ router.delete(
 
 /**
  * Get the configurations of the profile
+ * 
  * @param {Request} req
  * @param {Response} res
  */
@@ -185,6 +232,7 @@ router.get(
 
 /**
  * Update the configurations
+ * 
  * @param {Request} req
  * @param {Response} res
  */
@@ -212,6 +260,7 @@ router.put(
 
 /**
  * Get a profile
+ * 
  * @param {Request} req
  * @param {Response} res
  */
@@ -233,6 +282,7 @@ router.get(
 
 /**
  * Get all profiles
+ * 
  * @param {Request} req
  * @param {Response} res
  */

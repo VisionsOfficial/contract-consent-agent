@@ -10,11 +10,27 @@ export interface ProfilePreference {
   policies: ProfilePolicy[];
   ecosystems: string[];
   services: string[];
+  participant?: string;
+  category?: string;
+  asDataProvider?: {
+    authorizationLevel?: AuthorizationLevelEnum,
+    conditions?: Condition[]
+  };
+  asServiceProvider?: {
+    authorizationLevel?: AuthorizationLevelEnum,
+    conditions?: Condition[]
+  };
 }
+
 export interface ProfileRecommendation {
   policies?: ProfilePolicy[];
   ecosystemContracts?: any[];
   services?: any[];
+  consents?: any[];
+  dataExchanges?: any[];
+}
+
+export interface ConsentProfileRecommendation {
   consents?: any[];
   dataExchanges?: any[];
 }
@@ -28,7 +44,6 @@ export interface ProfileMatching {
 export interface ProfileConfigurations {
   allowRecommendations: boolean;
   allowPolicies?: boolean;
-  allowPreferences?: boolean;
 }
 
 export interface SearchCriteria {
@@ -71,7 +86,7 @@ export interface ProfileDocument {
   _id?: string;
   uri?: string;
   configurations: any;
-  recommendations?: any[];
+  recommendations?: any[] | ConsentProfileRecommendation;
   matching?: any[];
   preference?: any[];
 }
@@ -129,6 +144,8 @@ export type DataChangeEvent = {
 };
 
 export type PreferencePayload = {
+  participant: string,
+  category: string,
   asDataProvider: {
     authorizationLevel?: AuthorizationLevelEnum,
     conditions?: Condition[]
@@ -155,7 +172,7 @@ export type LocationCondition = {
 }
 
 export enum AuthorizationLevelEnum {
-  NEVER = 'NEVER',
-  ALWAYS = 'ALWAYS',
-  CONDITIONAL = 'CONDITIONAL',
+  NEVER = 'never',
+  ALWAYS = 'always',
+  CONDITIONAL = 'conditional',
 }

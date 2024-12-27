@@ -3,6 +3,7 @@ import {
   ProfileRecommendation,
   ProfilePreference,
   ProfileMatching,
+  ConsentProfileRecommendation,
 } from './types';
 
 export type ProfileJSON = Omit<
@@ -17,7 +18,7 @@ export class Profile {
   _id?: string;
   uri?: string;
   configurations: ProfileConfigurations;
-  recommendations: ProfileRecommendation[];
+  recommendations: ProfileRecommendation[] | ConsentProfileRecommendation;
   matching: ProfileMatching[];
   preference: ProfilePreference[];
 
