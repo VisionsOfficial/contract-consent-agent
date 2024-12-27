@@ -1,3 +1,4 @@
+import mongoose, { Schema, Document } from 'mongoose';
 import {
   ProfileConfigurations,
   ProfileRecommendation,
@@ -38,3 +39,21 @@ export class Profile {
     this.preference = preference;
   }
 }
+
+export const ProfileSchema = new Schema(
+  {
+    uri: { type: String, required: true },
+    configurations: { type: Schema.Types.Mixed, required: true },
+    recommendations: { type: [Schema.Types.Mixed], default: [] },
+    matching: { type: [Schema.Types.Mixed], default: [] },
+    preference: { type: [Schema.Types.Mixed], default: [] },
+  },
+  {
+    timestamps: true,
+  },
+);
+
+export const ProfileModel = mongoose.model<Document & Profile>(
+  'Profile',
+  ProfileSchema,
+);

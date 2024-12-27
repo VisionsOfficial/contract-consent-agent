@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { EventEmitter } from 'events';
 import { MongoClient, Collection, Document, WithId } from 'mongodb';
+import { Document as Document$1, Schema } from 'mongoose';
 
 declare const router$1: Router;
 
@@ -211,6 +212,7 @@ declare class Logger {
  */
 declare class ContractAgent extends Agent {
     private static instance;
+    _uid: string;
     private constructor();
     /**
      * Prepares the ContractAgent instance by loading configuration and setting up providers
@@ -241,6 +243,7 @@ declare class ContractAgent extends Agent {
      * @returns Promise<void>
      */
     private updateProfileFromContractChange;
+    signalUpdate(): void;
     /**
      * Updates profiles for all contract members
      * @param contract - Contract instance
@@ -319,7 +322,7 @@ declare class MongoDBProvider extends DataProvider {
     getCollection(): Collection<Document>;
     private connectToDatabase;
     static disconnectFromDatabase(url: string, dbName: string): Promise<void>;
-    ensureReady(): Promise<void>;
+    ensureReady(collection?: Collection<Document>): Promise<void>;
     private static createCollectionProxy;
     private setupCallbacks;
     protected makeQuery(conditions: FilterCondition[]): Record<string, any>;
@@ -329,4 +332,28 @@ declare class MongoDBProvider extends DataProvider {
     update(criteria: SearchCriteria, data: unknown): Promise<boolean>;
 }
 
-export { Agent, ContractAgent, router as ContractAgentRouter, type DataProviderConfig, type FilterCondition, Logger, MongoDBProvider, router$1 as NegotiationAgentRouter, Profile, type ProfileConfigurations, type ProfileDocument, type ProfileMatching, type ProfilePolicy, type ProfilePreference, type ProfileRecommendation, type Provider, type SearchCriteria };
+declare class MongooseProvider extends DataProvider {
+    private static connections;
+    private static externalModels;
+    private static instances;
+    private connection?;
+    private model;
+    private dbName;
+    private connectionPromise?;
+    private url;
+    private mongoosePromise;
+    private mongoosePromiseResolve;
+    constructor(config: DataProviderConfig);
+    static setCollectionModel<T extends Document$1>(source: string, schema: Schema): void;
+    static getCollectionSchema(source: string): Schema | undefined;
+    getMongoosePromise(): Promise<void>;
+    ensureReady(): Promise<void>;
+    setupHooks(): void;
+    protected makeQuery(conditions: FilterCondition[]): Record<string, any>;
+    create(data: Document$1): Promise<Document$1>;
+    delete(id: string): Promise<boolean>;
+    find(criteria: SearchCriteria): Promise<[]>;
+    update(criteria: SearchCriteria, data: unknown): Promise<boolean>;
+}
+
+export { Agent, ContractAgent, router as ContractAgentRouter, type DataProviderConfig, type FilterCondition, Logger, MongoDBProvider, MongooseProvider, router$1 as NegotiationAgentRouter, Profile, type ProfileConfigurations, type ProfileDocument, type ProfileMatching, type ProfilePolicy, type ProfilePreference, type ProfileRecommendation, type Provider, type SearchCriteria };

@@ -20,3 +20,4 @@ export { Agent } from './Agent';
 export { Logger } from './Logger';
 export { ContractAgent } from './ContractAgent';
 export { MongoDBProvider } from './MongoDBProvider';
+export { MongooseProvider } from './MongooseProvider';

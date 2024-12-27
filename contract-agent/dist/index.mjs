@@ -319,6 +319,7 @@ var NegotiationService = class _NegotiationService {
 };
 
 // src/Profile.ts
+import mongoose, { Schema } from "mongoose";
 var Profile = class {
   constructor({
     _id,
@@ -336,6 +337,22 @@ var Profile = class {
     this.preference = preference;
   }
 };
+var ProfileSchema = new Schema(
+  {
+    uri: { type: String, required: true },
+    configurations: { type: Schema.Types.Mixed, required: true },
+    recommendations: { type: [Schema.Types.Mixed], default: [] },
+    matching: { type: [Schema.Types.Mixed], default: [] },
+    preference: { type: [Schema.Types.Mixed], default: [] }
+  },
+  {
+    timestamps: true
+  }
+);
+var ProfileModel = mongoose.model(
+  "Profile",
+  ProfileSchema
+);
 
 // src/Contract.ts
 var Contract = class {
@@ -597,11 +614,11 @@ var _MongoDBProvider = class _MongoDBProvider extends DataProvider {
       }
     });
   }
-  ensureReady() {
+  ensureReady(collection) {
     return __async(this, null, function* () {
       yield this.connectionPromise;
       this.collection = _MongoDBProvider.createCollectionProxy(
-        this.db.collection(this.dataSource)
+        collection || this.db.collection(this.dataSource)
       );
       this.setupCallbacks();
     });
@@ -707,59 +724,6 @@ var _MongoDBProvider = class _MongoDBProvider extends DataProvider {
     };
     return new Proxy(collection, handler);
   }
-  /*
-    private static createCollectionProxy(collection: Collection): Collection {
-      const interceptor = MongoInterceptor.getInstance();
-      const handler = {
-        get(target: Collection, prop: string | symbol): any {
-          const original = target[prop as keyof Collection];
-          if (typeof original !== 'function') return original;
-  
-          const nonAsyncMethods = ['find', 'aggregate'];
-  
-          if (nonAsyncMethods.includes(prop as string)) {
-            return function (this: Collection, ...args: any[]) {
-              return (original as Function).call(target, ...args);
-            };
-          }
-  
-          return async function (this: any, ...args: any[]) {
-            const method = original as (...args: any[]) => Promise<any>;
-            const result = await method.apply(target, args);
-  
-            if (prop === 'insertOne') {
-              interceptor.notifyCallbacks('insert', collection.collectionName, {
-                fullDocument: args[0],
-                insertedId: result.insertedId,
-                acknowledged: result.acknowledged,
-              });
-            } else if (prop === 'insertMany') {
-              interceptor.notifyCallbacks('insert', collection.collectionName, {
-                fullDocuments: args[0],
-                insertedIds: result.insertedIds,
-                acknowledged: result.acknowledged,
-              });
-            } else if (prop === 'updateOne' || prop === 'updateMany') {
-              interceptor.notifyCallbacks('update', collection.collectionName, {
-                filter: args[0],
-                update: args[1],
-                result,
-              });
-            } else if (prop === 'deleteOne' || prop === 'deleteMany') {
-              interceptor.notifyCallbacks('delete', collection.collectionName, {
-                filter: args[0],
-                result,
-              });
-            }
-  
-            return result;
-          };
-        },
-      };
-  
-      return new Proxy(collection, handler);
-    }
-  */
   setupCallbacks() {
     const interceptor = MongoInterceptor.getInstance();
     interceptor.addCallback("insert", (collectionName, data) => {
@@ -1080,9 +1044,11 @@ var RecommendationService = class _RecommendationService {
 };
 
 // src/ContractAgent.ts
+import { randomUUID } from "crypto";
 var _ContractAgent = class _ContractAgent extends Agent {
   constructor() {
     super();
+    this._uid = randomUUID();
   }
   /**
    * Prepares the ContractAgent instance by loading configuration and setting up providers
@@ -1178,10 +1144,16 @@ var _ContractAgent = class _ContractAgent extends Agent {
       if (!contract) {
         throw new Error("Contract is undefined");
       }
+      Logger.info("updating profiles for members...");
       yield this.updateProfilesForMembers(contract);
+      Logger.info("updating profiles for offerings...");
       yield this.updateProfilesForServiceOfferings(contract);
+      Logger.info("updating profiles for orchestrator...");
       yield this.updateProfileForOrchestrator(contract);
+      this.signalUpdate();
     });
+  }
+  signalUpdate() {
   }
   /**
    * Updates profiles for all contract members
@@ -1189,8 +1161,16 @@ var _ContractAgent = class _ContractAgent extends Agent {
    */
   updateProfilesForMembers(contract) {
     return __async(this, null, function* () {
+      var _a, _b;
       for (const member of contract.members) {
-        yield this.updateProfile(member.participant, contract);
+        if ((_a = member == null ? void 0 : member.participant) == null ? void 0 : _a.length) {
+          yield this.updateProfile(member.participant, contract);
+        }
+      }
+      if (!((_b = contract == null ? void 0 : contract.members) == null ? void 0 : _b.length)) {
+        Logger.warn("no members found, 0 profile updated");
+      } else {
+        Logger.info(`${contract.members.length} profiles found for members`);
       }
     });
   }
@@ -1200,8 +1180,21 @@ var _ContractAgent = class _ContractAgent extends Agent {
    */
   updateProfilesForServiceOfferings(contract) {
     return __async(this, null, function* () {
-      for (const offering of contract.serviceOfferings) {
-        yield this.updateProfile(offering.participant, contract);
+      var _a, _b;
+      const uniqueParticipants = /* @__PURE__ */ new Set();
+      for (const offering of contract.serviceOfferings || []) {
+        if ((_a = offering == null ? void 0 : offering.participant) == null ? void 0 : _a.length) {
+          uniqueParticipants.add(offering.participant);
+          yield this.updateProfile(offering.participant, contract);
+        }
+      }
+      const offeringsCount = ((_b = contract.serviceOfferings) == null ? void 0 : _b.length) || 0;
+      if (!offeringsCount) {
+        Logger.warn("no service offerings found, 0 profile updated");
+      } else {
+        Logger.info(
+          `${offeringsCount} service offerings with ${uniqueParticipants.size} unique participants processed`
+        );
       }
     });
   }
@@ -1211,7 +1204,13 @@ var _ContractAgent = class _ContractAgent extends Agent {
    */
   updateProfileForOrchestrator(contract) {
     return __async(this, null, function* () {
-      yield this.updateProfile(contract.orchestrator, contract);
+      var _a;
+      if ((_a = contract == null ? void 0 : contract.orchestrator) == null ? void 0 : _a.length) {
+        yield this.updateProfile(contract.orchestrator, contract);
+        Logger.info("Profile updated for orchestrator");
+      } else {
+        Logger.warn("no orchestrator found, 0 profile updated");
+      }
     });
   }
   /**
@@ -2027,12 +2026,264 @@ router2.delete(
   })
 );
 var agent_contract_profile_router_default = router2;
+
+// src/MongooseProvider.ts
+import mongoose2 from "mongoose";
+var _MongooseProvider = class _MongooseProvider extends DataProvider {
+  constructor(config) {
+    super(config.source);
+    this.mongoosePromiseResolve = null;
+    this.dbName = config.dbName;
+    this.url = config.url;
+    this.mongoosePromise = new Promise((resolve) => {
+      this.mongoosePromiseResolve = resolve;
+    });
+    _MongooseProvider.instances.set(config.source, this);
+  }
+  static setCollectionModel(source, schema) {
+    schema.post("save", (doc) => {
+      const provider = _MongooseProvider.instances.get(source);
+      if (provider) {
+        provider.notifyDataChange("dataInserted", {
+          source,
+          fullDocument: doc
+        });
+      }
+    });
+    schema.post("insertMany", (docs) => {
+      const provider = _MongooseProvider.instances.get(source);
+      if (provider) {
+        docs.forEach((doc) => {
+          provider.notifyDataChange("dataInserted", {
+            source,
+            fullDocument: doc
+          });
+        });
+      }
+    });
+    schema.post(["updateOne", "findOneAndUpdate"], (doc) => {
+      const provider = _MongooseProvider.instances.get(source);
+      if (provider) {
+        provider.notifyDataChange("dataUpdated", {
+          source,
+          updateDescription: {
+            updatedFields: doc
+          }
+        });
+      }
+    });
+    schema.post(["deleteOne", "findOneAndDelete"], (doc) => {
+      const provider = _MongooseProvider.instances.get(source);
+      if (provider) {
+        provider.notifyDataChange("dataDeleted", {
+          source,
+          documentKey: { _id: doc._id }
+        });
+      }
+    });
+    _MongooseProvider.externalModels.set(source, schema);
+    Logger.info(`External schema set for collection: ${source}`);
+  }
+  static getCollectionSchema(source) {
+    return _MongooseProvider.externalModels.get(source);
+  }
+  getMongoosePromise() {
+    return this.mongoosePromise;
+  }
+  ensureReady() {
+    return __async(this, null, function* () {
+      if (mongoose2.connection.readyState !== 1) {
+        Logger.info("Connecting to Mongoose...");
+        try {
+          if (mongoose2.connection.readyState === 0) {
+            yield mongoose2.connect(this.url + "/" + this.dbName, {
+              retryWrites: true,
+              serverSelectionTimeoutMS: 5e3,
+              family: 4
+            });
+            if (this.mongoosePromiseResolve) {
+              this.mongoosePromiseResolve();
+            } else {
+              throw new Error("Mongoose promise undefined");
+            }
+          }
+          mongoose2.connection.on("disconnected", () => {
+            Logger.warn("Mongoose disconnected");
+          });
+        } catch (error) {
+          Logger.error(
+            `Error during Mongoose connection: ${error.message}`
+          );
+          throw error;
+        }
+      }
+      const schema = _MongooseProvider.getCollectionSchema(this.dataSource);
+      if (schema) {
+        try {
+          this.model = mongoose2.model(this.dataSource);
+        } catch (e) {
+          this.model = mongoose2.model(this.dataSource, schema);
+        }
+      } else {
+        this.model = mongoose2.model(this.dataSource, ProfileSchema);
+      }
+    });
+  }
+  setupHooks() {
+    this.model.schema.post("save", (doc) => {
+      this.notifyDataChange("dataInserted", {
+        source: this.dataSource,
+        fullDocument: doc
+      });
+    });
+    this.model.schema.post("insertMany", (docs) => {
+      docs.forEach((doc) => {
+        this.notifyDataChange("dataInserted", {
+          source: this.dataSource,
+          fullDocument: doc
+        });
+      });
+    });
+    this.model.schema.post(
+      ["updateOne", "findOneAndUpdate"],
+      (doc) => {
+        this.notifyDataChange("dataUpdated", {
+          source: this.dataSource,
+          updateDescription: {
+            updatedFields: doc
+          }
+        });
+      }
+    );
+    this.model.schema.post(
+      ["deleteOne", "findOneAndDelete"],
+      (doc) => {
+        this.notifyDataChange("dataDeleted", {
+          source: this.dataSource,
+          documentKey: { _id: doc._id }
+        });
+      }
+    );
+  }
+  makeQuery(conditions) {
+    return conditions.reduce((query, condition) => {
+      switch (condition.operator) {
+        case "IN" /* IN */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: { $in: condition.value }
+          });
+        case "EQUALS" /* EQUALS */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: condition.value
+          });
+        case "GT" /* GT */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: { $gt: condition.value }
+          });
+        case "LT" /* LT */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: { $lt: condition.value }
+          });
+        case "CONTAINS" /* CONTAINS */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: {
+              $in: Array.isArray(condition.value) ? condition.value : [condition.value]
+            }
+          });
+        case "REGEX" /* REGEX */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: {
+              $in: Array.isArray(condition.value) ? condition.value.map((val) => new RegExp(val, "i")) : [new RegExp(condition.value, "i")]
+            }
+          });
+        default:
+          throw new Error(`Unsupported operator: ${condition.operator}`);
+      }
+    }, {});
+  }
+  create(data) {
+    return __async(this, null, function* () {
+      try {
+        return yield this.model.create(data);
+      } catch (error) {
+        Logger.error(
+          `Error during document insertion: ${error.message}`
+        );
+        throw error;
+      }
+    });
+  }
+  delete(id) {
+    return __async(this, null, function* () {
+      try {
+        const result = yield this.model.deleteOne({
+          _id: new mongoose2.Types.ObjectId(id)
+        });
+        if (result.deletedCount === 0) {
+          Logger.warn(`No document found with id: ${id}`);
+          return false;
+        }
+        Logger.info(`Document with id: ${id} successfully deleted`);
+        return true;
+      } catch (error) {
+        Logger.error(
+          `Error during document deletion: ${error.message}`
+        );
+        throw error;
+      }
+    });
+  }
+  find(criteria) {
+    return __async(this, null, function* () {
+      const query = this.makeQuery(criteria.conditions);
+      const data = yield this.model.find(query).limit(criteria.limit || 0).exec();
+      return data.map((item) => {
+        if (item._id) {
+          const _a = item.toObject(), { _id } = _a, rest = __objRest(_a, ["_id"]);
+          return __spreadValues({
+            _id: _id.toString()
+          }, rest);
+        }
+        return item.toObject();
+      });
+    });
+  }
+  update(criteria, data) {
+    return __async(this, null, function* () {
+      try {
+        const updateData = data;
+        const query = this.makeQuery(criteria.conditions);
+        const result = yield this.model.updateOne(query, {
+          $set: updateData
+        }).exec();
+        if (result.matchedCount === 0) {
+          Logger.warn(`No document found matching the criteria`);
+          return false;
+        }
+        if (result.modifiedCount === 0) {
+          Logger.info(`No changes made to document`);
+          return false;
+        }
+        Logger.info(`Document successfully updated`);
+        return true;
+      } catch (error) {
+        Logger.error(`Error during document update: ${error.message}`);
+        throw error;
+      }
+    });
+  }
+};
+_MongooseProvider.connections = /* @__PURE__ */ new Map();
+_MongooseProvider.externalModels = /* @__PURE__ */ new Map();
+_MongooseProvider.instances = /* @__PURE__ */ new Map();
+var MongooseProvider = _MongooseProvider;
 export {
   Agent,
   ContractAgent,
   agent_contract_profile_router_default as ContractAgentRouter,
   Logger,
   MongoDBProvider,
+  MongooseProvider,
   agent_contract_negotation_router_default as NegotiationAgentRouter,
   Profile
 };

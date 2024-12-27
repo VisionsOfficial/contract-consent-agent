@@ -15,6 +15,15 @@ import { DataProvider, DataProviderType } from './DataProvider';
 import { MongoDBProvider } from './MongoDBProvider';
 import { MatchingService } from './MatchingService';
 import { RecommendationService } from './RecommendationService';
+import { randomUUID } from 'crypto';
+import { setTimeout } from 'timers';
+
+interface WaitFunction {
+  (_ms: number): Promise<void>;
+}
+
+export const wait: WaitFunction = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
  * ContractAgent class handles contract-related operations and profile management
@@ -22,9 +31,11 @@ import { RecommendationService } from './RecommendationService';
  */
 export class ContractAgent extends Agent {
   private static instance: ContractAgent | null = null;
+  public _uid: string;
 
   private constructor() {
     super();
+    this._uid = randomUUID();
   }
 
   /**
@@ -140,10 +151,16 @@ export class ContractAgent extends Agent {
     if (!contract) {
       throw new Error('Contract is undefined');
     }
+    Logger.info('updating profiles for members...');
     await this.updateProfilesForMembers(contract);
+    Logger.info('updating profiles for offerings...');
     await this.updateProfilesForServiceOfferings(contract);
+    Logger.info('updating profiles for orchestrator...');
     await this.updateProfileForOrchestrator(contract);
+    this.signalUpdate();
   }
+
+  signalUpdate(): void {}
 
   /**
    * Updates profiles for all contract members
@@ -151,7 +168,14 @@ export class ContractAgent extends Agent {
    */
   private async updateProfilesForMembers(contract: Contract): Promise<void> {
     for (const member of contract.members) {
-      await this.updateProfile(member.participant, contract);
+      if (member?.participant?.length) {
+        await this.updateProfile(member.participant, contract);
+      }
+    }
+    if (!contract?.members?.length) {
+      Logger.warn('no members found, 0 profile updated');
+    } else {
+      Logger.info(`${contract.members.length} profiles found for members`);
     }
   }
 
@@ -162,11 +186,22 @@ export class ContractAgent extends Agent {
   private async updateProfilesForServiceOfferings(
     contract: Contract,
   ): Promise<void> {
-    for (const offering of contract.serviceOfferings) {
-      await this.updateProfile(offering.participant, contract);
+    const uniqueParticipants = new Set<string>();
+    for (const offering of contract.serviceOfferings || []) {
+      if (offering?.participant?.length) {
+        uniqueParticipants.add(offering.participant);
+        await this.updateProfile(offering.participant, contract);
+      }
+    }
+    const offeringsCount = contract.serviceOfferings?.length || 0;
+    if (!offeringsCount) {
+      Logger.warn('no service offerings found, 0 profile updated');
+    } else {
+      Logger.info(
+        `${offeringsCount} service offerings with ${uniqueParticipants.size} unique participants processed`,
+      );
     }
   }
-
   /**
    * Updates profile for contract orchestrator
    * @param contract - Contract instance
@@ -174,7 +209,12 @@ export class ContractAgent extends Agent {
   private async updateProfileForOrchestrator(
     contract: Contract,
   ): Promise<void> {
-    await this.updateProfile(contract.orchestrator, contract);
+    if (contract?.orchestrator?.length) {
+      await this.updateProfile(contract.orchestrator, contract);
+      Logger.info('Profile updated for orchestrator');
+    } else {
+      Logger.warn('no orchestrator found, 0 profile updated');
+    }
   }
 
   /**
@@ -421,12 +461,14 @@ export class ContractAgent extends Agent {
         threshold: 0,
       };
       const existingProfile = await this.findProfiles('profiles', criteria);
+
       if (existingProfile?.length && existingProfile[0]) {
         Logger.warn(
           `Profile already exists for participant: ${participantURI}`,
         );
         return existingProfile[0];
       }
+
       const profileProvider = this.getDataProvider(Agent.profilesHost);
       const newProfileData = {
         uri: participantURI,
@@ -434,9 +476,11 @@ export class ContractAgent extends Agent {
         recommendations: [],
         matching: [],
       };
+
       const profile = await profileProvider.create(newProfileData);
       const newProfile = new Profile(profile as ProfileJSON);
       const saved = await this.saveProfile('profiles', criteria, newProfile);
+
       if (!saved) {
         throw new Error(`Failed to save new profile for: ${participantURI}`);
       }
