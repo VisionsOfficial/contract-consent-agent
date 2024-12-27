@@ -13,6 +13,7 @@ import {
   ContractAgentError,
   CAECode,
   FilterOperator,
+  ConsentProfileRecommendation,
 } from './types';
 import path from 'path';
 
@@ -147,7 +148,7 @@ export abstract class Agent {
     }
   }
 
-  getRecommendations(profile: Profile): ProfileRecommendation[] {
+  getRecommendations(profile: Profile): ProfileRecommendation[] | ConsentProfileRecommendation {
     return profile.recommendations;
   }
 
