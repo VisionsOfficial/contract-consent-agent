@@ -5,6 +5,7 @@ const router: Router = express.Router();
 router.get(
   '/profile/:id/policies-recommendations',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Profile']
     const requestHandler = await RequestHandler.retrieveService();
     try {
       const policies =
@@ -21,6 +22,7 @@ router.get(
 router.get(
   '/profile/:id/services-recommendations',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Profile']
     const requestHandler = await RequestHandler.retrieveService();
     try {
       const services =
@@ -37,6 +39,7 @@ router.get(
 router.get(
   '/profile/:id/policies-matching',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Profile']
     const requestHandler = await RequestHandler.retrieveService();
     try {
       const policies = await requestHandler.getPoliciesMatchingFromProfile(
@@ -52,6 +55,7 @@ router.get(
 router.get(
   '/profile/:id/services-matching',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Profile']
     const requestHandler = await RequestHandler.retrieveService();
     try {
       const services = await requestHandler.getServicesMatchingFromProfile(
@@ -67,6 +71,7 @@ router.get(
 router.get(
   '/profile/:id/service-recommendations',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Profile']
     const requestHandler = await RequestHandler.retrieveService();
     try {
       const services =
@@ -83,6 +88,7 @@ router.get(
 router.get(
   '/profile/:id/policies-matching',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Profile']
     const requestHandler = await RequestHandler.retrieveService();
     try {
       const policies = await requestHandler.getPoliciesMatchingFromProfile(
@@ -98,6 +104,7 @@ router.get(
 router.get(
   '/profile/:id/contract-matching',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Profile']
     const requestHandler = await RequestHandler.retrieveService();
     try {
       const contracts = await requestHandler.getContractMatchingFromProfile(
@@ -113,6 +120,7 @@ router.get(
 router.get(
   '/profile/:id/configurations',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Profile']
     const requestHandler = await RequestHandler.retrieveService();
     try {
       const configurations = await requestHandler.getConfigurationsFromProfile(
@@ -126,6 +134,7 @@ router.get(
 );
 
 router.post('/profile/configurations', async (req: Request, res: Response) => {
+  // #swagger.tags = ['Profile']
   const requestHandler = await RequestHandler.retrieveService();
   try {
     const { profileURI, configurations } = req.body;
@@ -142,6 +151,7 @@ router.post('/profile/configurations', async (req: Request, res: Response) => {
 router.put(
   '/profile/:id/configurations',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Profile']
     const requestHandler = await RequestHandler.retrieveService();
     try {
       const { configurations } = req.body;
@@ -159,6 +169,7 @@ router.put(
 router.delete(
   '/profile/:id/configurations',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Profile']
     const requestHandler = await RequestHandler.retrieveService();
     try {
       const result = await requestHandler.removeConfigurationsFromProfile(

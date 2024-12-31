@@ -41,7 +41,7 @@ export class MatchingService {
 
       otherParticipantsServices.forEach((service) => {
         service.policies?.forEach((policy) => {
-          const matchingPolicy = currentRecommendation.policies.find(
+          const matchingPolicy = currentRecommendation?.policies?.find(
             (recPolicy) => recPolicy.policy === policy.description,
           );
 
@@ -60,7 +60,7 @@ export class MatchingService {
           }
         });
 
-        const matchingService = currentRecommendation.services.find(
+        const matchingService = currentRecommendation?.services?.find(
           (recService) =>
             recService.serviceOffering === service.serviceOffering,
         );

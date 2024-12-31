@@ -52,6 +52,9 @@ class MongoInterceptor {
 }
 
 export class MongoDBProvider extends DataProvider {
+  findAll(): Promise<any[]> {
+    throw new Error('Method not implemented.');
+  }
   private static connections: Map<
     string,
     { db: Db; client: MongoClient } | undefined
