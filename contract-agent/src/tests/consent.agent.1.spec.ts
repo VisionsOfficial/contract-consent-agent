@@ -37,6 +37,16 @@ describe('Consent Agent Tests', function () {
   after(async function () {
     // Disconnect from the database using the static method
     await ChangeStreamDataProvider.disconnectFromDatabase(mongoUri, 'consent-manager');
+
+    const configFilePath = path.join(__dirname, './mocks/consent-agent.config.json');
+    const configContent = fs.readFileSync(configFilePath, 'utf8');
+    const config = JSON.parse(configContent);
+
+    config.dataProviderConfig.forEach((configItem: { url: string}) => {
+      configItem.url = 'test';
+    });
+
+    fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));
   });
 
   describe('Profile Management', () => {

@@ -3,37 +3,37 @@
   "dataProviderConfig": [
     {
       "source": "users",
-      "url": "mongodb://127.0.0.1:37256/?replicaSet=testset",
+      "url": "test",
       "dbName": "consent-manager",
       "watchChanges": true
     },
     {
       "source": "consents",
-      "url": "mongodb://127.0.0.1:37256/?replicaSet=testset",
+      "url": "test",
       "dbName": "consent-manager",
       "watchChanges": true
     },
     {
       "source": "privacynotices",
-      "url": "mongodb://127.0.0.1:37256/?replicaSet=testset",
+      "url": "test",
       "dbName": "consent-manager",
       "watchChanges": true
     },
     {
       "source": "participants",
-      "url": "mongodb://127.0.0.1:37256/?replicaSet=testset",
+      "url": "test",
       "dbName": "consent-manager",
       "watchChanges": false
     },
     {
       "source": "useridentifiers",
-      "url": "mongodb://127.0.0.1:37256/?replicaSet=testset",
+      "url": "test",
       "dbName": "consent-manager",
       "watchChanges": false
     },
     {
       "source": "profiles",
-      "url": "mongodb://127.0.0.1:37256/?replicaSet=testset",
+      "url": "test",
       "dbName": "consent-manager",
       "watchChanges": false,
       "hostsProfiles": true

@@ -109,6 +109,16 @@ describe('Consent Agent Handle Tests', function () {
     handleRemoveConsentSpy.restore();
     deleteProfileForParticipantSpy.restore();
     handleRemovePrivacyNoticeSpy.restore();
+
+    const configFilePath = path.join(__dirname, './mocks/consent-agent.config.json');
+    const configContent = fs.readFileSync(configFilePath, 'utf8');
+    const config = JSON.parse(configContent);
+
+    config.dataProviderConfig.forEach((configItem: { url: string}) => {
+      configItem.url = 'test';
+    });
+
+    fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));
   });
 
   it('should verify the flow for creating a users and creating profile', async function () {
