@@ -1,4 +1,5 @@
 import swaggerAutogen from 'swagger-autogen';
+import { Logger } from '../Logger';
 
 const doc = {
   info: {
@@ -7,7 +8,7 @@ const doc = {
   },
   servers: [
     {
-      url: 'http://localhost:8888',
+      url: 'http://localhost:8000',
     },
   ],
   components: {
@@ -19,12 +20,9 @@ const doc = {
     },
   },
 };
-const outputFile = './swagger_output.json';
-const endpointsFiles = ['./negotiation.swagger.ts',
-  './preference.swagger.ts',
-  './profile.swagger.ts',
-];
+const outputFile = '../../docs/swagger.json';
+const endpointsFiles = ['../agent.consent.router.ts', '../agent.contract.negotiation.router.ts', '../agent.contract.profile.router.ts'];
 
 swaggerAutogen()(outputFile, endpointsFiles, doc).then(() => {
-  console.log('Swagger documentation has been generated');
+  Logger.info('Swagger documentation has been generated');
 });

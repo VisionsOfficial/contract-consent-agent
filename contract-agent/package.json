@@ -12,8 +12,8 @@
     "build": "tsup",
     "test": "node run-tests.js",
     "test-legacy": "npx ts-mocha -p tsconfig.json ./src/tests/**/*.spec.ts --timeout 4000 --exit --test",
-    "doc": "typedoc",
-    "seed": "npx ts-node ./src/tests/seeds/index.ts"
+    "seed": "npx ts-node ./src/tests/seeds/index.ts",
+    "swagger": "npx ts-node ./src/swagger/swagger.ts"
   },
   "keywords": [],
   "author": "",
@@ -69,6 +69,7 @@
     "mongodb-memory-server": "^10.1.2",
     "node-cron": "^3.0.3",
     "stripe": "^16.12.0",
+    "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },

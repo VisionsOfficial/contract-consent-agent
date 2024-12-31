@@ -12,6 +12,7 @@ const router = express.Router();
 router.get(
   '/profile/:profileId/preferences/match',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Consent']
     try {
       const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
@@ -42,6 +43,7 @@ router.get(
 router.get(
   '/profile/:profileId/recommendations/consent',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Consent']
     try {
       const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
@@ -66,6 +68,7 @@ router.get(
 router.get(
   '/profile/:profileId/recommendations/dataexchanges',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Consent']
     try {
       const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
@@ -90,6 +93,7 @@ router.get(
 router.get(
   '/profile/:profileId/preferences',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Consent']
     try {
       const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
@@ -114,6 +118,7 @@ router.get(
 router.get(
   '/profile/:profileId/preferences/:preferenceId',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Consent']
     try {
       const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId, preferenceId } = req.params;
@@ -139,6 +144,7 @@ router.get(
 router.post(
   '/profile/:profileId/preferences',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Consent']
     try {
       const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
@@ -170,6 +176,7 @@ router.post(
 router.put(
   '/profile/:profileId/preferences/:preferenceId',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Consent']
     try {
       const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId, preferenceId } = req.params;
@@ -196,6 +203,7 @@ router.put(
 router.delete(
   '/profile/:profileId/preferences/:preferenceId',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Consent']
     try {
       const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId, preferenceId } = req.params;
@@ -221,6 +229,7 @@ router.delete(
 router.get(
   '/profile/:profileId/configurations',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Consent']
     try {
       const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
@@ -245,6 +254,7 @@ router.get(
 router.put(
   '/profile/:profileId/configurations',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Consent']
     try {
       const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
@@ -274,6 +284,7 @@ router.put(
 router.get(
   '/profile/:profileId',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Consent']
     try {
       const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
@@ -297,6 +308,7 @@ router.get(
 router.get(
   '/profile/',
   async (req: Request, res: Response) => {
+    // #swagger.tags = ['Consent']
     try {
       const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const services =
