@@ -42,7 +42,7 @@ export interface ProfileMatching {
 }
 
 export interface ProfileConfigurations {
-  allowRecommendations: boolean;
+  allowRecommendations?: boolean;
   allowPolicies?: boolean;
 }
 

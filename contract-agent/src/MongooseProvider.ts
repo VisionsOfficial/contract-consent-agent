@@ -50,6 +50,21 @@ class MongooseInterceptor {
 }
 
 export class MongooseProvider extends DataProvider {
+  findAll(): Promise<any[]> {
+    throw new Error('Method not implemented.');
+  }
+  findOne(criteria: SearchCriteria): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
+  findOneAndUpdate(criteria: SearchCriteria, data: any): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
+  findOneAndPush(criteria: SearchCriteria, data: any): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
+  findOneAndPull(criteria: SearchCriteria, data: any): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
   private static connections: Map<string, Connection | undefined> = new Map();
   private static externalModels: Map<string, Schema> = new Map();
   private static instances: Map<string, MongooseProvider> = new Map();

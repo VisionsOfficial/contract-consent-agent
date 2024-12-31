@@ -77,21 +77,22 @@ var __async = (__this, __arguments, generator) => {
 };
 
 // src/index.ts
-var index_exports = {};
-__export(index_exports, {
+var src_exports = {};
+__export(src_exports, {
   Agent: () => Agent,
+  ConsentAgentRouter: () => agent_consent_router_default,
   ContractAgent: () => ContractAgent,
   ContractAgentRouter: () => agent_contract_profile_router_default,
   Logger: () => Logger,
   MongoDBProvider: () => MongoDBProvider,
   MongooseProvider: () => MongooseProvider,
-  NegotiationAgentRouter: () => agent_contract_negotation_router_default,
+  NegotiationAgentRouter: () => agent_contract_negotiation_router_default,
   Profile: () => Profile
 });
-module.exports = __toCommonJS(index_exports);
+module.exports = __toCommonJS(src_exports);
 
-// src/agent.contract.negotation.router.ts
-var import_express = __toESM(require("express"));
+// src/agent.contract.negotiation.router.ts
+var import_express = require("express");
 
 // src/Logger.ts
 var import_fs = require("fs");
@@ -551,6 +552,9 @@ var Agent = class _Agent {
           );
         }
       }
+      if (this.config.existingDataCheck) {
+        yield this.existingDataCheck();
+      }
     });
   }
   loadDefaultConfiguration() {
@@ -568,6 +572,29 @@ var Agent = class _Agent {
   }
   getMatchings(profile) {
     return profile.matching;
+  }
+  createProfileForParticipant(participantId) {
+    return __async(this, null, function* () {
+      try {
+        if (!_Agent.profilesHost) {
+          throw new Error(
+            `Can't create profile for participant "profilesHost" is not set`
+          );
+        }
+        const profileProvider = this.getDataProvider(_Agent.profilesHost);
+        const newProfileData = {
+          uri: participantId,
+          configurations: {},
+          recommendations: [],
+          matching: []
+        };
+        const profile = yield profileProvider.create(newProfileData);
+        return new Profile(profile);
+      } catch (error) {
+        Logger.error(`Error creating profile: ${error.message}`);
+        throw new Error("Profile creation failed");
+      }
+    });
   }
 };
 
@@ -597,6 +624,9 @@ var MongoInterceptor = class _MongoInterceptor {
   }
 };
 var _MongoDBProvider = class _MongoDBProvider extends DataProvider {
+  findAll() {
+    throw new Error("Method not implemented.");
+  }
   constructor(config) {
     super(config.source);
     this.dbName = config.dbName;
@@ -900,6 +930,35 @@ var _MongoDBProvider = class _MongoDBProvider extends DataProvider {
       }
     });
   }
+  findOne(criteria) {
+    return __async(this, null, function* () {
+      const query = this.makeQuery(criteria.conditions);
+      const data = yield this.collection.findOne(query);
+      return data;
+    });
+  }
+  findOneAndUpdate(criteria, data) {
+    return __async(this, null, function* () {
+      const query = this.makeQuery(criteria.conditions);
+      return yield this.collection.findOneAndUpdate(query, { $set: data }, { returnDocument: "after" });
+    });
+  }
+  findOneAndPush(criteria, data) {
+    return __async(this, null, function* () {
+      const query = this.makeQuery(criteria.conditions);
+      Object.keys(data).map((key) => {
+        data[key].map((element) => element._id = new import_mongodb.ObjectId());
+        data[key] = { $each: data[key] };
+      });
+      return yield this.collection.findOneAndUpdate(query, { $push: data }, { returnDocument: "after" });
+    });
+  }
+  findOneAndPull(criteria, data) {
+    return __async(this, null, function* () {
+      const query = this.makeQuery(criteria.conditions);
+      return yield this.collection.findOneAndUpdate(query, { $pull: data }, { returnDocument: "after" });
+    });
+  }
 };
 _MongoDBProvider.connections = /* @__PURE__ */ new Map();
 var MongoDBProvider = _MongoDBProvider;
@@ -936,9 +995,10 @@ var MatchingService = class _MatchingService {
           profile.matching.push(matchingEntry);
         }
         otherParticipantsServices.forEach((service) => {
-          var _a;
+          var _a, _b;
           (_a = service.policies) == null ? void 0 : _a.forEach((policy) => {
-            const matchingPolicy = currentRecommendation.policies.find(
+            var _a2;
+            const matchingPolicy = (_a2 = currentRecommendation == null ? void 0 : currentRecommendation.policies) == null ? void 0 : _a2.find(
               (recPolicy) => recPolicy.policy === policy.description
             );
             if (matchingPolicy) {
@@ -955,7 +1015,7 @@ var MatchingService = class _MatchingService {
               }
             }
           });
-          const matchingService = currentRecommendation.services.find(
+          const matchingService = (_b = currentRecommendation == null ? void 0 : currentRecommendation.services) == null ? void 0 : _b.find(
             (recService) => recService.serviceOffering === service.serviceOffering
           );
           if (matchingService) {
@@ -996,12 +1056,13 @@ var RecommendationService = class _RecommendationService {
   }
   updateProfile(profile, data) {
     return __async(this, null, function* () {
+      var _a, _b, _c, _d;
       try {
         const contract = data;
-        const newPolicyDescriptions = this.collectPolicyDescriptionsForParticipant(contract, profile.uri);
+        const newPolicyDescriptions = this.collectPolicyDescriptionsForParticipant(contract, (_a = profile.uri) != null ? _a : "");
         const newServiceOfferings = this.collectServiceOfferingsForParticipant(
           contract,
-          profile.uri
+          (_b = profile.uri) != null ? _b : ""
         );
         const contractId = contract._id;
         let recommendation = profile.recommendations[0];
@@ -1014,8 +1075,8 @@ var RecommendationService = class _RecommendationService {
           profile.recommendations.push(recommendation);
         }
         newPolicyDescriptions.forEach((newPolicyDescription) => {
-          var _a;
-          const existingPolicy = (_a = recommendation.policies) == null ? void 0 : _a.find(
+          var _a2;
+          const existingPolicy = (_a2 = recommendation.policies) == null ? void 0 : _a2.find(
             (p) => p.policy === newPolicyDescription
           );
           if (existingPolicy) {
@@ -1028,12 +1089,12 @@ var RecommendationService = class _RecommendationService {
             });
           }
         });
-        if (contractId && !recommendation.ecosystemContracts.includes(contractId)) {
-          recommendation.ecosystemContracts.push(contractId);
+        if (contractId && !((_c = recommendation == null ? void 0 : recommendation.ecosystemContracts) == null ? void 0 : _c.includes(contractId))) {
+          (_d = recommendation == null ? void 0 : recommendation.ecosystemContracts) == null ? void 0 : _d.push(contractId);
         }
         newServiceOfferings.forEach((newServiceOffering) => {
-          var _a;
-          const existingService = (_a = recommendation.services) == null ? void 0 : _a.find(
+          var _a2;
+          const existingService = (_a2 = recommendation.services) == null ? void 0 : _a2.find(
             (s) => s.serviceOffering === newServiceOffering
           );
           if (existingService) {
@@ -1145,6 +1206,13 @@ var _ContractAgent = class _ContractAgent extends Agent {
    * @throws {ContractAgentError} Method not implemented
    */
   enrichProfileWithSystemRecommendations() {
+    throw new Error("Method not implemented.");
+  }
+  /**
+   * Enriches a profile with system recommendations
+   * @throws {ContractAgentError} Method not implemented
+   */
+  existingDataCheck() {
     throw new Error("Method not implemented.");
   }
   /**
@@ -1513,8 +1581,8 @@ var _ContractAgent = class _ContractAgent extends Agent {
 _ContractAgent.instance = null;
 var ContractAgent = _ContractAgent;
 
-// src/agent.contract.negotation.router.ts
-var router = import_express.default.Router();
+// src/agent.contract.negotiation.router.ts
+var router = (0, import_express.Router)();
 var negotiationService = NegotiationService.retrieveService();
 function fetchProfileById(profileId) {
   return __async(this, null, function* () {
@@ -1623,7 +1691,7 @@ router.put(
     }
   })
 );
-var agent_contract_negotation_router_default = router;
+var agent_contract_negotiation_router_default = router;
 
 // src/ContractAgentHandler.ts
 var _RequestHandler = class _RequestHandler {
@@ -1894,7 +1962,7 @@ var _RequestHandler = class _RequestHandler {
       }
       const profile = profiles[0];
       profile.configurations = {
-        allowRecommendation: false,
+        allowRecommendations: false,
         allowPolicies: false
       };
       yield this.contractAgent.saveProfile(this.profilesHost, criteria, profile);
@@ -1906,8 +1974,8 @@ _RequestHandler.instance = null;
 var RequestHandler = _RequestHandler;
 
 // src/agent.contract.profile.router.ts
-var import_express2 = __toESM(require("express"));
-var router2 = import_express2.default.Router();
+var import_express2 = require("express");
+var router2 = (0, import_express2.Router)();
 router2.get(
   "/profile/:id/policies-recommendations",
   (req, res) => __async(void 0, null, function* () {
@@ -2065,6 +2133,1730 @@ router2.delete(
 );
 var agent_contract_profile_router_default = router2;
 
+// src/ChangeStreamDataProvider.ts
+var import_mongodb2 = require("mongodb");
+var MongoInterceptor2 = class _MongoInterceptor {
+  constructor() {
+    this.callbacks = /* @__PURE__ */ new Map();
+    ["insert", "update", "delete"].forEach((op) => {
+      this.callbacks.set(op, []);
+    });
+  }
+  static getInstance() {
+    if (!_MongoInterceptor.instance) {
+      _MongoInterceptor.instance = new _MongoInterceptor();
+    }
+    return _MongoInterceptor.instance;
+  }
+  addCallback(changeType, callback) {
+    const callbacks = this.callbacks.get(changeType) || [];
+    callbacks.push(callback);
+    this.callbacks.set(changeType, callbacks);
+  }
+  notifyCallbacks(changeType, collectionName, document) {
+    const callbacks = this.callbacks.get(changeType) || [];
+    callbacks.forEach((callback) => callback(collectionName, document));
+  }
+};
+var _ChangeStreamDataProvider = class _ChangeStreamDataProvider extends DataProvider {
+  constructor(config) {
+    super(config.source);
+    this.dbName = config.dbName;
+    this.connectionPromise = this.connectToDatabase(config.url);
+  }
+  connectToDatabase(url) {
+    return __async(this, null, function* () {
+      if (!url) {
+        throw new Error("Database URL is required");
+      }
+      const connectionKey = `${url}:${this.dbName}`;
+      const existingConnection = _ChangeStreamDataProvider.connections.get(connectionKey);
+      if (existingConnection) {
+        Logger.info("Reusing existing MongoDB connection");
+        this.db = existingConnection.db;
+        this.client = existingConnection.client;
+        return this.db;
+      }
+      try {
+        const client = yield import_mongodb2.MongoClient.connect(url);
+        const db = client.db(this.dbName);
+        Logger.info("MongoDB connected successfully");
+        this.db = db;
+        this.client = client;
+        _ChangeStreamDataProvider.connections.set(connectionKey, { db, client });
+        return db;
+      } catch (error) {
+        Logger.error(`Error connecting to MongoDB: ${error.message}`);
+        throw error;
+      }
+    });
+  }
+  static disconnectFromDatabase(url, dbName) {
+    return __async(this, null, function* () {
+      const connectionKey = `${url}:${dbName}`;
+      const existingConnection = _ChangeStreamDataProvider.connections.get(connectionKey);
+      if (existingConnection) {
+        try {
+          yield existingConnection.client.close();
+          _ChangeStreamDataProvider.connections.set(connectionKey, void 0);
+          Logger.info(`MongoDB connection for ${connectionKey} closed`);
+        } catch (error) {
+          Logger.error(`Error during disconnect: ${error.message}`);
+        }
+      } else {
+        Logger.warn(`No active connection found for ${connectionKey}`);
+      }
+    });
+  }
+  ensureReady() {
+    return __async(this, null, function* () {
+      yield this.connectionPromise;
+      this.collection = _ChangeStreamDataProvider.createCollectionProxy(
+        this.db.collection(this.dataSource)
+      );
+      this.setupCallbacks();
+    });
+  }
+  static createCollectionProxy(collection) {
+    const interceptor = MongoInterceptor2.getInstance();
+    const changeStream = collection.watch();
+    changeStream.on("change", (change) => {
+      switch (change.operationType) {
+        case "insert":
+          interceptor.notifyCallbacks("insert", collection.collectionName, {
+            fullDocument: change.fullDocument,
+            insertedId: change.documentKey,
+            acknowledged: change.ns
+          });
+          break;
+        case "update":
+          interceptor.notifyCallbacks("update", collection.collectionName, {
+            filter: change.documentKey,
+            update: change.updateDescription,
+            change
+          });
+          break;
+        case "delete":
+          interceptor.notifyCallbacks("delete", collection.collectionName, {
+            filter: change.documentKey,
+            change
+          });
+          break;
+      }
+    });
+    const handler = {
+      get(target, prop) {
+        const original = target[prop];
+        if (typeof original !== "function") return original;
+        const nonAsyncMethods = ["find", "aggregate"];
+        if (nonAsyncMethods.includes(prop)) {
+          return function(...args) {
+            return original.call(target, ...args);
+          };
+        }
+        return function(...args) {
+          return __async(this, null, function* () {
+            const method = original;
+            const result = yield method.apply(target, args);
+            return result;
+          });
+        };
+      }
+    };
+    return new Proxy(collection, handler);
+  }
+  setupCallbacks() {
+    const interceptor = MongoInterceptor2.getInstance();
+    interceptor.addCallback("insert", (collectionName, data) => {
+      if (collectionName === this.dataSource) {
+        this.notifyDataChange("dataInserted", {
+          fullDocument: data.fullDocument,
+          fullDocuments: data.fullDocuments,
+          source: this.dataSource
+        });
+      }
+    });
+    interceptor.addCallback("update", (collectionName, data) => {
+      if (collectionName === this.dataSource) {
+        this.notifyDataChange("dataUpdated", {
+          documentKey: { _id: data.filter._id },
+          updateDescription: { updatedFields: data.update.$set || data.update.updatedFields || {} },
+          source: this.dataSource
+        });
+      }
+    });
+    interceptor.addCallback("delete", (collectionName, data) => {
+      if (collectionName === this.dataSource) {
+        this.notifyDataChange("dataDeleted", {
+          documentKey: { _id: data.filter._id },
+          source: this.dataSource
+        });
+      }
+    });
+  }
+  makeQuery(conditions) {
+    return conditions.reduce((query, condition) => {
+      switch (condition.operator) {
+        case "IN" /* IN */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: { $in: condition.value }
+          });
+        case "EQUALS" /* EQUALS */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: condition.value
+          });
+        case "GT" /* GT */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: { $gt: condition.value }
+          });
+        case "LT" /* LT */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: { $lt: condition.value }
+          });
+        case "CONTAINS" /* CONTAINS */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: {
+              $in: Array.isArray(condition.value) ? condition.value : [condition.value]
+            }
+          });
+        case "REGEX" /* REGEX */:
+          return __spreadProps(__spreadValues({}, query), {
+            [condition.field]: {
+              $in: Array.isArray(condition.value) ? condition.value.map((val) => new RegExp(val, "i")) : [new RegExp(condition.value, "i")]
+            }
+          });
+        default:
+          throw new Error(`Unsupported operator: ${condition.operator}`);
+      }
+    }, {});
+  }
+  create(data) {
+    return __async(this, null, function* () {
+      try {
+        const result = yield this.collection.insertOne(data);
+        if (!result.acknowledged) {
+          throw new Error("Document insertion was not acknowledged");
+        }
+        return __spreadProps(__spreadValues({}, data), { _id: result.insertedId });
+      } catch (error) {
+        Logger.info(
+          `Error during document insertion: ${error.message}`
+        );
+        throw error;
+      }
+    });
+  }
+  delete(id) {
+    return __async(this, null, function* () {
+      try {
+        const result = yield this.collection.deleteOne({ _id: new import_mongodb2.ObjectId(id) });
+        if (result.deletedCount === 0) {
+          Logger.warn(`No document found with id: ${id}`);
+          return false;
+        }
+        Logger.info(`Document with id: ${id} successfully deleted`);
+        return true;
+      } catch (error) {
+        Logger.error(
+          `Error during document deletion: ${error.message}`
+        );
+        throw error;
+      }
+    });
+  }
+  find(criteria) {
+    return __async(this, null, function* () {
+      const query = this.makeQuery(criteria.conditions);
+      const data = yield this.collection.find(query).limit(criteria.limit || 0).toArray();
+      return data.map((item) => {
+        if (item._id) {
+          const _a = item, { _id } = _a, rest = __objRest(_a, ["_id"]);
+          return __spreadValues({
+            _id: _id.toString()
+          }, rest);
+        }
+        return item;
+      });
+    });
+  }
+  update(criteria, data) {
+    return __async(this, null, function* () {
+      try {
+        const updateData = data;
+        const query = this.makeQuery(criteria.conditions);
+        const result = yield this.collection.updateOne(query, {
+          $set: updateData
+        });
+        if (result.matchedCount === 0) {
+          Logger.warn(`No document found matching the criteria`);
+          return false;
+        }
+        if (result.modifiedCount === 0) {
+          Logger.info(`No changes made to document`);
+          return false;
+        }
+        Logger.info(`Document successfully updated`);
+        return true;
+      } catch (error) {
+        Logger.error(`Error during document update: ${error.message}`);
+        throw error;
+      }
+    });
+  }
+  findAll() {
+    return __async(this, null, function* () {
+      return this.collection.find().toArray();
+    });
+  }
+  findOne(criteria) {
+    return __async(this, null, function* () {
+      const query = this.makeQuery(criteria.conditions);
+      const data = yield this.collection.findOne(query);
+      return data;
+    });
+  }
+  findOneAndUpdate(criteria, data) {
+    return __async(this, null, function* () {
+      const query = this.makeQuery(criteria.conditions);
+      return yield this.collection.findOneAndUpdate(query, { $set: data }, { returnDocument: "after" });
+    });
+  }
+  findOneAndPush(criteria, data) {
+    return __async(this, null, function* () {
+      const query = this.makeQuery(criteria.conditions);
+      Object.keys(data).map((key) => {
+        data[key].map((element) => element._id = new import_mongodb2.ObjectId());
+        data[key] = { $each: data[key] };
+      });
+      return yield this.collection.findOneAndUpdate(query, { $push: data }, { returnDocument: "after" });
+    });
+  }
+  findOneAndPull(criteria, data) {
+    return __async(this, null, function* () {
+      const query = this.makeQuery(criteria.conditions);
+      return yield this.collection.findOneAndUpdate(query, { $pull: data }, { returnDocument: "after" });
+    });
+  }
+};
+_ChangeStreamDataProvider.connections = /* @__PURE__ */ new Map();
+var ChangeStreamDataProvider = _ChangeStreamDataProvider;
+
+// src/ConsentAgent.ts
+var import_axios = __toESM(require("axios"));
+var import_mongodb3 = require("mongodb");
+var _ConsentAgent = class _ConsentAgent extends Agent {
+  constructor() {
+    super();
+  }
+  /**
+   * Prepares the ConsentAgent instance by loading configuration and setting up providers
+   * @throws {ConsentAgentError} If preparation fails
+   */
+  prepare() {
+    return __async(this, null, function* () {
+      try {
+        this.loadDefaultConfiguration();
+        yield this.addDefaultProviders();
+        this.setupProviderEventHandlers();
+      } catch (error) {
+        const agentError = {
+          name: "PreparationError",
+          message: `Failed to prepare ConsentAgent: ${error.message}`,
+          code: CAECode.PREPARATION_FAILED
+        };
+        Logger.error(agentError.message);
+        throw agentError;
+      }
+    });
+  }
+  /**
+   * Retrieves or creates an instance of ConsentAgent.
+   * @param dataProviderType
+   * @param refresh - Whether to force creation of a new instance.
+   * @returns Instance of ConsentAgent.
+   */
+  static retrieveService() {
+    return __async(this, arguments, function* (dataProviderType = ChangeStreamDataProvider, refresh = false) {
+      try {
+        if (!_ConsentAgent.instance || refresh) {
+          DataProvider.setChildType(dataProviderType);
+          const instance = new _ConsentAgent();
+          yield instance.prepare();
+          _ConsentAgent.instance = instance;
+        }
+        return _ConsentAgent.instance;
+      } catch (error) {
+        const serviceError = {
+          name: "ServiceRetrievalError",
+          message: `Failed to retrieve ConsentAgent service: ${error.message}`,
+          code: CAECode.SERVICE_RETRIEVAL_FAILED
+        };
+        Logger.error(serviceError.message);
+        throw serviceError;
+      }
+    });
+  }
+  /**
+   * Finds profiles based on the provided source and search criteria.
+   * @param source - Data source identifier.
+   * @param criteria - Search criteria.
+   * @returns Promise resolving to an array of profiles.
+   */
+  findProfiles(source, criteria) {
+    return __async(this, null, function* () {
+      try {
+        const dataProvider = this.getDataProvider(source);
+        const results = yield dataProvider.find(criteria);
+        return results.map((result) => {
+          const profil = {
+            uri: result.uri,
+            configurations: result.configurations,
+            recommendations: result.recommendations || [],
+            matching: result.matching || [],
+            preference: result.preference || []
+          };
+          return new Profile(profil);
+        });
+      } catch (error) {
+        Logger.error(`Error while finding profile: ${error.message}`);
+        throw new Error();
+      }
+    });
+  }
+  /**
+   * Finds profile based on the provided source and search criteria.
+   * @param source - Data source identifier.
+   * @param criteria - Search criteria.
+   * @returns Promise resolving to an array of profiles.
+   */
+  findProfile(source, criteria) {
+    return __async(this, null, function* () {
+      try {
+        const dataProvider = this.getDataProvider(source);
+        const result = yield dataProvider.findOne(criteria);
+        return new Profile({
+          _id: result == null ? void 0 : result._id,
+          uri: result == null ? void 0 : result.uri,
+          configurations: result == null ? void 0 : result.configurations,
+          recommendations: (result == null ? void 0 : result.recommendations) || [],
+          matching: (result == null ? void 0 : result.matching) || [],
+          preference: (result == null ? void 0 : result.preference) || []
+        });
+      } catch (error) {
+        Logger.error(`Error while finding profile: ${error.message}`);
+        throw new Error();
+      }
+    });
+  }
+  /**
+   * Finds profile based on the provided source and search criteria.
+   * @param source - Data source identifier.
+   * @param criteria - Search criteria.
+   * @param data - the updated data
+   * @returns Promise resolving to an array of profiles.
+   */
+  findProfileAndUpdate(source, criteria, data) {
+    return __async(this, null, function* () {
+      try {
+        const dataProvider = this.getDataProvider(source);
+        const result = yield dataProvider.findOneAndUpdate(
+          criteria,
+          data
+        );
+        return new Profile({
+          uri: result.uri,
+          configurations: result.configurations,
+          recommendations: result.recommendations || [],
+          matching: result.matching || [],
+          preference: result.preference || []
+        });
+      } catch (error) {
+        Logger.error(`Error while finding profile: ${error.message}`);
+        throw new Error();
+      }
+    });
+  }
+  /**
+   * Finds profile based on the provided source and search criteria.
+   * @param source - Data source identifier.
+   * @param criteria - Search criteria.
+   * @param data - the updated data
+   * @returns Promise resolving to an array of profiles.
+   */
+  findProfileAndPush(source, criteria, data) {
+    return __async(this, null, function* () {
+      try {
+        const dataProvider = this.getDataProvider(source);
+        const result = yield dataProvider.findOneAndPush(
+          criteria,
+          data
+        );
+        return new Profile({
+          uri: result.uri,
+          configurations: result.configurations,
+          recommendations: result.recommendations || [],
+          matching: result.matching || [],
+          preference: result.preference || []
+        });
+      } catch (error) {
+        Logger.error(`Error while finding profile: ${error.message}`);
+        throw new Error();
+      }
+    });
+  }
+  /**
+   * Finds profile based on the provided source and search criteria.
+   * @param source - Data source identifier.
+   * @param criteria - Search criteria.
+   * @param data - the updated data
+   *   Promise resolving to an array of profiles.
+   */
+  findProfileAndPull(source, criteria, data) {
+    return __async(this, null, function* () {
+      try {
+        const dataProvider = this.getDataProvider(source);
+        const result = yield dataProvider.findOneAndPull(
+          criteria,
+          data
+        );
+        return new Profile({
+          uri: result.uri,
+          configurations: result.configurations,
+          recommendations: result.recommendations || [],
+          matching: result.matching || [],
+          preference: result.preference || []
+        });
+      } catch (error) {
+        Logger.error(`Error while finding profile: ${error.message}`);
+        throw new Error();
+      }
+    });
+  }
+  /**
+   * Builds search criteria based on the provided source entity.
+   * @param sourceEntity - Entity from which to derive search criteria.
+   * @returns The constructed search criteria.
+   */
+  buildSearchCriteria(sourceEntity) {
+    throw new Error("Method not implemented.");
+  }
+  /**
+   * Enriches a profile with system recommendations.
+   * @returns The enriched profile.
+   */
+  enrichProfileWithSystemRecommendations() {
+    throw new Error("Method not implemented.");
+  }
+  /**
+   * Handles inserted data events
+   * @param data - Data change event
+   */
+  handleDataInserted(data) {
+    return __async(this, null, function* () {
+      if (data.fullDocument && data.fullDocument instanceof Object) {
+        switch (data.source) {
+          case "users":
+            {
+              try {
+                const { _id } = data.fullDocument;
+                yield this.createProfileForParticipant(_id);
+                Logger.info(`Data inserted for source: ${data.source}`);
+              } catch (error) {
+                Logger.error(
+                  `Data insertion failed: ${error.message}`
+                );
+                throw error;
+              }
+            }
+            break;
+          case "privacynotices":
+            {
+              try {
+                yield this.handlePrivacyNotice(data.fullDocument);
+                Logger.info(`Data inserted for source: ${data.source}`);
+              } catch (error) {
+                Logger.error(
+                  `Data insertion failed: ${error.message}`
+                );
+                throw error;
+              }
+            }
+            break;
+          case "consents":
+            {
+              try {
+                yield this.handleConsent(data.fullDocument);
+                Logger.info(`Data inserted for source: ${data.source}`);
+              } catch (error) {
+                Logger.error(
+                  `Data insertion failed: ${error.message}`
+                );
+                throw error;
+              }
+            }
+            break;
+        }
+      } else {
+        Logger.info(`Unhandled data for source: ${data.source}`);
+      }
+    });
+  }
+  /**
+   * Handles data update events.
+   * @param data - Data change event.
+   */
+  handleDataUpdated(data) {
+    return __async(this, null, function* () {
+      var _a, _b;
+      if (data.updateDescription && data.updateDescription.updatedFields && data.updateDescription.updatedFields instanceof Object) {
+        switch (data.source) {
+          case "users":
+            {
+              try {
+                if (data.updateDescription.updatedFields.identifiers) yield this.handleNewIdentifier({ _id: (_a = data.documentKey) == null ? void 0 : _a._id });
+                Logger.info(`Data updated for source: ${data.source}`);
+              } catch (error) {
+                Logger.error(
+                  `Data update failed: ${error.message}`
+                );
+                throw error;
+              }
+            }
+            break;
+          case "consents":
+            {
+              try {
+                const { updatedFields } = data.updateDescription;
+                if (updatedFields.status && (updatedFields.status === "revoked" || updatedFields.status === "refused" || updatedFields.status === "terminated")) {
+                  yield this.handleRemoveConsent({ _id: (_b = data.documentKey) == null ? void 0 : _b._id });
+                }
+                Logger.info(`Data updated for source: ${data.source}`);
+              } catch (error) {
+                Logger.error(
+                  `Data update failed: ${error.message}`
+                );
+                throw error;
+              }
+            }
+            break;
+        }
+      } else {
+        Logger.info(`Unhandled data for source: ${data.source}`);
+      }
+    });
+  }
+  /**
+   * Handles data deletion events.
+   * @param data - Data change event.
+   */
+  handleDataDeleted(data) {
+    return __async(this, null, function* () {
+      if (data.documentKey && data.documentKey instanceof Object) {
+        switch (data.source) {
+          case "users":
+            {
+              try {
+                const { _id } = data.documentKey;
+                yield this.deleteProfileForParticipant(_id);
+                Logger.info(`Data deleted for source: ${data.source}`);
+              } catch (error) {
+                Logger.error(
+                  `Data deletion failed: ${error.message}`
+                );
+                throw error;
+              }
+            }
+            break;
+          case "privacynotices":
+            {
+              try {
+                yield this.handleRemovePrivacyNotice(data.documentKey);
+                Logger.info(`Data deleted for source: ${data.source}`);
+              } catch (error) {
+                Logger.error(
+                  `Data deletion failed: ${error.message}`
+                );
+                throw error;
+              }
+            }
+            break;
+          case "consents":
+            {
+              try {
+                yield this.handleRemoveConsent(data.documentKey);
+                Logger.info(`Data deleted for source: ${data.source}`);
+              } catch (error) {
+                Logger.error(
+                  `Data deletion failed: ${error.message}`
+                );
+                throw error;
+              }
+            }
+            break;
+        }
+      } else {
+        Logger.info(`Unhandled data insertion for source: ${data.source}`);
+      }
+    });
+  }
+  /**
+   * Updates the matching information for a profile.
+   * @param profile - Profile instance.
+   * @param data - Matching data to update the profile with.
+   */
+  updateMatchingForProfile(profile, data) {
+    return __async(this, null, function* () {
+      throw new Error("Method not implemented.");
+    });
+  }
+  /**
+   * Check the existing data at the Agent initialization
+   * @returns {Promise<void>}
+   */
+  existingDataCheck() {
+    return __async(this, null, function* () {
+      const users = yield this.getDataProvider("users").findAll();
+      const profiles = yield this.getDataProvider("profiles").findAll();
+      for (const user of users) {
+        const existingProfile = profiles.find(
+          (profile) => profile.uri.toString() === user._id.toString()
+        );
+        if (!existingProfile) {
+          yield this.createProfileForParticipant(user._id);
+          Logger.info(`Profile created for user - ${user._id}`);
+        }
+      }
+    });
+  }
+  /**
+   * Updates recommendations for a profile.
+   * @param profile - Profile instance.
+   * @param data - Recommendation data to update the profile with.
+   */
+  updateRecommendationForProfile(profile, data) {
+    return __async(this, null, function* () {
+      const dataProvider = this.getDataProvider("profiles");
+      const criteria = {
+        conditions: [
+          {
+            field: "_id",
+            operator: "EQUALS" /* EQUALS */,
+            value: profile._id
+          }
+        ],
+        threshold: 0
+      };
+      yield dataProvider.findOneAndUpdate(criteria, data);
+    });
+  }
+  /**
+   * Create a profile for a user
+   * @param participantId - The Id of the user
+   * @param allowRecommendations - boolean option to setup configuration of the profile at the creation
+   */
+  createProfileForParticipant(participantId, allowRecommendations) {
+    return __async(this, null, function* () {
+      try {
+        const profileProvider = this.getDataProvider("profiles");
+        const newProfileData = {
+          uri: participantId,
+          configurations: {
+            allowRecommendations: allowRecommendations != null ? allowRecommendations : true
+          },
+          recommendations: {
+            consents: [],
+            dataExchanges: []
+          },
+          preference: []
+        };
+        const profile = yield profileProvider.create(newProfileData);
+        return new Profile(profile);
+      } catch (error) {
+        Logger.error(`Error creating profile: ${error.message}`);
+        throw new Error("Profile creation failed");
+      }
+    });
+  }
+  /**
+   * Deletes a profile for a given participant.
+   * 
+   * @param participantId - The Id of the participant whose profile is to be deleted.
+   * @returns The deleted profile.
+   */
+  deleteProfileForParticipant(participantId) {
+    return __async(this, null, function* () {
+      try {
+        const profileProvider = this.getDataProvider("profiles");
+        const result = yield profileProvider.findOne({
+          conditions: [
+            {
+              field: "uri",
+              operator: "EQUALS" /* EQUALS */,
+              value: participantId
+            }
+          ],
+          threshold: 0
+        });
+        if (result._id) {
+          yield profileProvider.delete(result == null ? void 0 : result._id);
+          return new Profile({
+            uri: result.uri,
+            configurations: result.configurations,
+            recommendations: result.recommendations || [],
+            matching: result.matching || [],
+            preference: result.preference || []
+          });
+        } else {
+          throw new Error("Profile not found");
+        }
+      } catch (error) {
+        Logger.error(`Error creating profile: ${error.message}`);
+        throw new Error("Profile creation failed");
+      }
+    });
+  }
+  /**
+   * Handles privacy notices by updating profiles that allow recommendations.
+   * 
+   * This method processes the privacy notice document by first fetching the purpose and data information.
+   * It then retrieves all profiles that allow recommendations and checks if they match the participants or categories
+   * specified in the purpose and data. If a match is found, the method updates the profile by adding the privacy notice.
+   * 
+   * @param fullDocument - The full document containing the privacy notice information.
+   */
+  handlePrivacyNotice(fullDocument) {
+    return __async(this, null, function* () {
+      const purposeData = yield this.getPurposeAndData(
+        fullDocument.purposes[0].serviceOffering,
+        fullDocument.data[0].serviceOffering
+      );
+      if (!purposeData) {
+        throw new Error("Purpose and data information is undefined");
+      }
+      const { purpose, data } = purposeData;
+      const profileProvider = this.getDataProvider("profiles");
+      const allProfiles = yield profileProvider.findAll();
+      for (const profile of allProfiles) {
+        if (profile.configurations.allowRecommendations && profile.preference.some(
+          (pref) => pref.participant === purpose.providedBy || pref.participant === data.providedBy || pref.category && purpose.category.includes(pref.category) || pref.category && data.category.includes(pref.category)
+        )) {
+          const { recommendations } = profile;
+          recommendations.dataExchanges.push(fullDocument._id);
+          yield this.updateRecommendationForProfile(profile, profile);
+          Logger.info(
+            `Profile ${profile._id} updated with privacy notice ${fullDocument._id}`
+          );
+        }
+      }
+    });
+  }
+  /**
+   * Handles consent by updating profiles that allow recommendations.
+   * 
+   * This method processes the consent document by first fetching the purpose and data information.
+   * It then retrieves all profiles that allow recommendations and checks if they match the participants or categories
+   * specified in the purpose and data. If a match is found, the method updates the profile by removing the privacy notice
+   * and adding the consent.
+   * 
+   * @param fullDocument - The full document containing the consent information.
+   */
+  handleConsent(fullDocument) {
+    return __async(this, null, function* () {
+      const purposeData = yield this.getPurposeAndData(
+        fullDocument.purposes[0].serviceOffering,
+        fullDocument.data[0].serviceOffering
+      );
+      if (!purposeData) {
+        throw new Error("Purpose and data information is undefined");
+      }
+      const { purpose, data } = purposeData;
+      const profileProvider = this.getDataProvider("profiles");
+      const allProfiles = yield profileProvider.findAll();
+      for (const profile of allProfiles) {
+        if (profile.configurations.allowRecommendations && profile.preference.some(
+          (pref) => pref.participant === purpose.providedBy || pref.participant === data.providedBy || pref.category && purpose.category.includes(pref.category) || pref.category && data.category.includes(pref.category)
+        )) {
+          const index = profile.recommendations.dataExchanges.indexOf(
+            fullDocument.privacyNotice
+          );
+          profile.recommendations.dataExchanges.splice(index, 1);
+          profile.recommendations.consents.push(fullDocument._id);
+          yield this.updateRecommendationForProfile(profile, profile);
+          Logger.info(
+            `Profile ${profile._id} updated with consent ${fullDocument._id}`
+          );
+        }
+      }
+    });
+  }
+  /**
+   * Handles the removal of privacy notice from profiles.
+   * @param fullDocument - The full document containing the privacy notice information.
+   */
+  handleRemovePrivacyNotice(fullDocument) {
+    return __async(this, null, function* () {
+      const profileProvider = this.getDataProvider("profiles");
+      const allProfiles = yield profileProvider.findAll();
+      for (const profile of allProfiles) {
+        const { recommendations } = profile;
+        if (recommendations.dataExchanges.includes(fullDocument._id)) {
+          const pull = { "recommendations.dataExchanges": { "_id": new import_mongodb3.ObjectId(fullDocument._id) } };
+          const criteria = {
+            conditions: [
+              {
+                field: "uri",
+                operator: "EQUALS" /* EQUALS */,
+                value: profile.uri
+              }
+            ],
+            threshold: 0
+          };
+          yield this.findProfileAndPull("profiles", criteria, pull);
+          Logger.info(
+            `Profile ${profile._id} updated with privacy notice ${fullDocument._id}`
+          );
+        }
+      }
+    });
+  }
+  /**
+   * Handles the removal of consent from profiles.
+   * @param fullDocument - The full document containing the consent information.
+   */
+  handleRemoveConsent(fullDocument) {
+    return __async(this, null, function* () {
+      const profileProvider = this.getDataProvider("profiles");
+      const allProfiles = yield profileProvider.findAll();
+      for (const profile of allProfiles) {
+        const { recommendations } = profile;
+        if (recommendations.consents.includes(fullDocument._id)) {
+          const pull = { "recommendations.consents": { "_id": new import_mongodb3.ObjectId(fullDocument._id) } };
+          const criteria = {
+            conditions: [
+              {
+                field: "uri",
+                operator: "EQUALS" /* EQUALS */,
+                value: profile.uri
+              }
+            ],
+            threshold: 0
+          };
+          yield this.findProfileAndPull("profiles", criteria, pull);
+          Logger.info(
+            `Profile ${profile._id} updated with privacy notice ${fullDocument._id}`
+          );
+        }
+      }
+    });
+  }
+  /**
+   * Fetches purpose and data documents based on their service descriptions.
+   *
+   * @param purposeSd - The service description URL for the purpose document.
+   * @param dataSd - The service description URL for the data document.
+   * @returns An object containing the fetched purpose and data documents.
+   */
+  getPurposeAndData(purposeSd, dataSd) {
+    return __async(this, null, function* () {
+      try {
+        const [purposeResponse, dataResponse] = yield Promise.all([
+          import_axios.default.get(purposeSd),
+          import_axios.default.get(dataSd)
+        ]);
+        if (!purposeResponse.data) {
+          throw new Error("Purpose data is undefined");
+        }
+        if (!dataResponse.data) {
+          throw new Error("Data data is undefined");
+        }
+        return { purpose: purposeResponse.data, data: dataResponse.data };
+      } catch (e) {
+        Logger.error(`Error fetching purpose and data: ${e.message}`);
+      }
+    });
+  }
+  /**
+   * Handles new identifier events.
+   * @param fullDocument - The full document of the new identifier event.
+   */
+  handleNewIdentifier(fullDocument) {
+    return __async(this, null, function* () {
+      try {
+        const profileProvider = this.getDataProvider("profiles");
+        const criteria = {
+          conditions: [
+            {
+              field: "uri",
+              operator: "EQUALS" /* EQUALS */,
+              value: fullDocument._id
+            }
+          ],
+          threshold: 0
+        };
+        const profile = yield profileProvider.findOne(criteria);
+        if (!profile) {
+          throw new Error("Profile not found");
+        }
+        const userIdentifierProvider = this.getDataProvider("useridentifiers");
+        const identifierCriteria = {
+          conditions: [
+            {
+              field: "_id",
+              operator: "EQUALS" /* EQUALS */,
+              value: fullDocument._id
+            }
+          ],
+          threshold: 0
+        };
+        const identifier = yield userIdentifierProvider.findOne(identifierCriteria);
+        if (!identifier) {
+          throw new Error("Identifier not found");
+        }
+        const participantsProvider = this.getDataProvider("participants");
+        const participantCriteria = {
+          conditions: [
+            {
+              field: "_id",
+              operator: "EQUALS" /* EQUALS */,
+              value: identifier.attachedParticipant
+            }
+          ],
+          threshold: 0
+        };
+        const participant = yield participantsProvider.findOne(participantCriteria);
+        if (!participant) {
+          throw new Error("Participant not found");
+        }
+        const pnProvider = this.getDataProvider("privacynotices");
+        const privacyNotices = yield pnProvider.findAll();
+        if (!privacyNotices) {
+          throw new Error("Privacy notices not found");
+        }
+        const filteredPrivacyNotices = privacyNotices.filter(
+          (pn) => pn.dataProvider === participant.selfDescriptionURL || pn.recipients.includes(participant.selfDescriptionURL)
+        );
+        const consentProvider = this.getDataProvider("consents");
+        const consents = yield consentProvider.findAll();
+        if (!consents) {
+          throw new Error("Consents not found");
+        }
+        const filteredConsents = consents.filter(
+          (consent) => consent.dataProvider === participant._id || consent.dataConsumer === participant._id
+        );
+        filteredPrivacyNotices.forEach((pn) => {
+          profile.recommendations.dataExchanges.push(pn._id);
+          profile.recommendations.dataExchanges = [...new Set(profile.recommendations.dataExchanges)];
+        });
+        filteredConsents.forEach((consent) => {
+          profile.recommendations.consents.push(consent._id);
+          profile.recommendations.consents = [...new Set(profile.recommendations.consents)];
+        });
+        yield this.updateRecommendationForProfile(profile, profile);
+      } catch (error) {
+        Logger.error(`Error handling new identifier: ${error.message}`);
+      }
+    });
+  }
+  /**
+   *
+   * @param source
+   * @param criteria
+   * @param profile
+   */
+  saveProfile(source, criteria, profile) {
+    throw new Error("Method not implemented.");
+  }
+};
+_ConsentAgent.instance = null;
+var ConsentAgent = _ConsentAgent;
+
+// src/ConsentAgentHandler.ts
+var import_mongodb4 = require("mongodb");
+var _ConsentAgentRequestHandler = class _ConsentAgentRequestHandler {
+  constructor() {
+    this.profilesHost = "";
+  }
+  static retrieveService() {
+    return __async(this, null, function* () {
+      if (!_ConsentAgentRequestHandler.instance) {
+        const instance = new _ConsentAgentRequestHandler();
+        yield instance.prepare();
+        _ConsentAgentRequestHandler.instance = instance;
+      }
+      return _ConsentAgentRequestHandler.instance;
+    });
+  }
+  prepare() {
+    return __async(this, null, function* () {
+      this.consentAgent = yield ConsentAgent.retrieveService();
+    });
+  }
+  getConsentAgent() {
+    return __async(this, null, function* () {
+      return ConsentAgent.retrieveService();
+    });
+  }
+  /**
+   * Returns only the policies from the recommendations.
+   * 
+   * @param profileId - The ID of the profile to retrieve recommendations for.
+   * @returns {Promise<any>} - A promise that resolves to the policies from the recommendations.
+   */
+  getConsentRecommendationFromProfile(profileId) {
+    return __async(this, null, function* () {
+      yield this.prepare();
+      const criteria = {
+        conditions: [
+          {
+            field: "uri",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileId
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.consentAgent) {
+        throw new Error("Consent Agent undefined");
+      }
+      const profile = yield this.consentAgent.findProfile("profiles", criteria);
+      if (!profile) {
+        throw new Error("Profile not found");
+      }
+      return profile.recommendations.consents;
+    });
+  }
+  /**
+   * Returns only the services from the recommendations.
+   * 
+   * @param profileId - The ID of the profile to retrieve recommendations for.
+   * @returns {Promise<any>} - A promise that resolves to the services from the recommendations.
+   */
+  getDataExchangeRecommendationFromProfile(profileId) {
+    return __async(this, null, function* () {
+      yield this.prepare();
+      const criteria = {
+        conditions: [
+          {
+            field: "uri",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileId
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.consentAgent) {
+        throw new Error("Consent Agent undefined");
+      }
+      const profile = yield this.consentAgent.findProfile("profiles", criteria);
+      if (!profile) {
+        throw new Error("Profile not found");
+      }
+      return profile.recommendations.dataExchanges;
+    });
+  }
+  /**
+   * Return the profile's authorization
+   * @param profileURL - uri of the profile
+   * @return Promise<ProfilePreference[]>
+   */
+  getPreferencesFromProfile(profileURL) {
+    return __async(this, null, function* () {
+      yield this.prepare();
+      const criteria = {
+        conditions: [
+          {
+            field: "uri",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileURL
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.consentAgent) {
+        throw new Error("Consent Agent undefined");
+      }
+      const profile = yield this.consentAgent.findProfile("profiles", criteria);
+      if (!profile) throw new Error("Profile not found");
+      return profile.preference;
+    });
+  }
+  /**
+   * Return the profile's authorization
+   * @param profileURL - uri of the profile
+   * @param {PreferencePayload} data
+   * @return Promise<ProfilePreference[]>
+   */
+  addPreferenceToProfile(profileURL, data) {
+    return __async(this, null, function* () {
+      yield this.prepare();
+      const criteria = {
+        conditions: [
+          {
+            field: "uri",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileURL
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.consentAgent) {
+        throw new Error("Consent Agent undefined");
+      }
+      const profile = yield this.consentAgent.findProfileAndPush(
+        "profiles",
+        criteria,
+        { preference: data }
+      );
+      if (!profile) throw new Error("Profile not found");
+      return profile.preference;
+    });
+  }
+  /**
+   * Return the profile's authorization
+   * @param {string} profileURL - URL of the profile
+   * @param {string} preferenceId - ID of the preference
+   * @return Promise<ProfilePreference[]>
+   */
+  getPreferenceByIdFromProfile(profileURL, preferenceId) {
+    return __async(this, null, function* () {
+      yield this.prepare();
+      const criteria = {
+        conditions: [
+          {
+            field: "uri",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileURL
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.consentAgent) {
+        throw new Error("Consent Agent undefined");
+      }
+      const profile = yield this.consentAgent.findProfile("profiles", criteria);
+      if (!profile) throw new Error("Profile not found");
+      return profile.preference.filter(
+        (element) => {
+          var _a;
+          return ((_a = element._id) == null ? void 0 : _a.toString()) === preferenceId;
+        }
+      );
+    });
+  }
+  /**
+   * Update the profile's preference
+   * @param {string} profileURL - URL of the profile
+   * @param {string} preferenceId - ID of the preference
+   * @param {PreferencePayload} data - Data to update
+   * @return Promise<ProfilePreference[]>
+   */
+  updatePreferenceByIdFromProfile(profileURL, preferenceId, data) {
+    return __async(this, null, function* () {
+      yield this.prepare();
+      const criteria = {
+        conditions: [
+          {
+            field: "uri",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileURL
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.consentAgent) {
+        throw new Error("Consent Agent undefined");
+      }
+      const profile = yield this.consentAgent.findProfile("profiles", criteria);
+      if (!profile) throw new Error("Profile not found");
+      const preferenceIndex = profile.preference.findIndex(
+        (element) => {
+          var _a;
+          return ((_a = element._id) == null ? void 0 : _a.toString()) === preferenceId;
+        }
+      );
+      if (data.asDataProvider) {
+        profile.preference[preferenceIndex].asDataProvider = __spreadValues(__spreadValues({}, profile.preference[preferenceIndex].asDataProvider), data.asDataProvider);
+      }
+      if (data.asServiceProvider) {
+        profile.preference[preferenceIndex].asServiceProvider = __spreadValues(__spreadValues({}, profile.preference[preferenceIndex].asServiceProvider), data.asServiceProvider);
+      }
+      if (data.participant) {
+        profile.preference[preferenceIndex].participant = data.participant;
+      }
+      if (data.category) {
+        profile.preference[preferenceIndex].participant = data.category;
+      }
+      delete profile._id;
+      const profileUpdated = yield this.consentAgent.findProfileAndUpdate(
+        "profiles",
+        criteria,
+        profile
+      );
+      if (!profileUpdated) throw new Error("Profile not found");
+      return profileUpdated.preference.filter(
+        (element) => {
+          var _a;
+          return ((_a = element._id) == null ? void 0 : _a.toString()) === preferenceId;
+        }
+      );
+    });
+  }
+  /**
+   * Update the profile's preference
+   * @param {string} profileURL - URL of the profile
+   * @param {string} preferenceId - ID of the preference
+   * @param {PreferencePayload} data - Data to update
+   * @return Promise<ProfilePreference[]>
+   */
+  deletePreferenceByIdFromProfile(profileURL, preferenceId) {
+    return __async(this, null, function* () {
+      yield this.prepare();
+      const criteria = {
+        conditions: [
+          {
+            field: "uri",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileURL
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.consentAgent) {
+        throw new Error("Consent Agent undefined");
+      }
+      const data = { preference: { _id: new import_mongodb4.ObjectId(preferenceId) } };
+      const profile = yield this.consentAgent.findProfileAndPull(
+        "profiles",
+        criteria,
+        data
+      );
+      if (!profile) throw new Error("Profile not found");
+      return profile.preference;
+    });
+  }
+  /**
+   * Return the profile's authorization
+   * @param profileURL - uri of the profile
+   * @return Promise<ProfileConfigurations>
+   */
+  getConfigurationsFromProfile(profileURL) {
+    return __async(this, null, function* () {
+      yield this.prepare();
+      const criteria = {
+        conditions: [
+          {
+            field: "uri",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileURL
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.consentAgent) {
+        throw new Error("Consent Agent undefined");
+      }
+      const profiles = yield this.consentAgent.findProfiles("profiles", criteria);
+      if (profiles.length === 0) throw new Error("Profile not found");
+      return profiles[0].configurations;
+    });
+  }
+  // Return the profile by uri
+  getProfileByURL(uri) {
+    return __async(this, null, function* () {
+      yield this.prepare();
+      const criteria = {
+        conditions: [
+          {
+            field: "uri",
+            operator: "EQUALS" /* EQUALS */,
+            value: uri
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.consentAgent) {
+        throw new Error("Consent Agent undefined");
+      }
+      const profile = yield this.consentAgent.findProfile("profiles", criteria);
+      if (!profile) throw new Error("Profile not found");
+      return profile;
+    });
+  }
+  // Return the authorization of the profile
+  getProfiles() {
+    return __async(this, null, function* () {
+      yield this.prepare();
+      const criteria = {
+        conditions: [],
+        threshold: 0
+      };
+      if (!this.consentAgent) {
+        throw new Error("Consent Agent undefined");
+      }
+      const profiles = yield this.consentAgent.findProfiles("profiles", criteria);
+      if (profiles.length === 0) throw new Error("Profile not found");
+      return profiles;
+    });
+  }
+  // Return the authorization of the profile
+  updateProfile(profileURL, data) {
+    return __async(this, null, function* () {
+      yield this.prepare();
+      const criteria = {
+        conditions: [
+          {
+            field: "uri",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileURL
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.consentAgent) {
+        throw new Error("Consent Agent undefined");
+      }
+      const profile = yield this.consentAgent.findProfileAndUpdate(
+        "profiles",
+        criteria,
+        data
+      );
+      if (!profile) throw new Error("Profile not found");
+      return profile;
+    });
+  }
+  /**
+   * Checks if the given parameters match the preferences of a profile.
+   * 
+   * @param {string} profileId - The ID of the profile to check preferences for.
+   * @param {string} category - The category to match preferences against.
+   * @param {string} participant - The participant to match preferences against.
+   * @param {string} location - The location to match preferences against.
+   * @param {boolean} asDataProvider - Indicates if the check is for a data provider role.
+   * @param {boolean} asServiceProvider - Indicates if the check is for a service provider role.
+   * 
+   * @returns {Promise<boolean>} A promise that resolves to a boolean indicating if the preferences match.
+   */
+  checkPreferenceMatch(params) {
+    return __async(this, null, function* () {
+      const {
+        profileId,
+        category,
+        participant,
+        location,
+        asDataProvider,
+        asServiceProvider
+      } = params;
+      if (category && participant) {
+        throw new Error(
+          "Cannot use both category and participant simultaneously."
+        );
+      }
+      if (!category && !participant) {
+        throw new Error("At least one of category or participant must be true.");
+      }
+      if (asDataProvider && asServiceProvider) {
+        throw new Error(
+          "Cannot use both asDataProvider and asServiceProvider simultaneously."
+        );
+      }
+      if (!asDataProvider && !asServiceProvider) {
+        throw new Error(
+          "At least one of asDataProvider or asServiceProvider must be true."
+        );
+      }
+      yield this.prepare();
+      const criteria = {
+        conditions: [
+          {
+            field: "uri",
+            operator: "EQUALS" /* EQUALS */,
+            value: profileId
+          }
+        ],
+        threshold: 0
+      };
+      if (!this.consentAgent) {
+        throw new Error("Consent Agent undefined");
+      }
+      if (participant) {
+        criteria.conditions.push({
+          field: "preference.participant",
+          operator: "EQUALS" /* EQUALS */,
+          value: participant
+        });
+      }
+      if (category) {
+        criteria.conditions.push({
+          field: "preference.category",
+          operator: "EQUALS" /* EQUALS */,
+          value: category
+        });
+      }
+      const profile = yield this.consentAgent.findProfile("profiles", criteria);
+      if (!profile._id) return false;
+      let preference;
+      if (participant) {
+        preference = profile.preference.find(
+          (pref) => pref.participant === participant
+        );
+      }
+      if (category) {
+        preference = profile.preference.find(
+          (pref) => pref.category === category
+        );
+      }
+      if (preference) {
+        const currentDay = (/* @__PURE__ */ new Date()).getDay().toString();
+        let isMatch = false;
+        if (asDataProvider && preference.asDataProvider) {
+          isMatch = this.checkAuthorizationMatch(preference.asDataProvider, currentDay, location);
+        } else if (asServiceProvider && preference.asServiceProvider) {
+          isMatch = this.checkAuthorizationMatch(preference.asServiceProvider, currentDay, location);
+        }
+        return isMatch;
+      }
+      return true;
+    });
+  }
+  /**
+   * This function checks if the authorization matches the current day and location.
+   * 
+   * @param authorization - The authorization object to check.
+   * @param currentDay - The current day of the week.
+   * @param location - The current location.
+   * @returns {boolean} - True if the authorization matches, false otherwise.
+   */
+  checkAuthorizationMatch(authorization, currentDay, location) {
+    if (authorization.authorizationLevel === "never") {
+      return false;
+    } else if (authorization.authorizationLevel === "always") {
+      return true;
+    } else if (authorization.authorizationLevel === "conditional") {
+      if (authorization.conditions) {
+        return authorization.conditions.some((condition) => {
+          if (condition.time && condition.time.dayOfWeek && condition.time.dayOfWeek.includes(currentDay)) {
+            const startTime = new Date(condition.time.startTime || "");
+            const endTime = new Date(condition.time.endTime || "");
+            const currentTime = /* @__PURE__ */ new Date();
+            return currentTime >= startTime && currentTime <= endTime;
+          }
+          if (condition.location && condition.location.countryCode === location) {
+            return true;
+          }
+          return false;
+        });
+      }
+    }
+    return false;
+  }
+};
+_ConsentAgentRequestHandler.instance = null;
+var ConsentAgentRequestHandler = _ConsentAgentRequestHandler;
+
+// src/agent.consent.router.ts
+var import_express3 = require("express");
+var router3 = (0, import_express3.Router)();
+router3.get(
+  "/profile/:profileId/preferences/match",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const requestHandler = yield ConsentAgentRequestHandler.retrieveService();
+      const { profileId } = req.params;
+      const {
+        category,
+        participant,
+        location,
+        asDataProvider,
+        asServiceProvider
+      } = req.query;
+      const service = yield requestHandler.checkPreferenceMatch({
+        profileId,
+        category: category == null ? void 0 : category.toString(),
+        participant: participant == null ? void 0 : participant.toString(),
+        location: location == null ? void 0 : location.toString(),
+        asDataProvider: asDataProvider === "true",
+        asServiceProvider: asServiceProvider === "true"
+      });
+      res.json(service);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router3.get(
+  "/profile/:profileId/recommendations/consent",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const requestHandler = yield ConsentAgentRequestHandler.retrieveService();
+      const { profileId } = req.params;
+      const services = yield requestHandler.getConsentRecommendationFromProfile(profileId);
+      res.json(services);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router3.get(
+  "/profile/:profileId/recommendations/dataexchanges",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const requestHandler = yield ConsentAgentRequestHandler.retrieveService();
+      const { profileId } = req.params;
+      const service = yield requestHandler.getDataExchangeRecommendationFromProfile(
+        profileId
+      );
+      res.json(service);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router3.get(
+  "/profile/:profileId/preferences",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const requestHandler = yield ConsentAgentRequestHandler.retrieveService();
+      const { profileId } = req.params;
+      const service = yield requestHandler.getPreferencesFromProfile(profileId);
+      res.json(service);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router3.get(
+  "/profile/:profileId/preferences/:preferenceId",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const requestHandler = yield ConsentAgentRequestHandler.retrieveService();
+      const { profileId, preferenceId } = req.params;
+      const service = yield requestHandler.getPreferenceByIdFromProfile(
+        profileId,
+        preferenceId
+      );
+      res.json(service);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router3.post(
+  "/profile/:profileId/preferences",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const requestHandler = yield ConsentAgentRequestHandler.retrieveService();
+      const { profileId } = req.params;
+      const { preference } = req.body;
+      if (!preference.every((p) => p.participant || p.category)) {
+        throw new Error("Each preference must contain at least the field participant or category");
+      }
+      const service = yield requestHandler.addPreferenceToProfile(
+        profileId,
+        preference
+      );
+      res.status(201).json(service);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router3.put(
+  "/profile/:profileId/preferences/:preferenceId",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const requestHandler = yield ConsentAgentRequestHandler.retrieveService();
+      const { profileId, preferenceId } = req.params;
+      const service = yield requestHandler.updatePreferenceByIdFromProfile(
+        profileId,
+        preferenceId,
+        req.body
+      );
+      res.json(service);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router3.delete(
+  "/profile/:profileId/preferences/:preferenceId",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const requestHandler = yield ConsentAgentRequestHandler.retrieveService();
+      const { profileId, preferenceId } = req.params;
+      const service = yield requestHandler.deletePreferenceByIdFromProfile(
+        profileId,
+        preferenceId
+      );
+      res.json(service);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router3.get(
+  "/profile/:profileId/configurations",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const requestHandler = yield ConsentAgentRequestHandler.retrieveService();
+      const { profileId } = req.params;
+      const service = yield requestHandler.getConfigurationsFromProfile(
+        profileId
+      );
+      res.json(service);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router3.put(
+  "/profile/:profileId/configurations",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const requestHandler = yield ConsentAgentRequestHandler.retrieveService();
+      const { profileId } = req.params;
+      const configurations = req.body.configurations;
+      const services = yield requestHandler.updateProfile(
+        profileId,
+        {
+          uri: profileId,
+          configurations
+        }
+      );
+      res.json(services);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router3.get(
+  "/profile/:profileId",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const requestHandler = yield ConsentAgentRequestHandler.retrieveService();
+      const { profileId } = req.params;
+      const services = yield requestHandler.getProfileByURL(
+        profileId
+      );
+      res.json(services);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+router3.get(
+  "/profile/",
+  (req, res) => __async(void 0, null, function* () {
+    try {
+      const requestHandler = yield ConsentAgentRequestHandler.retrieveService();
+      const services = yield requestHandler.getProfiles();
+      res.json(services);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+);
+var agent_consent_router_default = router3;
+
 // src/MongooseProvider.ts
 var import_mongoose2 = __toESM(require("mongoose"));
 var _MongooseProvider = class _MongooseProvider extends DataProvider {
@@ -2077,6 +3869,21 @@ var _MongooseProvider = class _MongooseProvider extends DataProvider {
       this.mongoosePromiseResolve = resolve;
     });
     _MongooseProvider.instances.set(config.source, this);
+  }
+  findAll() {
+    throw new Error("Method not implemented.");
+  }
+  findOne(criteria) {
+    throw new Error("Method not implemented.");
+  }
+  findOneAndUpdate(criteria, data) {
+    throw new Error("Method not implemented.");
+  }
+  findOneAndPush(criteria, data) {
+    throw new Error("Method not implemented.");
+  }
+  findOneAndPull(criteria, data) {
+    throw new Error("Method not implemented.");
   }
   static setCollectionModel(source, schema) {
     schema.post("save", (doc) => {
@@ -2318,6 +4125,7 @@ var MongooseProvider = _MongooseProvider;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   Agent,
+  ConsentAgentRouter,
   ContractAgent,
   ContractAgentRouter,
   Logger,

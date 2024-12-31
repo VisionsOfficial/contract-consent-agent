@@ -1,14 +1,6 @@
-export { default as NegotiationAgentRouter } from './agent.contract.negotation.router';
+export { default as NegotiationAgentRouter } from './agent.contract.negotiation.router';
 export { default as ContractAgentRouter } from './agent.contract.profile.router';
-// export { default as ConsentAgentRouter } from './agent.consent.router';
-import express from 'express';
-
-import  router  from './agent.contract.profile.router';
-
-export const routes = express.Router();
-
-routes.use('/api/doc', router);
-
+export { default as ConsentAgentRouter } from './agent.consent.router';
 
 export type {
   ProfilePolicy,

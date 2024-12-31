@@ -1,4 +1,4 @@
-import express, { Request, Response, Router } from 'express';
+import { Request, Response, Router } from 'express';
 import { NegotiationService } from './NegotiationService';
 import { Profile } from './Profile';
 import { Policy, ServiceOffering, Contract } from './Contract';
@@ -7,7 +7,7 @@ import { Logger } from './Logger';
 import { SearchCriteria, FilterOperator } from './types';
 import { Agent } from './Agent';
 
-const router: Router = express.Router();
+const router: Router = Router();
 const negotiationService = NegotiationService.retrieveService();
 
 async function fetchProfileById(profileId: string): Promise<Profile> {
@@ -33,10 +33,27 @@ async function fetchProfileById(profileId: string): Promise<Profile> {
   return new Profile(profiles[0]);
 }
 
+/**
+ * Handles the request to check if a contract can be accepted by a profile.
+ * 
+ * @param {Request} req - The incoming request object.
+ * @param {Response} res - The response object to send back to the client.
+ */
 router.post(
   '/negotiation/contract/acceptance',
   async (req: Request, res: Response) => {
-    // #swagger.tags = ['Negotiation']
+    /*    #swagger.tags = ['Negotiation']
+          #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: "#/components/schemas/ContractPayload"
+                    }  
+                }
+            }
+        } 
+    */
     try {
       const { profileId, contractData } = req.body;
       const profile = await fetchProfileById(profileId);
@@ -50,10 +67,27 @@ router.post(
   },
 );
 
+/**
+ * Handles the request to check if a policy is acceptable by a profile.
+ * 
+ * @param {Request} req - The incoming request object.
+ * @param {Response} res - The response object to send back to the client.
+ */
 router.post(
   '/negotiation/policy/acceptance',
   async (req: Request, res: Response) => {
-    // #swagger.tags = ['Negotiation']
+    /*    #swagger.tags = ['Negotiation']
+          #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: "#/components/schemas/PolicyPayload"
+                    }  
+                }
+            }
+        } 
+    */
     try {
       const { profileId, policyData } = req.body;
       const profile = await fetchProfileById(profileId);
@@ -70,10 +104,27 @@ router.post(
   },
 );
 
+/**
+ * Handles the request to check if a service offering is acceptable by a profile.
+ * 
+ * @param {Request} req - The incoming request object.
+ * @param {Response} res - The response object to send back to the client.
+ */
 router.post(
   '/negotiation/service/acceptance',
   async (req: Request, res: Response) => {
-    // #swagger.tags = ['Negotiation']
+    /*    #swagger.tags = ['Negotiation']
+          #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: "#/components/schemas/ServiceOfferingPayload"
+                    }  
+                }
+            }
+        } 
+    */
     try {
       const { profileId, serviceData } = req.body;
       const profile = await fetchProfileById(profileId);
@@ -90,10 +141,27 @@ router.post(
   },
 );
 
+/**
+ * Handles the request to negotiate a contract with a profile.
+ * 
+ * @param {Request} req - The incoming request object.
+ * @param {Response} res - The response object to send back to the client.
+ */
 router.post(
   '/negotiation/contract/negotiate',
   async (req: Request, res: Response) => {
-    // #swagger.tags = ['Negotiation']
+    /*    #swagger.tags = ['Negotiation']
+          #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: "#/components/schemas/ContractPayload"
+                    }  
+                }
+            }
+        } 
+    */
     try {
       const { profileId, contractData } = req.body;
       const profile = await fetchProfileById(profileId);
@@ -110,10 +178,27 @@ router.post(
   },
 );
 
+/**
+ * Handles the request to update a profile's preferences.
+ * 
+ * @param {Request} req - The incoming request object.
+ * @param {Response} res - The response object to send back to the client.
+ */
 router.put(
   '/negotiation/profile/preferences',
   async (req: Request, res: Response) => {
-    // #swagger.tags = ['Negotiation']
+    /*    #swagger.tags = ['Negotiation']
+          #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: "#/components/schemas/ProfilePreferencePayload"
+                    }  
+                }
+            }
+        } 
+    */
     try {
       const { profileId, preferences } = req.body;
       const profile = await fetchProfileById(profileId);

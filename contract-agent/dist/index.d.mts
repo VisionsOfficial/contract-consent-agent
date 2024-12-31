@@ -3,6 +3,8 @@ import { EventEmitter } from 'events';
 import { MongoClient, Collection, Document, WithId } from 'mongodb';
 import { Document as Document$1, Schema } from 'mongoose';
 
+declare const router$2: Router;
+
 declare const router$1: Router;
 
 declare const router: Router;
@@ -15,6 +17,11 @@ declare abstract class DataProvider extends EventEmitter {
     static childType?: DataProviderType;
     constructor(dataSource: string);
     abstract find(criteria: SearchCriteria): Promise<[]>;
+    abstract findAll(): Promise<any[]>;
+    abstract findOne(criteria: SearchCriteria): Promise<any>;
+    abstract findOneAndUpdate(criteria: SearchCriteria, data: any): Promise<any>;
+    abstract findOneAndPush(criteria: SearchCriteria, data: any): Promise<any>;
+    abstract findOneAndPull(criteria: SearchCriteria, data: any): Promise<any>;
     abstract create(data: unknown): Promise<unknown>;
     abstract delete(id: string): Promise<boolean>;
     abstract update(criteria: SearchCriteria, data: unknown): Promise<boolean>;
@@ -31,14 +38,31 @@ interface ProfilePolicy {
     frequency: number;
 }
 interface ProfilePreference {
+    _id?: string;
     policies: ProfilePolicy[];
     ecosystems: string[];
     services: string[];
+    participant?: string;
+    category?: string;
+    asDataProvider?: {
+        authorizationLevel?: AuthorizationLevelEnum;
+        conditions?: Condition[];
+    };
+    asServiceProvider?: {
+        authorizationLevel?: AuthorizationLevelEnum;
+        conditions?: Condition[];
+    };
 }
 interface ProfileRecommendation {
-    policies: ProfilePolicy[];
-    ecosystemContracts: any[];
-    services: any[];
+    policies?: ProfilePolicy[];
+    ecosystemContracts?: any[];
+    services?: any[];
+    consents?: any[];
+    dataExchanges?: any[];
+}
+interface ConsentProfileRecommendation {
+    consents?: any[];
+    dataExchanges?: any[];
 }
 interface ProfileMatching {
     policies: ProfilePolicy[];
@@ -46,8 +70,8 @@ interface ProfileMatching {
     services: any[];
 }
 interface ProfileConfigurations {
-    allowRecommendation: boolean;
-    allowPolicies: boolean;
+    allowRecommendations?: boolean;
+    allowPolicies?: boolean;
 }
 interface SearchCriteria {
     conditions: FilterCondition[];
@@ -82,9 +106,9 @@ interface DataProviderConfig {
 }
 interface ProfileDocument {
     _id?: string;
-    uri: string;
+    uri?: string;
     configurations: any;
-    recommendations?: any[];
+    recommendations?: any[] | ConsentProfileRecommendation;
     matching?: any[];
     preference?: any[];
 }
@@ -100,6 +124,23 @@ type DataChangeEvent = {
         removedFields?: string[];
     };
 };
+type Condition = {
+    time?: TimeCondition;
+    location?: LocationCondition;
+};
+type TimeCondition = {
+    dayOfWeek?: string[];
+    startTime?: string;
+    endTime?: string;
+};
+type LocationCondition = {
+    countryCode: string;
+};
+declare enum AuthorizationLevelEnum {
+    NEVER = "never",
+    ALWAYS = "always",
+    CONDITIONAL = "conditional"
+}
 
 type ProfileJSON = Omit<Pick<Profile, keyof Profile>, 'createdAt' | 'updatedAt'> & {
     createdAt?: string | Date;
@@ -107,15 +148,16 @@ type ProfileJSON = Omit<Pick<Profile, keyof Profile>, 'createdAt' | 'updatedAt'>
 };
 declare class Profile {
     _id?: string;
-    uri: string;
+    uri?: string;
     configurations: ProfileConfigurations;
-    recommendations: ProfileRecommendation[];
+    recommendations: ProfileRecommendation[] | ConsentProfileRecommendation;
     matching: ProfileMatching[];
     preference: ProfilePreference[];
     constructor({ _id, uri, configurations, recommendations, matching, preference, }: ProfileJSON);
 }
 
 interface AgentConfig {
+    existingDataCheck?: boolean;
     dataProviderConfig: DataProviderConfig[];
 }
 declare abstract class Agent {
@@ -133,13 +175,14 @@ declare abstract class Agent {
     protected abstract handleDataUpdated(data: DataChangeEvent): Promise<void>;
     protected abstract handleDataDeleted(data: DataChangeEvent): void;
     abstract findProfiles(source: string, criteria: SearchCriteria): Promise<Profile[]>;
+    protected abstract existingDataCheck(): Promise<void>;
     addDataProviders(dataProviders: Provider[]): void;
     protected addDefaultProviders(): Promise<void>;
     protected loadDefaultConfiguration(): void;
-    getRecommendations(profile: Profile): ProfileRecommendation[];
+    getRecommendations(profile: Profile): ProfileRecommendation[] | ConsentProfileRecommendation;
     getMatchings(profile: Profile): ProfileMatching[];
-    abstract createProfileForParticipant(participantId: string): Promise<Profile>;
     abstract saveProfile(source: string, criteria: SearchCriteria, profile: Profile): Promise<boolean>;
+    protected createProfileForParticipant(participantId: string): Promise<Profile>;
     protected abstract updateMatchingForProfile(profile: Profile, data: unknown): Promise<void>;
     protected abstract updateRecommendationForProfile(profile: Profile, data: unknown): Promise<void>;
     protected abstract enrichProfileWithSystemRecommendations(): Profile;
@@ -232,6 +275,11 @@ declare class ContractAgent extends Agent {
      */
     protected enrichProfileWithSystemRecommendations(): Profile;
     /**
+     * Enriches a profile with system recommendations
+     * @throws {ContractAgentError} Method not implemented
+     */
+    protected existingDataCheck(): Promise<void>;
+    /**
      * Finds profiles across all configured providers
      * @param criteria - Search criteria
      * @returns Promise<Profile[]>
@@ -311,6 +359,7 @@ declare class ContractAgent extends Agent {
 }
 
 declare class MongoDBProvider extends DataProvider {
+    findAll(): Promise<any[]>;
     private static connections;
     private db?;
     private client?;
@@ -330,9 +379,18 @@ declare class MongoDBProvider extends DataProvider {
     delete(id: string): Promise<boolean>;
     find(criteria: SearchCriteria): Promise<[]>;
     update(criteria: SearchCriteria, data: unknown): Promise<boolean>;
+    findOne(criteria: SearchCriteria): Promise<any>;
+    findOneAndUpdate(criteria: SearchCriteria, data: any): Promise<any>;
+    findOneAndPush(criteria: SearchCriteria, data: any): Promise<any>;
+    findOneAndPull(criteria: SearchCriteria, data: any): Promise<any>;
 }
 
 declare class MongooseProvider extends DataProvider {
+    findAll(): Promise<any[]>;
+    findOne(criteria: SearchCriteria): Promise<any>;
+    findOneAndUpdate(criteria: SearchCriteria, data: any): Promise<any>;
+    findOneAndPush(criteria: SearchCriteria, data: any): Promise<any>;
+    findOneAndPull(criteria: SearchCriteria, data: any): Promise<any>;
     private static connections;
     private static externalModels;
     private static instances;
@@ -356,4 +414,4 @@ declare class MongooseProvider extends DataProvider {
     update(criteria: SearchCriteria, data: unknown): Promise<boolean>;
 }
 
-export { Agent, ContractAgent, router as ContractAgentRouter, type DataProviderConfig, type FilterCondition, Logger, MongoDBProvider, MongooseProvider, router$1 as NegotiationAgentRouter, Profile, type ProfileConfigurations, type ProfileDocument, type ProfileMatching, type ProfilePolicy, type ProfilePreference, type ProfileRecommendation, type Provider, type SearchCriteria };
+export { Agent, router as ConsentAgentRouter, ContractAgent, router$1 as ContractAgentRouter, type DataProviderConfig, type FilterCondition, Logger, MongoDBProvider, MongooseProvider, router$2 as NegotiationAgentRouter, Profile, type ProfileConfigurations, type ProfileDocument, type ProfileMatching, type ProfilePolicy, type ProfilePreference, type ProfileRecommendation, type Provider, type SearchCriteria };

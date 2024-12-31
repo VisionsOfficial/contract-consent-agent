@@ -1,19 +1,14 @@
 {
-  "swagger": "2.0",
+  "openapi": "3.0.0",
   "info": {
     "title": "Contract Consent Agent API",
     "description": "Availables routes through the Contract Consent Agent API",
     "version": "1.0.0"
   },
-  "host": "localhost:3000",
   "servers": [
     {
       "url": "http://localhost:8000"
     }
-  ],
-  "basePath": "/",
-  "schemes": [
-    "http"
   ],
   "paths": {
     "/profile/{profileId}/preferences/match": {
@@ -27,32 +22,44 @@
             "name": "profileId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "category",
             "in": "query",
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "participant",
             "in": "query",
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "location",
             "in": "query",
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "asDataProvider",
             "in": "query",
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "asServiceProvider",
             "in": "query",
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -76,7 +83,9 @@
             "name": "profileId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -100,7 +109,9 @@
             "name": "profileId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -124,7 +135,9 @@
             "name": "profileId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -146,18 +159,8 @@
             "name": "profileId",
             "in": "path",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
             "schema": {
-              "type": "object",
-              "properties": {
-                "preference": {
-                  "example": "any"
-                }
-              }
+              "type": "string"
             }
           }
         ],
@@ -167,6 +170,16 @@
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferencePayload"
+              }
+            }
           }
         }
       }
@@ -182,13 +195,17 @@
             "name": "profileId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "preferenceId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -210,13 +227,17 @@
             "name": "profileId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "preferenceId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -238,13 +259,17 @@
             "name": "profileId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "preferenceId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -268,7 +293,9 @@
             "name": "profileId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -290,18 +317,8 @@
             "name": "profileId",
             "in": "path",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
             "schema": {
-              "type": "object",
-              "properties": {
-                "configurations": {
-                  "example": "any"
-                }
-              }
+              "type": "string"
             }
           }
         ],
@@ -311,6 +328,16 @@
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileConfigurations"
+              }
+            }
           }
         }
       }
@@ -326,7 +353,9 @@
             "name": "profileId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -361,29 +390,22 @@
           "Negotiation"
         ],
         "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "profileId": {
-                  "example": "any"
-                },
-                "contractData": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractPayload"
+              }
+            }
           }
         }
       }
@@ -394,29 +416,22 @@
           "Negotiation"
         ],
         "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "profileId": {
-                  "example": "any"
-                },
-                "policyData": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyPayload"
+              }
+            }
           }
         }
       }
@@ -427,29 +442,22 @@
           "Negotiation"
         ],
         "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "profileId": {
-                  "example": "any"
-                },
-                "serviceData": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceOfferingPayload"
+              }
+            }
           }
         }
       }
@@ -460,29 +468,22 @@
           "Negotiation"
         ],
         "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "profileId": {
-                  "example": "any"
-                },
-                "contractData": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractPayload"
+              }
+            }
           }
         }
       }
@@ -493,29 +494,22 @@
           "Negotiation"
         ],
         "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "profileId": {
-                  "example": "any"
-                },
-                "preferences": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfilePreferencePayload"
+              }
+            }
           }
         }
       }
@@ -531,7 +525,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -555,7 +551,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -579,7 +577,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -603,7 +603,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -627,7 +629,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -651,7 +655,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -675,7 +681,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -697,18 +705,8 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
             "schema": {
-              "type": "object",
-              "properties": {
-                "configurations": {
-                  "example": "any"
-                }
-              }
+              "type": "string"
             }
           }
         ],
@@ -718,6 +716,16 @@
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractProfilePutPayload"
+              }
+            }
           }
         }
       },
@@ -731,7 +739,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -750,29 +760,22 @@
           "Contract"
         ],
         "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "profileURI": {
-                  "example": "any"
-                },
-                "configurations": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
         "responses": {
           "201": {
             "description": "Created"
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractProfilePostPayload"
+              }
+            }
           }
         }
       }
@@ -783,6 +786,408 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "PreferencePayload": {
+        "type": "object",
+        "properties": {
+          "preference": {
+            "type": "object",
+            "properties": {
+              "participant": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "asDataProvider": {
+                "type": "object",
+                "properties": {
+                  "authorizationLevel": {
+                    "type": "string"
+                  },
+                  "conditions": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "time": {
+                          "type": "object",
+                          "properties": {
+                            "dayOfWeek": [
+                              {
+                                "type": "string"
+                              }
+                            ],
+                            "startTime": {
+                              "type": "string"
+                            },
+                            "endTime": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "location": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "asServiceProvider": {
+                "type": "object",
+                "properties": {
+                  "authorizationLevel": {
+                    "type": "string"
+                  },
+                  "conditions": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "time": {
+                          "type": "object",
+                          "properties": {
+                            "dayOfWeek": [
+                              {
+                                "type": "string"
+                              }
+                            ],
+                            "startTime": {
+                              "type": "string"
+                            },
+                            "endTime": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "location": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "ProfileConfigurations": {
+        "type": "object",
+        "properties": {
+          "configurations": {
+            "type": "object",
+            "properties": {
+              "allowRecommendations": {
+                "type": "string"
+              },
+              "allowPolicies": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ContractPayload": {
+        "type": "object",
+        "properties": {
+          "profileId": {
+            "type": "string"
+          },
+          "contractData": {
+            "type": "object",
+            "properties": {
+              "_id": {
+                "type": "string",
+                "nullable": true
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "ecosystem": {
+                "type": "string"
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Participant"
+                }
+              },
+              "orchestrator": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "revokedMembers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Participant"
+                }
+              },
+              "rolesAndObligations": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "serviceOfferings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ServiceOffering"
+                }
+              },
+              "status": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Participant": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      },
+      "ServiceOffering": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "PolicyPayload": {
+        "type": "object",
+        "properties": {
+          "profileId": {
+            "type": "string"
+          },
+          "policyData": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "permission": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "action": {
+                      "type": "string"
+                    },
+                    "target": {
+                      "type": "string"
+                    },
+                    "constraint": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "leftOperand": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "type": "string"
+                          },
+                          "rightOperand": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "prohibition": {
+                "type": "array"
+              }
+            }
+          }
+        }
+      },
+      "ServiceOfferingPayload": {
+        "type": "object",
+        "properties": {
+          "profileId": {
+            "type": "string"
+          },
+          "serviceData": {
+            "type": "object",
+            "properties": {
+              "participant": {
+                "type": "string"
+              },
+              "serviceOffering": {
+                "type": "string"
+              },
+              "policies": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PolicyPayload"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ProfilePreferencePayload": {
+        "type": "object",
+        "properties": {
+          "profileId": {
+            "type": "string"
+          },
+          "preferences": {
+            "type": "object",
+            "properties": {
+              "_id": {
+                "type": "string"
+              },
+              "policies": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "policy": {
+                      "type": "string"
+                    },
+                    "frequency": {
+                      "type": "number"
+                    }
+                  }
+                }
+              },
+              "ecosystems": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "services": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "participant": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "asDataProvider": {
+                "type": "object",
+                "properties": {
+                  "authorizationLevel": {
+                    "type": "string"
+                  },
+                  "conditions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string"
+                        },
+                        "operator": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "asServiceProvider": {
+                "type": "object",
+                "properties": {
+                  "authorizationLevel": {
+                    "type": "string"
+                  },
+                  "conditions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string"
+                        },
+                        "operator": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ContractProfilePostPayload": {
+        "type": "object",
+        "properties": {
+          "profileURI": {
+            "type": "string"
+          },
+          "configurations": {
+            "type": "object",
+            "properties": {
+              "allowRecommendations": {
+                "type": "string"
+              },
+              "allowPolicies": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ContractProfilePutPayload": {
+        "type": "object",
+        "properties": {
+          "configurations": {
+            "type": "object",
+            "properties": {
+              "allowRecommendations": {
+                "type": "string"
+              },
+              "allowPolicies": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     }
   }
