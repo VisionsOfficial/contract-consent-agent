@@ -1,24 +1,42 @@
 {
+  "existingDataCheck": true,
   "dataProviderConfig": [
     {
+      "source": "users",
+      "url": "mongodb://127.0.0.1:37256/?replicaSet=testset",
+      "dbName": "consent-manager",
+      "watchChanges": true
+    },
+    {
       "source": "consents",
-      "url": "mongodb://localhost:27017",
-      "dbName": "contract_consent_agent_db"
+      "url": "mongodb://127.0.0.1:37256/?replicaSet=testset",
+      "dbName": "consent-manager",
+      "watchChanges": true
     },
     {
       "source": "privacynotices",
-      "url": "mongodb://localhost:27017",
-      "dbName": "contract_consent_agent_db"
+      "url": "mongodb://127.0.0.1:37256/?replicaSet=testset",
+      "dbName": "consent-manager",
+      "watchChanges": true
     },
     {
-      "source": "users",
-      "url": "mongodb://localhost:27017",
-      "dbName": "contract_consent_agent_db"
+      "source": "participants",
+      "url": "mongodb://127.0.0.1:37256/?replicaSet=testset",
+      "dbName": "consent-manager",
+      "watchChanges": false
+    },
+    {
+      "source": "useridentifiers",
+      "url": "mongodb://127.0.0.1:37256/?replicaSet=testset",
+      "dbName": "consent-manager",
+      "watchChanges": false
     },
     {
       "source": "profiles",
-      "url": "mongodb://localhost:27017",
-      "dbName": "contract_consent_agent_db"
+      "url": "mongodb://127.0.0.1:37256/?replicaSet=testset",
+      "dbName": "consent-manager",
+      "watchChanges": false,
+      "hostsProfiles": true
     }
   ]
 }

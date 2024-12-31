@@ -3,8 +3,6 @@ import { ConsentAgentRequestHandler } from './ConsentAgentHandler';
 import { PreferencePayload, ProfileConfigurations } from './types';
 const router = express.Router();
 
-const consentAgentRequestHandler = new ConsentAgentRequestHandler();
-
 /**
  * Handles the request to check if the preferences match the params.
  * 
@@ -12,14 +10,15 @@ const consentAgentRequestHandler = new ConsentAgentRequestHandler();
  * @param {Response} res - The response object to send back to the client.
  */
 router.get(
-  '/:profileId/preferences/match',
+  '/profile/:profileId/preferences/match',
   async (req: Request, res: Response) => {
     try {
+      const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
       const { category, participant, location, asDataProvider, asServiceProvider } = req.query;
 
       const service =
-            await consentAgentRequestHandler.checkPreferenceMatch({
+            await requestHandler.checkPreferenceMatch({
               profileId,
               category: category?.toString(),
               participant: participant?.toString(),
@@ -27,7 +26,6 @@ router.get(
               asDataProvider: asDataProvider === 'true',
               asServiceProvider: asServiceProvider === 'true'
             });
-
       res.json(service);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -42,13 +40,14 @@ router.get(
  * @param {Response} res - The response object.
  */
 router.get(
-  '/:profileId/recommendations/consent',
+  '/profile/:profileId/recommendations/consent',
   async (req: Request, res: Response) => {
     try {
+      const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
 
       const services =
-            await consentAgentRequestHandler.getConsentRecommendationFromProfile(
+            await requestHandler.getConsentRecommendationFromProfile(
               profileId,
             );
       res.json(services);
@@ -65,13 +64,14 @@ router.get(
  * @param {Response} res
  */
 router.get(
-  '/:profileId/recommendations/dataexchanges',
+  '/profile/:profileId/recommendations/dataexchanges',
   async (req: Request, res: Response) => {
     try {
+      const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
 
       const service =
-            await consentAgentRequestHandler.getDataExchangeRecommendationFromProfile(
+            await requestHandler.getDataExchangeRecommendationFromProfile(
               profileId,
             );
       res.json(service);
@@ -88,13 +88,14 @@ router.get(
  * @param {Response} res
  */
 router.get(
-  '/:profileId/preferences',
+  '/profile/:profileId/preferences',
   async (req: Request, res: Response) => {
     try {
+      const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
 
       const service =
-            await consentAgentRequestHandler.getPreferencesFromProfile(
+            await requestHandler.getPreferencesFromProfile(
               profileId,
             );
       res.json(service);
@@ -111,13 +112,14 @@ router.get(
  * @param {Response} res
  */
 router.get(
-  '/:profileId/preferences/:preferenceId',
+  '/profile/:profileId/preferences/:preferenceId',
   async (req: Request, res: Response) => {
     try {
+      const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId, preferenceId } = req.params;
 
       const service =
-            await consentAgentRequestHandler.getPreferenceByIdFromProfile(
+            await requestHandler.getPreferenceByIdFromProfile(
               profileId,
               preferenceId
             );
@@ -135,9 +137,10 @@ router.get(
  * @param {Response} res - The response object to send back to the client.
  */
 router.post(
-  '/:profileId/preferences',
+  '/profile/:profileId/preferences',
   async (req: Request, res: Response) => {
     try {
+      const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
       const { preference } = req.body;
       
@@ -146,11 +149,12 @@ router.post(
       }
 
       const service =
-            await consentAgentRequestHandler.addPreferenceToProfile(
+            await requestHandler.addPreferenceToProfile(
               profileId,
               preference,
             );
-      res.json(service);
+
+      res.status(201).json(service);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
@@ -164,17 +168,17 @@ router.post(
  * @param {Response} res - The response object to send back to the client.
  */
 router.put(
-  '/:profileId/preferences/:preferenceId',
+  '/profile/:profileId/preferences/:preferenceId',
   async (req: Request, res: Response) => {
     try {
+      const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId, preferenceId } = req.params;
-      const { preference } = req.body;
 
       const service =
-            await consentAgentRequestHandler.updatePreferenceByIdFromProfile(
+            await requestHandler.updatePreferenceByIdFromProfile(
               profileId,
               preferenceId,
-              preference,
+              req.body,
             );
       res.json(service);
     } catch (error) {
@@ -190,13 +194,14 @@ router.put(
  * @param {Response} res - The response object to send back to the client.
  */
 router.delete(
-  '/:profileId/preferences/:preferenceId',
+  '/profile/:profileId/preferences/:preferenceId',
   async (req: Request, res: Response) => {
     try {
+      const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId, preferenceId } = req.params;
 
       const service =
-            await consentAgentRequestHandler.deletePreferenceByIdFromProfile(
+            await requestHandler.deletePreferenceByIdFromProfile(
               profileId,
               preferenceId,
             );
@@ -214,13 +219,14 @@ router.delete(
  * @param {Response} res
  */
 router.get(
-  '/:profileId/configurations',
+  '/profile/:profileId/configurations',
   async (req: Request, res: Response) => {
     try {
+      const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
         
       const service =
-            await consentAgentRequestHandler.getConfigurationsFromProfile(
+            await requestHandler.getConfigurationsFromProfile(
               profileId,
             );
       res.json(service);
@@ -237,14 +243,15 @@ router.get(
  * @param {Response} res
  */
 router.put(
-  '/:profileId/configurations',
+  '/profile/:profileId/configurations',
   async (req: Request, res: Response) => {
     try {
+      const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
       const configurations: ProfileConfigurations = req.body.configurations;
         
       const services =
-        await consentAgentRequestHandler.updateProfile(
+        await requestHandler.updateProfile(
           profileId,
           {
             uri: profileId,
@@ -265,12 +272,13 @@ router.put(
  * @param {Response} res
  */
 router.get(
-  '/:profileId',
+  '/profile/:profileId',
   async (req: Request, res: Response) => {
     try {
+      const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const { profileId } = req.params;
       const services =
-            await consentAgentRequestHandler.getProfileByURL(
+            await requestHandler.getProfileByURL(
               profileId,
             );
       res.json(services);
@@ -287,11 +295,12 @@ router.get(
  * @param {Response} res
  */
 router.get(
-  '/',
+  '/profile/',
   async (req: Request, res: Response) => {
     try {
+      const requestHandler = await ConsentAgentRequestHandler.retrieveService();
       const services =
-            await consentAgentRequestHandler.getProfiles();
+            await requestHandler.getProfiles();
       res.json(services);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });

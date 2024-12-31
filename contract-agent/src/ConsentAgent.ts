@@ -299,14 +299,14 @@ export class ConsentAgent extends Agent {
    * @param data - Data change event.
    */
   protected async handleDataUpdated(data: DataChangeEvent): Promise<void> {
-    if (data.fullDocument && data.fullDocument instanceof Object) {
+    if (data.updateDescription && data.updateDescription.updatedFields && data.updateDescription.updatedFields instanceof Object) {
       switch (data.source) {
         case 'users':
           {
             try {
               //update profiles
               // watch for new identifier
-              await this.handleNewIdentifier(data.fullDocument);
+              if((data.updateDescription.updatedFields as any).identifiers) await this.handleNewIdentifier({ _id: data.documentKey?._id });
               Logger.info(`Data updated for source: ${data.source}`);
             } catch (error) {
               Logger.error(
@@ -319,12 +319,12 @@ export class ConsentAgent extends Agent {
         case 'consents':
           {
             try {
-              const { fullDocument } = data as any
+              const { updatedFields } = data.updateDescription as any
               //watch for revoked consent
-              if (fullDocument.status === 'revoked' || fullDocument.status === 'refused' || fullDocument.status === 'terminated') {
+              if (updatedFields.status && (updatedFields.status === 'revoked' || updatedFields.status === 'refused' || updatedFields.status === 'terminated')) {
                 //update profiles
                 //remove element from profiles
-                await this.handleRemoveConsent(data.fullDocument);
+                await this.handleRemoveConsent({ _id: data.documentKey?._id });
               }
               Logger.info(`Data updated for source: ${data.source}`);
             } catch (error) {
@@ -346,12 +346,12 @@ export class ConsentAgent extends Agent {
    * @param data - Data change event.
    */
   protected async handleDataDeleted(data: DataChangeEvent): Promise<void> {
-    if (data.fullDocument && data.fullDocument instanceof Object) {
+    if (data.documentKey && data.documentKey instanceof Object) {
       switch (data.source) {
         case 'users':
           {
             try {
-              const { _id } = data.fullDocument as any;
+              const { _id } = data.documentKey as any;
               await this.deleteProfileForParticipant(_id);
               Logger.info(`Data deleted for source: ${data.source}`);
             } catch (error) {
@@ -367,7 +367,7 @@ export class ConsentAgent extends Agent {
             try {
               //update profiles
               //remove element from profiles
-              await this.handleRemovePrivacyNotice(data.fullDocument);
+              await this.handleRemovePrivacyNotice(data.documentKey);
               Logger.info(`Data deleted for source: ${data.source}`);
             } catch (error) {
               Logger.error(
@@ -382,7 +382,7 @@ export class ConsentAgent extends Agent {
             try {
               //update profiles
               //remove element from profiles
-              await this.handleRemoveConsent(data.fullDocument);
+              await this.handleRemoveConsent(data.documentKey);
               Logger.info(`Data deleted for source: ${data.source}`);
             } catch (error) {
               Logger.error(

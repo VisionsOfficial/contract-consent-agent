@@ -8,6 +8,7 @@ import {
   PreferencePayload,
   Condition,
   AuthorizationLevelEnum,
+  ConsentProfileRecommendation,
 } from './types';
 import {  ObjectId } from 'mongodb';
 
@@ -15,10 +16,26 @@ import {  ObjectId } from 'mongodb';
 export class ConsentAgentRequestHandler {
   private consentAgent?: ConsentAgent;
 
-  constructor() {}
+  private static instance: ConsentAgentRequestHandler | null = null;
+  private contractAgent?: ConsentAgent;
+  private profilesHost: string = '';
+  private constructor() {}
+
+  static async retrieveService(): Promise<ConsentAgentRequestHandler> {
+    if (!ConsentAgentRequestHandler.instance) {
+      const instance = new ConsentAgentRequestHandler();
+      await instance.prepare();
+      ConsentAgentRequestHandler.instance = instance;
+    }
+    return ConsentAgentRequestHandler.instance;
+  }
 
   async prepare() {
     this.consentAgent = await ConsentAgent.retrieveService();
+  }
+
+  async getConsentAgent(): Promise<ConsentAgent> {
+    return ConsentAgent.retrieveService();
   }
 
   /**
@@ -47,7 +64,7 @@ export class ConsentAgentRequestHandler {
     if (!profile) {
       throw new Error('Profile not found');
     }
-    return profile.recommendations;
+    return (profile.recommendations as ConsentProfileRecommendation).consents;
   }
 
   /**
@@ -77,7 +94,7 @@ export class ConsentAgentRequestHandler {
     if (!profile) {
       throw new Error('Profile not found');
     }
-    return profile.recommendations;
+    return (profile.recommendations as ConsentProfileRecommendation).dataExchanges;
   }
 
   /**
@@ -206,10 +223,28 @@ export class ConsentAgentRequestHandler {
     const preferenceIndex = profile.preference.findIndex(
       (element) => element._id?.toString() === preferenceId,
     );
-    profile.preference[preferenceIndex] = {
-      ...profile.preference[preferenceIndex],
-      ...data,
-    };
+
+    if(data.asDataProvider){
+      profile.preference[preferenceIndex].asDataProvider = {
+        ...profile.preference[preferenceIndex].asDataProvider,
+        ...data.asDataProvider,
+      };
+    }
+
+    if(data.asServiceProvider){
+      profile.preference[preferenceIndex].asServiceProvider = {
+        ...profile.preference[preferenceIndex].asServiceProvider,
+        ...data.asServiceProvider,
+      };
+    }
+
+    if(data.participant){
+      profile.preference[preferenceIndex].participant = data.participant
+    }
+
+    if(data.category){
+      profile.preference[preferenceIndex].participant = data.category
+    }
 
     delete profile._id;
 

@@ -190,7 +190,7 @@ export class ChangeStreamDataProvider extends DataProvider {
       if (collectionName === this.dataSource) {
         this.notifyDataChange('dataUpdated', {
           documentKey: { _id: data.filter._id },
-          updateDescription: { updatedFields: data.update.$set || {} },
+          updateDescription: { updatedFields: data.update.$set || data.update.updatedFields || {} },
           source: this.dataSource,
         });
       }
@@ -271,6 +271,7 @@ export class ChangeStreamDataProvider extends DataProvider {
 
   async delete(id: string): Promise<boolean> {
     try {
+      
       const result = await this.collection.deleteOne({ _id: new ObjectId(id) });
 
       if (result.deletedCount === 0) {
