@@ -1,0 +1,690 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Contract Consent Agent API",
+    "description": "Availables routes through the Contract Consent Agent API",
+    "version": "1.0.0"
+  },
+  "host": "localhost:3000",
+  "servers": [
+    {
+      "url": "http://localhost:8888"
+    }
+  ],
+  "basePath": "/",
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/negotiation/contract/acceptance": {
+      "post": {
+        "tags": [
+          "Negotiation"
+        ],
+        "description": "Endpoint to check if a contract can be accepted.",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "body",
+            "description": "Profile id.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          {
+            "name": "contractData",
+            "in": "body",
+            "description": "Contract data.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "object"
+                },
+                "additionalProperties": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contract accepted."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/negotiation/policy/acceptance": {
+      "post": {
+        "tags": [
+          "Negotiation"
+        ],
+        "description": "Endpoint to check if a policy can be accepted.",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "body",
+            "description": "Profile id.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          {
+            "name": "policyData",
+            "in": "body",
+            "description": "Policy data.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "object"
+                },
+                "additionalProperties": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Policy accepted."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/negotiation/service/acceptance": {
+      "post": {
+        "tags": [
+          "Negotiation"
+        ],
+        "description": "Endpoint to check if a service can be accepted.",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "body",
+            "description": "Profile id.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          {
+            "name": "serviceData",
+            "in": "body",
+            "description": "Service data.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "object"
+                },
+                "additionalProperties": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service accepted."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/negotiation/contract/negotiate": {
+      "post": {
+        "tags": [
+          "Negotiation"
+        ],
+        "description": "Endpoint to negotiate a contract.",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "body",
+            "description": "Profile id.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          {
+            "name": "contractData",
+            "in": "body",
+            "description": "Contract data.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "object"
+                },
+                "additionalProperties": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contract negotiated."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/negotiation/profile/preferences": {
+      "put": {
+        "tags": [
+          "Negotiation"
+        ],
+        "description": "Endpoint to update profile preferences.",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "body",
+            "description": "Profile id.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          {
+            "name": "preferences",
+            "in": "body",
+            "description": "Preferences.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "object"
+                },
+                "additionalProperties": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Preferences updated."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/{profileId}/preferences": {
+      "get": {
+        "tags": [
+          "Preference"
+        ],
+        "description": "Endpoint to get preferences from profile.",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Profile id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Preferences data."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Preference"
+        ],
+        "description": "Endpoint to add preference to profile.",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Profile id."
+          },
+          {
+            "name": "preference",
+            "in": "body",
+            "description": "Preference data.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Preference added."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/{profileId}/preferences/{preferenceId}": {
+      "get": {
+        "tags": [
+          "Preference"
+        ],
+        "description": "Endpoint to get preference by id from profile.",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Profile id."
+          },
+          {
+            "name": "preferenceId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Preference id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Preference data."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Preference"
+        ],
+        "description": "Endpoint to update preference from a profile.",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Profile id."
+          },
+          {
+            "name": "preferenceId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Preference id."
+          },
+          {
+            "name": "preference",
+            "in": "body",
+            "description": "Updated preference data.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Preference updated."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Preference"
+        ],
+        "description": "Endpoint to delete preference from a profile.",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Profile id."
+          },
+          {
+            "name": "preferenceId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Preference id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Preference deleted."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/profile/:id/services-recommendations": {
+      "get": {
+        "tags": [
+          "Profile"
+        ],
+        "description": "Endpoint to get services recommendations from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Services recommendations.",
+            "schema": {
+              "$ref": "#/definitions/ServicesRecommendations"
+            }
+          }
+        }
+      }
+    },
+    "/profile/:id/policies-recommendations": {
+      "get": {
+        "tags": [
+          "Profile"
+        ],
+        "description": "Endpoint to get policies recommendations from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Policies recommendations.",
+            "schema": {
+              "$ref": "#/definitions/PoliciesRecommendations"
+            }
+          }
+        }
+      }
+    },
+    "/profile/:id/policies-matching": {
+      "get": {
+        "tags": [
+          "Profile"
+        ],
+        "description": "Endpoint to get policies matching from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching recommendations."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/profile/:id/service-recommendations": {
+      "get": {
+        "tags": [
+          "Profile"
+        ],
+        "description": "Endpoint to get service recommendations from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service recommendations."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/profile/:id/contract-matching": {
+      "get": {
+        "tags": [
+          "Profile"
+        ],
+        "description": "Endpoint to get contract matching from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contract matching."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/profile/:id/configurations": {
+      "get": {
+        "tags": [
+          "Profile"
+        ],
+        "description": "Endpoint to get configurations from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configurations."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Profile"
+        ],
+        "description": "Endpoint to update configurations from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "configurations",
+            "in": "body",
+            "description": "Configurations.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "object"
+                },
+                "additionalProperties": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configurations updated."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Profile"
+        ],
+        "description": "Endpoint to delete configurations from a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configurations deleted."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/profile/configurations": {
+      "post": {
+        "tags": [
+          "Profile"
+        ],
+        "description": "Endpoint to add configurations to a profile.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Profile id.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "configurations",
+            "in": "body",
+            "description": "Configurations.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "object"
+                },
+                "additionalProperties": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          },
+          {
+            "name": "profileURI",
+            "in": "body",
+            "description": "Profile URI.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configurations added."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

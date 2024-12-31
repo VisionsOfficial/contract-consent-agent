@@ -1,0 +1,17 @@
+{
+  "dataProviderConfig": [
+    {
+      "source": "contracts",
+      "url": "mongodb://localhost:27017",
+      "dbName": "contract_consent_agent_db_test",
+      "watchChanges": true
+    },
+    {
+      "source": "profiles",
+      "url": "mongodb://localhost:27017",
+      "dbName": "contract_consent_agent_db_test",
+      "watchChanges": false,
+      "hostsProfiles": true
+    }
+  ]
+}
