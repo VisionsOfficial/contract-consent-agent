@@ -1,6 +1,6 @@
 {
   "name": "contract-agent",
-  "version": "1.0.0-alpha.7",
+  "version": "1.0.0-alpha.8",
   "description": "",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -10,7 +10,8 @@
   ],
   "scripts": {
     "build": "tsup",
-    "test": "npx ts-mocha -p tsconfig.json ./src/tests/**/*.spec.ts --timeout 4000 --exit --test",
+    "test": "node run-tests.js",
+    "test-legacy": "npx ts-mocha -p tsconfig.json ./src/tests/**/*.spec.ts --timeout 4000 --exit --test",
     "doc": "typedoc",
     "seed": "npx ts-node ./src/tests/seeds/index.ts"
   },
