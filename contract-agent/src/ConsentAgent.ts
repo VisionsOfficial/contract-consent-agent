@@ -465,7 +465,7 @@ export class ConsentAgent extends Agent {
     try {
       const profileProvider = this.getDataProvider('profiles');
       const newProfileData = {
-        uri: participantId,
+        uri: participantId.toString(),
         configurations: {
           allowRecommendations: allowRecommendations ?? true,
         },
