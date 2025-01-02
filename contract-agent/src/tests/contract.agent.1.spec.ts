@@ -15,7 +15,7 @@ describe('Negotiation Service Test Cases', () => {
       uri: 'test-uri',
       configurations: {
         allowPolicies: true,
-        allowRecommendation: true,
+        allowRecommendations: true,
       },
       preference: [
         {

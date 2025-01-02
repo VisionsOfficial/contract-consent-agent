@@ -6,3 +6,4 @@ src/logs
 .npmrc
 **/logs/
 src/tests/mocks/consent-agent.config.json
+cca.iml
