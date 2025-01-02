@@ -1,0 +1,42 @@
+{
+  "existingDataCheck": true,
+  "dataProviderConfig": [
+    {
+      "source": "users",
+      "url": "test",
+      "dbName": "consent-manager",
+      "watchChanges": true
+    },
+    {
+      "source": "consents",
+      "url": "test",
+      "dbName": "consent-manager",
+      "watchChanges": true
+    },
+    {
+      "source": "privacynotices",
+      "url": "test",
+      "dbName": "consent-manager",
+      "watchChanges": true
+    },
+    {
+      "source": "participants",
+      "url": "test",
+      "dbName": "consent-manager",
+      "watchChanges": false
+    },
+    {
+      "source": "useridentifiers",
+      "url": "test",
+      "dbName": "consent-manager",
+      "watchChanges": false
+    },
+    {
+      "source": "profiles",
+      "url": "test",
+      "dbName": "consent-manager",
+      "watchChanges": false,
+      "hostsProfiles": true
+    }
+  ]
+}
