@@ -12,9 +12,9 @@ import { Agent } from './Agent';
 import { Contract } from './Contract';
 import { Logger } from './Logger';
 import { DataProvider, DataProviderType } from './DataProvider';
-import { MongoDBProvider } from './MongoDBProvider';
 import { MatchingService } from './MatchingService';
 import { RecommendationService } from './RecommendationService';
+import { DataStreamProvider } from './DataStreamProvider';
 
 /**
  * ContractAgent class handles contract-related operations and profile management
@@ -54,7 +54,7 @@ export class ContractAgent extends Agent {
    * @returns Promise<ContractAgent>
    */
   static async retrieveService(
-    dataProviderType: DataProviderType = MongoDBProvider,
+    dataProviderType: DataProviderType = DataStreamProvider,
     refresh: boolean = false,
   ): Promise<ContractAgent> {
     try {

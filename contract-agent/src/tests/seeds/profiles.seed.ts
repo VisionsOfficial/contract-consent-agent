@@ -12,7 +12,7 @@ const seedProfiles = async (): Promise<void> => {
     const profiles: ProfileJSON[] = [
       {
         uri: 'https://catalog.com/v1/catalog/participants/6564abb5d853e8e05b132057',
-        configurations: { allowRecommendation: true, allowPolicies: true },
+        configurations: { allowRecommendations: true, allowPolicies: true },
         recommendations: [
           {
             policies: [
@@ -36,7 +36,7 @@ const seedProfiles = async (): Promise<void> => {
       },
       {
         uri: 'https://catalog.com/v1/catalog/participants/12345abcd',
-        configurations: { allowRecommendation: false, allowPolicies: true },
+        configurations: { allowRecommendations: false, allowPolicies: true },
         recommendations: [
           {
             policies: [
@@ -60,7 +60,7 @@ const seedProfiles = async (): Promise<void> => {
       },
       {
         uri: 'https://catalog.com/v1/catalog/participants/98765xyz',
-        configurations: { allowRecommendation: true, allowPolicies: false },
+        configurations: { allowRecommendations: true, allowPolicies: false },
         recommendations: [
           {
             policies: [
@@ -84,7 +84,7 @@ const seedProfiles = async (): Promise<void> => {
       },
       {
         uri: 'https://catalog.com/v1/catalog/participants/98765xyz',
-        configurations: { allowRecommendation: true, allowPolicies: false },
+        configurations: { allowRecommendations: true, allowPolicies: false },
         recommendations: [
           {
             policies: [
