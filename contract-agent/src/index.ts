@@ -19,5 +19,6 @@ export { Profile } from './Profile';
 export { Agent } from './Agent';
 export { Logger } from './Logger';
 export { ContractAgent } from './ContractAgent';
+export { ConsentAgent } from './ConsentAgent';
 export { MongoDBProvider } from './MongoDBProvider';
 export { MongooseProvider } from './MongooseProvider';

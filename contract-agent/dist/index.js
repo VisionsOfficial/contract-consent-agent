@@ -80,6 +80,7 @@ var __async = (__this, __arguments, generator) => {
 var src_exports = {};
 __export(src_exports, {
   Agent: () => Agent,
+  ConsentAgent: () => ConsentAgent,
   ConsentAgentRouter: () => agent_consent_router_default,
   ContractAgent: () => ContractAgent,
   ContractAgentRouter: () => agent_contract_profile_router_default,
@@ -4125,6 +4126,7 @@ var MongooseProvider = _MongooseProvider;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   Agent,
+  ConsentAgent,
   ConsentAgentRouter,
   ContractAgent,
   ContractAgentRouter,

@@ -112,6 +112,12 @@ interface ProfileDocument {
     matching?: any[];
     preference?: any[];
 }
+interface ProfilePayload {
+    configurations?: any;
+    recommendations?: any[];
+    matching?: any[];
+    preference?: any[];
+}
 type DataChangeEvent = {
     source: string;
     type: 'insert' | 'update' | 'delete';
@@ -122,6 +128,18 @@ type DataChangeEvent = {
     updateDescription?: {
         updatedFields: unknown;
         removedFields?: string[];
+    };
+};
+type PreferencePayload = {
+    participant: string;
+    category: string;
+    asDataProvider: {
+        authorizationLevel?: AuthorizationLevelEnum;
+        conditions?: Condition[];
+    };
+    asServiceProvider: {
+        authorizationLevel?: AuthorizationLevelEnum;
+        conditions?: Condition[];
     };
 };
 type Condition = {
@@ -358,6 +376,168 @@ declare class ContractAgent extends Agent {
     createProfileForParticipant(participantURI: string): Promise<Profile>;
 }
 
+declare class ConsentAgent extends Agent {
+    private static instance;
+    private constructor();
+    /**
+     * Prepares the ConsentAgent instance by loading configuration and setting up providers
+     * @throws {ConsentAgentError} If preparation fails
+     */
+    prepare(): Promise<void>;
+    /**
+     * Retrieves or creates an instance of ConsentAgent.
+     * @param dataProviderType
+     * @param refresh - Whether to force creation of a new instance.
+     * @returns Instance of ConsentAgent.
+     */
+    static retrieveService(dataProviderType?: DataProviderType, refresh?: boolean): Promise<ConsentAgent>;
+    /**
+     * Finds profiles based on the provided source and search criteria.
+     * @param source - Data source identifier.
+     * @param criteria - Search criteria.
+     * @returns Promise resolving to an array of profiles.
+     */
+    findProfiles(source: string, criteria: SearchCriteria): Promise<Profile[]>;
+    /**
+     * Finds profile based on the provided source and search criteria.
+     * @param source - Data source identifier.
+     * @param criteria - Search criteria.
+     * @returns Promise resolving to an array of profiles.
+     */
+    findProfile(source: string, criteria: SearchCriteria): Promise<Profile>;
+    /**
+     * Finds profile based on the provided source and search criteria.
+     * @param source - Data source identifier.
+     * @param criteria - Search criteria.
+     * @param data - the updated data
+     * @returns Promise resolving to an array of profiles.
+     */
+    findProfileAndUpdate(source: string, criteria: SearchCriteria, data: ProfilePayload | PreferencePayload | ProfileDocument): Promise<Profile>;
+    /**
+     * Finds profile based on the provided source and search criteria.
+     * @param source - Data source identifier.
+     * @param criteria - Search criteria.
+     * @param data - the updated data
+     * @returns Promise resolving to an array of profiles.
+     */
+    findProfileAndPush(source: string, criteria: SearchCriteria, data: ProfilePayload): Promise<Profile>;
+    /**
+     * Finds profile based on the provided source and search criteria.
+     * @param source - Data source identifier.
+     * @param criteria - Search criteria.
+     * @param data - the updated data
+     *   Promise resolving to an array of profiles.
+     */
+    findProfileAndPull(source: string, criteria: SearchCriteria, data: any): Promise<Profile>;
+    /**
+     * Builds search criteria based on the provided source entity.
+     * @param sourceEntity - Entity from which to derive search criteria.
+     * @returns The constructed search criteria.
+     */
+    protected buildSearchCriteria(sourceEntity: unknown): SearchCriteria;
+    /**
+     * Enriches a profile with system recommendations.
+     * @returns The enriched profile.
+     */
+    protected enrichProfileWithSystemRecommendations(): Profile;
+    /**
+     * Handles inserted data events
+     * @param data - Data change event
+     */
+    protected handleDataInserted(data: DataChangeEvent): Promise<void>;
+    /**
+     * Handles data update events.
+     * @param data - Data change event.
+     */
+    protected handleDataUpdated(data: DataChangeEvent): Promise<void>;
+    /**
+     * Handles data deletion events.
+     * @param data - Data change event.
+     */
+    protected handleDataDeleted(data: DataChangeEvent): Promise<void>;
+    /**
+     * Updates the matching information for a profile.
+     * @param profile - Profile instance.
+     * @param data - Matching data to update the profile with.
+     */
+    protected updateMatchingForProfile(profile: Profile, data: unknown): Promise<void>;
+    /**
+     * Check the existing data at the Agent initialization
+     * @returns {Promise<void>}
+     */
+    protected existingDataCheck(): Promise<void>;
+    /**
+     * Updates recommendations for a profile.
+     * @param profile - Profile instance.
+     * @param data - Recommendation data to update the profile with.
+     */
+    protected updateRecommendationForProfile(profile: Profile, data: ProfileDocument): Promise<void>;
+    /**
+     * Create a profile for a user
+     * @param participantId - The Id of the user
+     * @param allowRecommendations - boolean option to setup configuration of the profile at the creation
+     */
+    createProfileForParticipant(participantId: string, allowRecommendations?: boolean): Promise<Profile>;
+    /**
+     * Deletes a profile for a given participant.
+     *
+     * @param participantId - The Id of the participant whose profile is to be deleted.
+     * @returns The deleted profile.
+     */
+    deleteProfileForParticipant(participantId: string): Promise<Profile>;
+    /**
+     * Handles privacy notices by updating profiles that allow recommendations.
+     *
+     * This method processes the privacy notice document by first fetching the purpose and data information.
+     * It then retrieves all profiles that allow recommendations and checks if they match the participants or categories
+     * specified in the purpose and data. If a match is found, the method updates the profile by adding the privacy notice.
+     *
+     * @param fullDocument - The full document containing the privacy notice information.
+     */
+    handlePrivacyNotice(fullDocument: any): Promise<void>;
+    /**
+     * Handles consent by updating profiles that allow recommendations.
+     *
+     * This method processes the consent document by first fetching the purpose and data information.
+     * It then retrieves all profiles that allow recommendations and checks if they match the participants or categories
+     * specified in the purpose and data. If a match is found, the method updates the profile by removing the privacy notice
+     * and adding the consent.
+     *
+     * @param fullDocument - The full document containing the consent information.
+     */
+    handleConsent(fullDocument: any): Promise<void>;
+    /**
+     * Handles the removal of privacy notice from profiles.
+     * @param fullDocument - The full document containing the privacy notice information.
+     */
+    handleRemovePrivacyNotice(fullDocument: any): Promise<void>;
+    /**
+     * Handles the removal of consent from profiles.
+     * @param fullDocument - The full document containing the consent information.
+     */
+    handleRemoveConsent(fullDocument: any): Promise<void>;
+    /**
+     * Fetches purpose and data documents based on their service descriptions.
+     *
+     * @param purposeSd - The service description URL for the purpose document.
+     * @param dataSd - The service description URL for the data document.
+     * @returns An object containing the fetched purpose and data documents.
+     */
+    private getPurposeAndData;
+    /**
+     * Handles new identifier events.
+     * @param fullDocument - The full document of the new identifier event.
+     */
+    private handleNewIdentifier;
+    /**
+     *
+     * @param source
+     * @param criteria
+     * @param profile
+     */
+    saveProfile(source: string, criteria: SearchCriteria, profile: Profile): Promise<boolean>;
+}
+
 declare class MongoDBProvider extends DataProvider {
     findAll(): Promise<any[]>;
     private static connections;
@@ -414,4 +594,4 @@ declare class MongooseProvider extends DataProvider {
     update(criteria: SearchCriteria, data: unknown): Promise<boolean>;
 }
 
-export { Agent, router as ConsentAgentRouter, ContractAgent, router$1 as ContractAgentRouter, type DataProviderConfig, type FilterCondition, Logger, MongoDBProvider, MongooseProvider, router$2 as NegotiationAgentRouter, Profile, type ProfileConfigurations, type ProfileDocument, type ProfileMatching, type ProfilePolicy, type ProfilePreference, type ProfileRecommendation, type Provider, type SearchCriteria };
+export { Agent, ConsentAgent, router as ConsentAgentRouter, ContractAgent, router$1 as ContractAgentRouter, type DataProviderConfig, type FilterCondition, Logger, MongoDBProvider, MongooseProvider, router$2 as NegotiationAgentRouter, Profile, type ProfileConfigurations, type ProfileDocument, type ProfileMatching, type ProfilePolicy, type ProfilePreference, type ProfileRecommendation, type Provider, type SearchCriteria };

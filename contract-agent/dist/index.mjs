@@ -4086,6 +4086,7 @@ _MongooseProvider.instances = /* @__PURE__ */ new Map();
 var MongooseProvider = _MongooseProvider;
 export {
   Agent,
+  ConsentAgent,
   agent_consent_router_default as ConsentAgentRouter,
   ContractAgent,
   agent_contract_profile_router_default as ContractAgentRouter,
