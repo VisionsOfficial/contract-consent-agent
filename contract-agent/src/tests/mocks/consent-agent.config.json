@@ -2,22 +2,22 @@
   "dataProviderConfig": [
     {
       "source": "consents",
-      "url": "mongodb://localhost:27017",
+      "url": "test",
       "dbName": "contract_consent_agent_db"
     },
     {
       "source": "privacynotices",
-      "url": "mongodb://localhost:27017",
+      "url": "test",
       "dbName": "contract_consent_agent_db"
     },
     {
       "source": "users",
-      "url": "mongodb://localhost:27017",
+      "url": "test",
       "dbName": "contract_consent_agent_db"
     },
     {
       "source": "profiles",
-      "url": "mongodb://localhost:27017",
+      "url": "test",
       "dbName": "contract_consent_agent_db"
     }
   ]
