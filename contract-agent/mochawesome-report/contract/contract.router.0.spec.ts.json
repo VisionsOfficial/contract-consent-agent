@@ -1,0 +1,236 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 6,
+    "passes": 6,
+    "pending": 0,
+    "failures": 0,
+    "start": "2025-01-22T14:28:25.960Z",
+    "end": "2025-01-22T14:28:26.110Z",
+    "duration": 150,
+    "testsRegistered": 6,
+    "passPercent": 100,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "458d0648-cb96-476b-90cf-c60521e0b424",
+      "title": "",
+      "fullFile": "C:\\Users\\E\\Desktop\\visions\\dev\\cca-ptx\\contract-agent\\src\\tests\\contract.router.0.spec.ts",
+      "file": "\\src\\tests\\contract.router.0.spec.ts",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "d02517dc-9213-48b1-8a69-1e4d742067c8",
+          "title": "ContractAgent Router Tests",
+          "fullFile": "C:\\Users\\E\\Desktop\\visions\\dev\\cca-ptx\\contract-agent\\src\\tests\\contract.router.0.spec.ts",
+          "file": "\\src\\tests\\contract.router.0.spec.ts",
+          "beforeHooks": [
+            {
+              "title": "\"before all\" hook in \"ContractAgent Router Tests\"",
+              "fullTitle": "ContractAgent Router Tests \"before all\" hook in \"ContractAgent Router Tests\"",
+              "timedOut": false,
+              "duration": 53,
+              "state": null,
+              "speed": null,
+              "pass": false,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "return __awaiter(this, void 0, void 0, function* () {\n    var _a;\n    Agent_1.Agent.setConfigPath('./mocks/contract-agent.config.json', __filename);\n    requestHandler = yield ContractAgentHandler_1.RequestHandler.retrieveService();\n    const contractAgent = yield requestHandler.getContractAgent();\n    const profile = yield contractAgent.createProfileForParticipant('some-participant-uri');\n    profileURI = (_a = profile.uri) !== null && _a !== void 0 ? _a : profileURI;\n    getPoliciesRecommendationFromProfileSpy = sinon_1.default.spy(requestHandler, 'getPoliciesRecommendationFromProfile');\n    getServicesRecommendationFromProfileSpy = sinon_1.default.spy(requestHandler, 'getServicesRecommendationFromProfile');\n    getPoliciesMatchingFromProfileSpy = sinon_1.default.spy(requestHandler, 'getPoliciesMatchingFromProfile');\n    getServicesMatchingFromProfileSpy = sinon_1.default.spy(requestHandler, 'getServicesMatchingFromProfile');\n    getContractMatchingFromProfileSpy = sinon_1.default.spy(requestHandler, 'getContractMatchingFromProfile');\n    getConfigurationsFromProfileSpy = sinon_1.default.spy(requestHandler, 'getConfigurationsFromProfile');\n    addConfigurationsToProfileSpy = sinon_1.default.spy(requestHandler, 'addConfigurationsToProfile');\n    updateConfigurationsForProfileSpy = sinon_1.default.spy(requestHandler, 'updateConfigurationsForProfile');\n    removeConfigurationsFromProfileSpy = sinon_1.default.spy(requestHandler, 'removeConfigurationsFromProfile');\n});",
+              "err": {},
+              "uuid": "aa4c8d93-2de1-4817-9ce0-1850d94d98b0",
+              "parentUUID": "d02517dc-9213-48b1-8a69-1e4d742067c8",
+              "isHook": true,
+              "skipped": false
+            }
+          ],
+          "afterHooks": [
+            {
+              "title": "\"after all\" hook in \"ContractAgent Router Tests\"",
+              "fullTitle": "ContractAgent Router Tests \"after all\" hook in \"ContractAgent Router Tests\"",
+              "timedOut": false,
+              "duration": 0,
+              "state": null,
+              "speed": null,
+              "pass": false,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "getPoliciesRecommendationFromProfileSpy.restore();\ngetServicesRecommendationFromProfileSpy.restore();\ngetPoliciesMatchingFromProfileSpy.restore();\ngetServicesMatchingFromProfileSpy.restore();\ngetContractMatchingFromProfileSpy.restore();\ngetConfigurationsFromProfileSpy.restore();\naddConfigurationsToProfileSpy.restore();\nupdateConfigurationsForProfileSpy.restore();\nremoveConfigurationsFromProfileSpy.restore();",
+              "err": {},
+              "uuid": "b7649943-dc2f-437f-b3e2-9022df211b81",
+              "parentUUID": "d02517dc-9213-48b1-8a69-1e4d742067c8",
+              "isHook": true,
+              "skipped": false
+            }
+          ],
+          "tests": [
+            {
+              "title": "should get policies recommendations from profile",
+              "fullTitle": "ContractAgent Router Tests should get policies recommendations from profile",
+              "timedOut": false,
+              "duration": 34,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "return __awaiter(this, void 0, void 0, function* () {\n    const response = yield (0, supertest_1.default)(app)\n        .get(`/api/profile/${profileURI}/policies-recommendations`)\n        .expect(200);\n    sinon_1.default.assert.calledOnce(getPoliciesRecommendationFromProfileSpy);\n    sinon_1.default.assert.calledWith(getPoliciesRecommendationFromProfileSpy, profileURI);\n    (0, chai_1.expect)(response.body).to.be.an('array');\n});",
+              "err": {},
+              "uuid": "b1fde2d9-27bf-43af-81f2-34b8b4481918",
+              "parentUUID": "d02517dc-9213-48b1-8a69-1e4d742067c8",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "should get services recommendations from profile",
+              "fullTitle": "ContractAgent Router Tests should get services recommendations from profile",
+              "timedOut": false,
+              "duration": 7,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "return __awaiter(this, void 0, void 0, function* () {\n    const response = yield (0, supertest_1.default)(app)\n        .get(`/api/profile/${profileURI}/services-recommendations`)\n        .expect(200);\n    sinon_1.default.assert.calledOnce(getServicesRecommendationFromProfileSpy);\n    sinon_1.default.assert.calledWith(getServicesRecommendationFromProfileSpy, profileURI);\n    (0, chai_1.expect)(response.body).to.be.an('array');\n});",
+              "err": {},
+              "uuid": "d9e09bc2-ceda-45a3-a1a5-c6dc8a9323fe",
+              "parentUUID": "d02517dc-9213-48b1-8a69-1e4d742067c8",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "should get policies matching from profile",
+              "fullTitle": "ContractAgent Router Tests should get policies matching from profile",
+              "timedOut": false,
+              "duration": 6,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "return __awaiter(this, void 0, void 0, function* () {\n    const response = yield (0, supertest_1.default)(app)\n        .get(`/api/profile/${profileURI}/policies-matching`)\n        .expect(200);\n    sinon_1.default.assert.calledOnce(getPoliciesMatchingFromProfileSpy);\n    sinon_1.default.assert.calledWith(getPoliciesMatchingFromProfileSpy, profileURI);\n    (0, chai_1.expect)(response.body).to.be.an('array');\n});",
+              "err": {},
+              "uuid": "6015de06-b8f1-495f-a9df-14daebec4356",
+              "parentUUID": "d02517dc-9213-48b1-8a69-1e4d742067c8",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "should handle adding configurations to profile",
+              "fullTitle": "ContractAgent Router Tests should handle adding configurations to profile",
+              "timedOut": false,
+              "duration": 25,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "return __awaiter(this, void 0, void 0, function* () {\n    const configurations = [{ configId: 'config1' }];\n    const response = yield (0, supertest_1.default)(app)\n        .post('/api/profile/configurations')\n        .send({ profileURI, configurations })\n        .expect(201);\n    sinon_1.default.assert.calledOnce(addConfigurationsToProfileSpy);\n    sinon_1.default.assert.calledWith(addConfigurationsToProfileSpy, profileURI, configurations);\n    (0, chai_1.expect)(response.body).to.have.property('success', true);\n});",
+              "err": {},
+              "uuid": "8047de84-4043-4004-b987-0dc6239e2c9a",
+              "parentUUID": "d02517dc-9213-48b1-8a69-1e4d742067c8",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "should handle updating configurations for profile",
+              "fullTitle": "ContractAgent Router Tests should handle updating configurations for profile",
+              "timedOut": false,
+              "duration": 9,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "return __awaiter(this, void 0, void 0, function* () {\n    const configurations = [{ configId: 'config2' }];\n    const response = yield (0, supertest_1.default)(app)\n        .put(`/api/profile/${profileURI}/configurations`)\n        .send({ configurations })\n        .expect(200);\n    sinon_1.default.assert.calledOnce(updateConfigurationsForProfileSpy);\n    sinon_1.default.assert.calledWith(updateConfigurationsForProfileSpy, profileURI, configurations);\n    (0, chai_1.expect)(response.body).to.have.property('success', true);\n});",
+              "err": {},
+              "uuid": "f127e11f-ffbe-469c-a13f-1e1520e8e452",
+              "parentUUID": "d02517dc-9213-48b1-8a69-1e4d742067c8",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "should handle deleting configurations from profile",
+              "fullTitle": "ContractAgent Router Tests should handle deleting configurations from profile",
+              "timedOut": false,
+              "duration": 8,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "return __awaiter(this, void 0, void 0, function* () {\n    const response = yield (0, supertest_1.default)(app)\n        .delete(`/api/profile/${profileURI}/configurations`)\n        .expect(200);\n    sinon_1.default.assert.calledOnce(removeConfigurationsFromProfileSpy);\n    sinon_1.default.assert.calledWith(removeConfigurationsFromProfileSpy, profileURI);\n    (0, chai_1.expect)(response.body).to.have.property('success', true);\n});",
+              "err": {},
+              "uuid": "6eac6bfe-3b61-4773-bf4b-f5a51ed1937d",
+              "parentUUID": "d02517dc-9213-48b1-8a69-1e4d742067c8",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [
+            "b1fde2d9-27bf-43af-81f2-34b8b4481918",
+            "d9e09bc2-ceda-45a3-a1a5-c6dc8a9323fe",
+            "6015de06-b8f1-495f-a9df-14daebec4356",
+            "8047de84-4043-4004-b987-0dc6239e2c9a",
+            "f127e11f-ffbe-469c-a13f-1e1520e8e452",
+            "6eac6bfe-3b61-4773-bf4b-f5a51ed1937d"
+          ],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 89,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 4000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 4000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "10.8.2"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": false,
+        "reportFilename": "contract.router.0.spec.ts",
+        "saveHtml": true,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.3"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "mochawesome-report/contract",
+        "reportFilename": "contract.router.0.spec.ts"
+      },
+      "version": "6.2.0"
+    }
+  }
+}
