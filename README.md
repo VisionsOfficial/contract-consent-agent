@@ -4,11 +4,24 @@
 
 The Consent/Contracts Agent is a comprehensive library designed to seamlessly integrate with the contract-manager and consent-manager. It offers a range of features, including the automatic creation and management of profiles, automation of processes, personalized recommendations, and the ability to set and manage profile preferences. Additionally, the agent provides a robust routing system to facilitate the efficient flow of these functionalities.
 
+## Design Document
+See the design document [here](docs/design-document.md).
+
 ## Features
 
 - **Consent Profile Management**: Enables profiles for users in the consent-manager.
 - **Contract Profile Management**: Enables profiles for contract-manager.
 - **Contract Negotiation Management**: Enables organizations to define default rules and conditions for negotiation.
+
+## Building instructions
+_Describe how to build the BB._
+
+E.g.: `docker build -t <bb name>:latest .` or `npm install` 
+
+## Running instructions
+_Describe how to run the BB._
+
+E.g.: `docker compose up` or `npm run`
 
 ## Technical Usage Scenarios
 
@@ -26,6 +39,17 @@ The API for the Consent/Contracts Negotiating Agent is documented using Swagger.
 - **Set Preferences**: `POST /profile/{profileId}/preferences`
 - **Get Preferences**: `GET /profile/{profileId}/preferences`
 - **Negotiate Contract**: `POST /negotiation/contract/negotiate`
+
+### Example usage
+_Describe how to check some basic functionality of the BB._
+E.g.:
+
+Send the following requests to the designated endpoints:
+| Endpoint      | Example input | Expected output   |
+| ------------- | ------------- | ----------------- |
+| /hello        | World         | 200, Hello World! |
+|               |               |                   |
+|               |               |                   |
 
 ## Integrations
 
