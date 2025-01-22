@@ -1,7 +1,7 @@
 {
   "name": "contract-agent",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.0.1",
+  "description": "Contract-Consent Agent Library",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -46,7 +46,7 @@
     "jsdoc-babel": "^0.5.0",
     "jsdoc-plugin-typescript": "^3.2.0",
     "mocha": "^10.2.0",
-    "mongoose": "^7.8.3",
+    "mongoose": "^8.9.5",
     "nodemon": "^3.1.7",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",
@@ -73,7 +73,7 @@
     "swagger-ui-express": "^5.0.1"
   },
   "peerDependencies": {
-    "mongoose": "^7.8.3"
+    "mongoose": "^8.9.5"
   },
   "pnpm": {
     "peerDependencyRules": {
