@@ -25,6 +25,10 @@ Here’s an example of a JSON configuration:
   "existingDataCheck": true
 }
 ```
+## Installation
+```bash
+pnpm install
+```
 
 ## Run Tests Independently by Agent
 
