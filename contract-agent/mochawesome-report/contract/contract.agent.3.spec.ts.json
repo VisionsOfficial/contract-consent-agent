@@ -1,0 +1,216 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 4,
+    "passes": 4,
+    "pending": 0,
+    "failures": 0,
+    "start": "2025-01-22T14:28:15.858Z",
+    "end": "2025-01-22T14:28:16.562Z",
+    "duration": 704,
+    "testsRegistered": 4,
+    "passPercent": 100,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "f86012d9-5746-458b-8e92-ad0fcd4b9025",
+      "title": "",
+      "fullFile": "C:\\Users\\E\\Desktop\\visions\\dev\\cca-ptx\\contract-agent\\src\\tests\\contract.agent.3.spec.ts",
+      "file": "\\src\\tests\\contract.agent.3.spec.ts",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "c191771c-3bc6-4477-8104-d7a25dfd8a64",
+          "title": "MongooseProvider Events Tests",
+          "fullFile": "C:\\Users\\E\\Desktop\\visions\\dev\\cca-ptx\\contract-agent\\src\\tests\\contract.agent.3.spec.ts",
+          "file": "\\src\\tests\\contract.agent.3.spec.ts",
+          "beforeHooks": [
+            {
+              "title": "\"before all\" hook in \"MongooseProvider Events Tests\"",
+              "fullTitle": "MongooseProvider Events Tests \"before all\" hook in \"MongooseProvider Events Tests\"",
+              "timedOut": false,
+              "duration": 40,
+              "state": null,
+              "speed": null,
+              "pass": false,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "__awaiter(void 0, void 0, void 0, function* () {\n        provider = new MongooseProvider_1.MongooseProvider({\n            source: 'contracts',\n            url: 'mongodb://localhost:27017',\n            dbName: 'test',\n        });\n        provider.on('dataInserted', (event) => {\n            dataInsertedEventReceived = true;\n            dataInsertedPayload = event;\n        });\n        provider.on('dataUpdated', (event) => {\n            dataUpdatedEventReceived = true;\n            dataUpdatedPayload = event;\n        });\n        provider.on('dataDeleted', (event) => {\n            dataDeletedEventReceived = true;\n            dataDeletedPayload = event;\n        });\n        model = yield contract_model_mock_1.default.getModel();\n        yield provider.ensureReady();\n    })",
+              "err": {},
+              "uuid": "21d0e84b-581e-44d3-8552-5e2db42914ce",
+              "parentUUID": "c191771c-3bc6-4477-8104-d7a25dfd8a64",
+              "isHook": true,
+              "skipped": false
+            },
+            {
+              "title": "\"before each\" hook in \"MongooseProvider Events Tests\"",
+              "fullTitle": "MongooseProvider Events Tests \"before each\" hook in \"MongooseProvider Events Tests\"",
+              "timedOut": false,
+              "duration": 6,
+              "state": null,
+              "speed": null,
+              "pass": false,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "__awaiter(void 0, void 0, void 0, function* () {\n        dataInsertedEventReceived = false;\n        dataInsertedPayload = null;\n        dataUpdatedEventReceived = false;\n        dataUpdatedPayload = null;\n        dataDeletedEventReceived = false;\n        dataDeletedPayload = null;\n        yield model.deleteMany({});\n    })",
+              "err": {},
+              "uuid": "696f35f3-60a5-4eef-97df-f205bcd96140",
+              "parentUUID": "c191771c-3bc6-4477-8104-d7a25dfd8a64",
+              "isHook": true,
+              "skipped": false
+            }
+          ],
+          "afterHooks": [
+            {
+              "title": "\"after all\" hook in \"MongooseProvider Events Tests\"",
+              "fullTitle": "MongooseProvider Events Tests \"after all\" hook in \"MongooseProvider Events Tests\"",
+              "timedOut": false,
+              "duration": 70,
+              "state": null,
+              "speed": null,
+              "pass": false,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "__awaiter(void 0, void 0, void 0, function* () {\n        yield model.deleteMany({});\n        yield mongoose_1.default.disconnect();\n    })",
+              "err": {},
+              "uuid": "63fd89b6-e5a9-4b78-8c70-21f8ed1362ed",
+              "parentUUID": "c191771c-3bc6-4477-8104-d7a25dfd8a64",
+              "isHook": true,
+              "skipped": false
+            }
+          ],
+          "tests": [
+            {
+              "title": "should emit dataInserted event when saving a new document",
+              "fullTitle": "MongooseProvider Events Tests should emit dataInserted event when saving a new document",
+              "timedOut": false,
+              "duration": 138,
+              "state": "passed",
+              "speed": "slow",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "__awaiter(void 0, void 0, void 0, function* () {\n        const contractData = {\n            uid: 'test-contract-1',\n            profile: 'test-profile',\n            ecosystem: 'test-ecosystem',\n            orchestrator: 'test-orchestrator',\n            members: [\n                {\n                    participant: 'test-participant',\n                    role: 'test-role',\n                    signature: 'test-signature',\n                },\n            ],\n            status: 'pending',\n            serviceOfferings: [],\n            rolesAndObligations: [],\n            purpose: [],\n            revokedMembers: [],\n        };\n        const contract = new model(contractData);\n        yield contract.save();\n        yield new Promise((resolve) => setTimeout(resolve, 100));\n        (0, chai_1.expect)(dataInsertedEventReceived).to.be.true;\n        (0, chai_1.expect)(dataInsertedPayload).to.exist;\n        (0, chai_1.expect)(dataInsertedPayload.source).to.equal('contracts');\n        (0, chai_1.expect)(dataInsertedPayload.fullDocument).to.exist;\n        (0, chai_1.expect)(dataInsertedPayload.fullDocument.uid).to.equal(contractData.uid);\n    })",
+              "err": {},
+              "uuid": "fb7c5bfd-4159-4972-aaff-f56a0b1b32d6",
+              "parentUUID": "c191771c-3bc6-4477-8104-d7a25dfd8a64",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "should emit dataInserted event when creating via model.create()",
+              "fullTitle": "MongooseProvider Events Tests should emit dataInserted event when creating via model.create()",
+              "timedOut": false,
+              "duration": 127,
+              "state": "passed",
+              "speed": "slow",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "__awaiter(void 0, void 0, void 0, function* () {\n        const contractData = {\n            uid: 'test-contract-1',\n            profile: 'test-profile',\n            ecosystem: 'test-ecosystem',\n            orchestrator: 'test-orchestrator',\n            members: [\n                {\n                    participant: 'test-participant',\n                    role: 'test-role',\n                    signature: 'test-signature',\n                },\n            ],\n            status: 'pending',\n            serviceOfferings: [],\n            rolesAndObligations: [],\n            purpose: [],\n            revokedMembers: [],\n        };\n        yield model.create(contractData);\n        yield new Promise((resolve) => setTimeout(resolve, 100));\n        (0, chai_1.expect)(dataInsertedEventReceived).to.be.true;\n        (0, chai_1.expect)(dataInsertedPayload).to.exist;\n        (0, chai_1.expect)(dataInsertedPayload.source).to.equal('contracts');\n        (0, chai_1.expect)(dataInsertedPayload.fullDocument.uid).to.equal(contractData.uid);\n    })",
+              "err": {},
+              "uuid": "04879960-b8b8-4b6d-a389-bb221622c811",
+              "parentUUID": "c191771c-3bc6-4477-8104-d7a25dfd8a64",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "should emit dataUpdated event when updating via model.updateOne()",
+              "fullTitle": "MongooseProvider Events Tests should emit dataUpdated event when updating via model.updateOne()",
+              "timedOut": false,
+              "duration": 145,
+              "state": "passed",
+              "speed": "slow",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "__awaiter(void 0, void 0, void 0, function* () {\n        const contract = yield model.create({\n            uid: 'test-contract-2',\n            profile: 'old-profile',\n            ecosystem: 'test-ecosystem',\n            orchestrator: 'test-orchestrator',\n            status: 'pending',\n        });\n        yield model.updateOne({ _id: contract._id }, { $set: { profile: 'new-profile' } });\n        yield new Promise((resolve) => setTimeout(resolve, 100));\n        (0, chai_1.expect)(dataUpdatedEventReceived).to.be.true;\n        (0, chai_1.expect)(dataUpdatedPayload).to.exist;\n        (0, chai_1.expect)(dataUpdatedPayload.source).to.equal('contracts');\n        (0, chai_1.expect)(dataUpdatedPayload.updateDescription).to.exist;\n    })",
+              "err": {},
+              "uuid": "da936162-f31d-4883-8888-677805732250",
+              "parentUUID": "c191771c-3bc6-4477-8104-d7a25dfd8a64",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "should emit dataDeleted event when deleting via model.deleteOne()",
+              "fullTitle": "MongooseProvider Events Tests should emit dataDeleted event when deleting via model.deleteOne()",
+              "timedOut": false,
+              "duration": 133,
+              "state": "passed",
+              "speed": "slow",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "__awaiter(void 0, void 0, void 0, function* () {\n        const contract = yield model.create({\n            uid: 'test-contract-3',\n            profile: 'test-profile',\n            ecosystem: 'test-ecosystem',\n            orchestrator: 'test-orchestrator',\n            status: 'pending',\n        });\n        yield model.deleteOne({ _id: contract._id });\n        yield new Promise((resolve) => setTimeout(resolve, 100));\n        (0, chai_1.expect)(dataDeletedEventReceived).to.be.true;\n        (0, chai_1.expect)(dataDeletedPayload).to.exist;\n        (0, chai_1.expect)(dataDeletedPayload.source).to.equal('contracts');\n        (0, chai_1.expect)(dataDeletedPayload.documentKey).to.exist;\n    })",
+              "err": {},
+              "uuid": "e180396f-c8f3-44aa-a97b-6081ae675b88",
+              "parentUUID": "c191771c-3bc6-4477-8104-d7a25dfd8a64",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [
+            "fb7c5bfd-4159-4972-aaff-f56a0b1b32d6",
+            "04879960-b8b8-4b6d-a389-bb221622c811",
+            "da936162-f31d-4883-8888-677805732250",
+            "e180396f-c8f3-44aa-a97b-6081ae675b88"
+          ],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 543,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 4000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 4000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "10.8.2"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": false,
+        "reportFilename": "contract.agent.3.spec.ts",
+        "saveHtml": true,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.3"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "mochawesome-report/contract",
+        "reportFilename": "contract.agent.3.spec.ts"
+      },
+      "version": "6.2.0"
+    }
+  }
+}

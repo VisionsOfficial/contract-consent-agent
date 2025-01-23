@@ -1,7 +1,5 @@
 # Contract-Consent-Agent
 
-[Swagger Documentation](./docs/swagger.json)
-
 ## Configuring a DataProvider (`contract-agent.config`)
 
 The configuration file is a JSON document consisting of sections, where each section describes the configuration for a specific **DataProvider**. Below is a detailed explanation of the available attributes:
@@ -27,3 +25,42 @@ Here’s an example of a JSON configuration:
   "existingDataCheck": true
 }
 ```
+
+## Run Tests Independently by Agent
+
+### Contract Agent
+```bash
+pnpm test-cca-contract
+```
+
+### Consent Agent
+```bash
+pnpm test-cca-consent
+```
+
+## Generate Test Reports Independently by Agent
+
+### Contract Agent
+```bash
+pnpm report-cca-contract
+```
+
+### Consent Agent
+```bash
+pnpm report-cca-consent
+```
+
+## Run Full Test Suite
+```bash
+pnpm test
+```
+
+## Build the Project
+```bash
+pnpm build
+```
+
+## Swagger Documentation
+You can find the Swagger documentation at the following link:
+
+[Swagger Documentation](./docs/swagger.json)
