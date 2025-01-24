@@ -13,15 +13,37 @@ See the design document [here](docs/design-document.md).
 - **Contract Profile Management**: Enables profiles for contract-manager.
 - **Contract Negotiation Management**: Enables organizations to define default rules and conditions for negotiation.
 
-## Building instructions
-_Describe how to build the BB._
+### Example Configuration
 
-E.g.: `docker build -t <bb name>:latest .` or `npm install` 
+Here’s an example of a JSON configuration:
+
+```json
+{
+  "source": "profiles",
+  "url": "mongodb://localhost:27017",
+  "dbName": "contract_consent_agent_db",
+  "watchChanges": false,
+  "hostsProfiles": true,
+  "existingDataCheck": true
+}
+```
+
+## Building instructions
+```bash
+pnpm install
+```
 
 ## Running instructions
-_Describe how to run the BB._
 
-E.g.: `docker compose up` or `npm run`
+### Contract Agent
+```bash
+pnpm test-cca-contract
+```
+
+### Consent Agent
+```bash
+pnpm test-cca-consent
+```
 
 ## Technical Usage Scenarios
 
@@ -77,9 +99,29 @@ The agent logs operations, errors, and warnings to facilitate troubleshooting an
 
 The testing strategy includes unit tests, integration tests, and UI tests to ensure the correctness and reliability of functionalities.
 
+### Generate Test Reports for Contract Agent
+```bash
+pnpm report-cca-contract
+```
+
+### Generate Test Reports for Consent Agent
+```bash
+pnpm report-cca-consent
+```
+
+### Run Full Test Suite
+```bash
+pnpm test
+```
+
 ## Usage in the Dataspace
 
 The Consent/Contracts Negotiating Agent enhances data usage and sharing agreements management, ensuring compliance with policies and streamlining processes for individuals and organizations.
+
+## Build the Project
+```bash
+pnpm build
+```
 
 ## License
 

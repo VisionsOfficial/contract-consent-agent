@@ -7,3 +7,4 @@ src/logs
 **/logs/
 src/tests/mocks/consent-agent.config.json
 cca.iml
+mochawesome-report
