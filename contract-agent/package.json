@@ -1,7 +1,7 @@
 {
   "name": "contract-agent",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.0.1",
+  "description": "Contract-Consent Agent Library",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -10,8 +10,12 @@
   ],
   "scripts": {
     "build": "tsup",
-    "test": "node run-tests.js",
     "test-legacy": "npx ts-mocha -p tsconfig.json ./src/tests/**/*.spec.ts --timeout 4000 --exit --test",
+    "test": "node run-tests.js",
+    "test-cca-contract": "node run-cca-contract-tests.js",
+    "test-cca-consent": "node run-cca-consent-tests.js",
+    "report-cca-contract": "node report-cca-contract-tests.js",
+    "report-cca-consent": "node report-cca-consent-tests.js",
     "seed": "npx ts-node ./src/tests/seeds/index.ts",
     "swagger": "npx ts-node ./src/swagger/swagger.ts"
   },
@@ -45,8 +49,12 @@
     "globals": "^15.9.0",
     "jsdoc-babel": "^0.5.0",
     "jsdoc-plugin-typescript": "^3.2.0",
+    "marge": "^1.0.1",
     "mocha": "^10.2.0",
-    "mongoose": "^7.8.3",
+    "mochawesome": "^7.1.3",
+    "mochawesome-merge": "^4.3.0",
+    "mochawesome-report-generator": "^6.2.0",
+    "mongoose": "^8.9.5",
     "nodemon": "^3.1.7",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",
@@ -73,7 +81,7 @@
     "swagger-ui-express": "^5.0.1"
   },
   "peerDependencies": {
-    "mongoose": "^7.8.3"
+    "mongoose": "^8.9.5"
   },
   "pnpm": {
     "peerDependencyRules": {
