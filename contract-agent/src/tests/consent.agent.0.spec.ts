@@ -11,6 +11,7 @@ import { ConsentAgent } from '../ConsentAgent';
 import { ChangeStreamDataProvider } from '../ChangeStreamDataProvider';
 import { SearchCriteria, FilterOperator } from '../types';
 import { ObjectId } from 'mongodb';
+import { setUpCatalogNockMocks } from './mocks/mockCatalog';
 
 
 describe('Consent Agent Handle Tests', function () {
@@ -147,6 +148,7 @@ describe('Consent Agent Handle Tests', function () {
   });
 
   it('should verify the flow for creating a privacy notice', async function () {
+    setUpCatalogNockMocks();
     const privacyNoticeData = {
       'contract': 'http://localhost:8888/contracts/672c89942308b486f7d0bca1',
       'purposes': [
@@ -193,6 +195,7 @@ describe('Consent Agent Handle Tests', function () {
   });
 
   it('should verify the flow for creating a consent', async function () {
+    setUpCatalogNockMocks();
     const consentData = {
       'contract': 'http://localhost:8888/contracts/672c89942308b486f7d0bca1',
       'user': '660fff4528678b2683bab15f',

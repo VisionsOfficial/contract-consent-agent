@@ -75,6 +75,7 @@
     "express": "^4.21.0",
     "mongodb": "^6.9.0",
     "mongodb-memory-server": "^10.1.2",
+    "nock": "^14.0.1",
     "node-cron": "^3.0.3",
     "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",

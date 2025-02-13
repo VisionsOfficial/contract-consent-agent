@@ -711,6 +711,8 @@ export class ConsentAgent extends Agent {
     | undefined
   > {
     try {
+      console.log('purposeSd', purposeSd)
+      console.log('dataSd', dataSd)
       const [purposeResponse, dataResponse] = await Promise.all([
         axios.get(purposeSd),
         axios.get(dataSd),
