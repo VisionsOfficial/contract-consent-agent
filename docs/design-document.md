@@ -1285,9 +1285,124 @@ For unit testing, we will utilize the Mocha testing framework along with Chai fo
 
 Integration tests will focus on validating the interaction between different components of the Consent/Contracts Negotiating Agent. We will use tools such as Postman for API testing to verify communication interfaces and data exchange protocols. Additionally, integration tests will ensure seamless integration with external systems like consent managers and catalog APIs. Continuous Integration (CI) pipelines will be set up to automate the execution of integration tests.
 
-### UI test
+### Test definitions
+#### Consent
+| Suite                          | Test Case                                                        |
+|--------------------------------|------------------------------------------------------------------|
+| Consent Agent Handle Tests     |                                                                  |
+|                                | should verify the flow for creating a users and creating profile |
+|                                | should verify the flow for creating a privacy notice             |
+|                                | should verify the flow for creating a consent                    |
+|                                | should verify the flow for updating a user                       |
+|                                | should verify the flow for updating a consent                    |
+|                                | should verify the flow for deleting a privacy notice             |
+|                                | should verify the flow for deleting a consent                    |
+|                                | should verify the flow for deleting a user                       |
+| ChangeStreamDataProvider Tests |                                                                  |
+|                                | should emit dataInserted event when creating a document          |
+|                                | should emit dataUpdated event when updating a document           |
+|                                | should emit dataDeleted event when deleting a document           |
+| ConsentAgent Router Tests      |                                                                  |
+|                                | should get a configuration from profile                          |
+|                                | should update a configuration from profile                       |
+|                                | should get recommendations from profile                          |
+|                                | should get data exchanges recommendations from profile           |
+|                                | should get preferences from profile                              |
+|                                | should handle adding preference to profile                       |
+|                                | should get preference by id for profile                          |
+|                                | should handle updating a preference from profile                 |
+|                                | should handle delete a preference from profile                   |
+|                                | should get a profile from URI                                    |
+|                                | should get all profiles                                          |
+|                                | should get a match for a profile                                 |
 
-UI tests will be defined for any user interfaces or administrative dashboards provided by the Consent/Contracts Negotiating Agent. Testing frameworks like Cypress will be used to automate UI interactions and validate the usability and functionality of the user interface. UI tests will cover scenarios such as consent preference settings, contract profile management, and error handling.
+#### [Consent-manager](https://github.com/Prometheus-X-association/consent-manager/wiki/Tests-definition)
+
+| Suite                      | Test Case                                                |
+|----------------------------|----------------------------------------------------------|
+| Consent Agent Routes Tests |                                                          |
+|                            | should get 401 unauthorized                              |
+|                            | should not get a configuration from non existent profile |
+|                            | should get a configuration from profile                  |
+|                            | should update a configuration from profile               |
+|                            | should get recommendations from profile                  |
+|                            | should get data exchanges recommendations from profile   |
+|                            | should get preferences from profile                      |
+|                            | should handle adding preference to profile               |
+|                            | should get preference by id for profile                  |
+|                            | should handle updating a preference from profile         |
+|                            | should handle delete a preference from profile           |
+|                            | should get a profile from URI                            |
+|                            | should get all profiles                                  |
+|                            | should get a match for a profile                         |
+
+#### Contract
+
+| Suite                               | Test Case                                                             |
+|-------------------------------------|-----------------------------------------------------------------------|
+| Contract Agent Test Cases           |                                                                       |
+|                                     | should verify the flow for creating a contract and updating profiles  |
+|                                     | should delete the previously created contract successfully            |
+| Negotiation Service Test Cases      |                                                                       |
+|                                     | isPolicyAcceptable:                                                   |
+|                                     | should accept allowed policy                                          |
+|                                     | should reject disallowed policy                                       |
+|                                     | should reject all policies when allowPolicies is false                |
+|                                     | should check policy frequency                                         |
+|                                     | isServiceAcceptable:                                                  |
+|                                     | should accept allowed service                                         |
+|                                     | should reject disallowed service                                      |
+|                                     | canAcceptContract:                                                    |
+|                                     | should accept valid contract                                          |
+|                                     | should reject inactive contract                                       |
+|                                     | should reject contract with unacceptable service offering             |
+|                                     | should reject contract with unacceptable policies                     |
+|                                     | negotiateContract:                                                    |
+|                                     | should return successful negotiation for valid contract               |
+|                                     | should return failed negotiation with unacceptable policies           |
+|                                     | should return failed negotiation with unacceptable services           |
+|                                     | should handle errors during negotiation                               |
+|                                     | should identify multiple unacceptable policies and services           |
+|                                     | areServicePoliciesAcceptable:                                         |
+|                                     | should accept service with acceptable policies                        |
+|                                     | should reject service with unacceptable policies                      |
+|                                     | updateProfilePreferences:                                             |
+|                                     | should add valid preferences                                          |
+|                                     | should filter out invalid preferences                                 |
+|                                     | NegotiationService Singleton:                                         |
+|                                     | should return the same instance without refresh                       |
+|                                     | should return a new instance with refresh                             |
+| MongooseProvider Events Tests       |                                                                       |
+|                                     | should emit dataInserted event when saving a new document             |
+|                                     | should emit dataInserted event when creating via model.create()       |
+|                                     | should emit dataUpdated event when updating via model.updateOne()     |
+|                                     | should emit dataDeleted event when deleting via model.deleteOne()     |
+| ContractAgent with MongooseProvider |                                                                       |
+|                                     | should initialize correctly and trigger handleDataInserted via create |
+|                                     | should initialize correctly and trigger handleDataInserted via save   |
+|                                     | should trigger updateProfileFromContractChange on update              |
+| ContractAgent Router Tests          |                                                                       |
+|                                     | should get policies recommendations from profile                      |
+|                                     | should get services recommendations from profile                      |
+|                                     | should get policies matching from profile                             |
+|                                     | should handle adding configurations to profile                        |
+|                                     | should handle updating configurations for profile                     |
+|                                     | should handle deleting configurations from profile                    |
+
+#### [Contract-manager](https://github.com/Prometheus-X-association/contract-manager/wiki/Tests-definition)
+
+| Suite                                  | Test Case                                           |
+|----------------------------------------|-----------------------------------------------------|
+| contract agent                         |                                                     |
+|                                        | should update profiles after contract creation      |
+|                                        | should update profiles after contract updates       |
+| Contract Negotiation Integration Tests |                                                     |
+|                                        | should retrieve the cookie after pinging the server |
+|                                        | should create a new contract and update profile     |
+|                                        | should test policy acceptance                       |
+|                                        | should test service acceptance                      |
+|                                        | should test contract acceptance                     |
+|                                        | should test contract negotiation                    |
 
 ## Partnerships & Roles
 
