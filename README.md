@@ -13,6 +13,8 @@ See the design document [here](docs/design-document.md).
 - **Contract Profile Management**: Enables profiles for contract-manager.
 - **Contract Negotiation Management**: Enables organizations to define default rules and conditions for negotiation.
 
+## Configuration instructions
+
 ### Example Configuration
 
 Here’s an example of a JSON configuration:
@@ -28,23 +30,88 @@ Here’s an example of a JSON configuration:
 }
 ```
 
+See more [here](./contract-agent/README.md)
+
 ## Building instructions
-```bash
-pnpm install
-```
+
+To build le library you can use
+
+`npm run build` 
 
 ## Running instructions
+The contract/consent agent is a library, so you can't run it, but it's purpose it's to be installed and use in the contract-manager and consent-manager
 
-### Contract Agent
+### Consent integration step guide
+1. Install the contract-consent-agent
 ```bash
-pnpm test-cca-contract
+npm install https://gitpkg.now.sh/Prometheus-X-association/contract-consent-agent/contract-agent?VERSION
 ```
 
-### Consent Agent
-```bash
-pnpm test-cca-consent
-```
+2. Create the config file and add your information ([documentation](./contract-agent/README.md))
 
+3. Initialise the library at your main.ts
+
+```typescript
+import express, { json as expressJson } from "express";
+import { loadRoutes } from "./routes";
+import path from "path";
+import fs from "fs";
+
+// Simulation
+import { Agent, ConsentAgent } from "contract-agent";
+
+export const startServer = async () => {
+
+  const app = express();
+  const port = testPort || process.env.PORT || 3000;
+
+  //Consent Agent exemple setup
+  const configFilePath = path.resolve(
+    __dirname,
+    agentConfigPath ?? "../consent-agent.config.json"
+  );
+  if (fs.existsSync(configFilePath)) {
+    Agent.setConfigPath(
+      agentConfigPath ?? "../consent-agent.config.json",
+      __filename
+    );
+    Agent.setProfilesHost("profiles");
+    await ConsentAgent.retrieveService();
+  }
+
+  loadRoutes(app);
+
+  // Start the server
+  const server = app.listen(port, () => {
+    //eslint-disable-next-line
+    console.log(`Consent manager running on: http://localhost:${port}`);
+  });
+
+  return { server, app }; // For tests
+};
+
+```
+4. Add the needed router into your project router
+```typescript
+//router.ts
+import { Application, Request, Response } from "express";
+
+// Routes
+import consentRouter from "./consent";
+import { ConsentAgentRouter } from "contract-agent";
+
+const API_PREFIX = process.env.API_PREFIX;
+
+export const loadRoutes = (app: Application) => {
+  app.get("/health", (req: Request, res: Response) => {
+    res.json({ status: "OK" });
+  });
+
+  app.use(API_PREFIX + "/consents", consentRouter);
+  app.use(API_PREFIX + "/", verifyUserJWT, ConsentAgentRouter);
+};
+
+```
 ## Technical Usage Scenarios
 
 - Individuals can manage their consent preferences effectively.
@@ -55,23 +122,25 @@ pnpm test-cca-consent
 
 The API for the Consent/Contracts Negotiating Agent is documented using Swagger. You can find the API routes and their descriptions in the `swagger.json` file located in the `contract-agent/docs` directory.
 
+You can use the following command to generate the swagger.json
+
+```bash
+npm run swagger
+```
 ### Example API Endpoints
 
-- **Get Recommendations**: `GET /profile/{profileId}/recommendations/consent`
+- **Get data exchanges recommendations**: `GET /profile/{profileId}/recommendations/consent`
 - **Set Preferences**: `POST /profile/{profileId}/preferences`
 - **Get Preferences**: `GET /profile/{profileId}/preferences`
 - **Negotiate Contract**: `POST /negotiation/contract/negotiate`
 
 ### Example usage
-_Describe how to check some basic functionality of the BB._
-E.g.:
 
 Send the following requests to the designated endpoints:
-| Endpoint      | Example input | Expected output   |
-| ------------- | ------------- | ----------------- |
-| /hello        | World         | 200, Hello World! |
-|               |               |                   |
-|               |               |                   |
+
+![Example Usage 1](./docs/example_usage1.png)
+![Example Usage 2](./docs/example_usage2.png)
+![Example Usage 3](./docs/example_usage3.png)
 
 ## Integrations
 
@@ -95,7 +164,7 @@ The architecture consists of several key components:
 
 The agent logs operations, errors, and warnings to facilitate troubleshooting and debugging. It also imposes limits and usage constraints to ensure efficient operation.
 
-## Testing
+## Testing and instructions
 
 The testing strategy includes unit tests, integration tests, and UI tests to ensure the correctness and reliability of functionalities.
 
@@ -114,14 +183,11 @@ pnpm report-cca-consent
 pnpm test
 ```
 
+See more [here](./contract-agent/README.md) for instructions.
+
 ## Usage in the Dataspace
 
 The Consent/Contracts Negotiating Agent enhances data usage and sharing agreements management, ensuring compliance with policies and streamlining processes for individuals and organizations.
-
-## Build the Project
-```bash
-pnpm build
-```
 
 ## License
 
