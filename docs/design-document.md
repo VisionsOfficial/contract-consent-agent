@@ -1316,11 +1316,31 @@ Integration tests will focus on validating the interaction between different com
 |                                | should get all profiles                                          |
 |                                | should get a match for a profile                                 |
 
+#### [Consent-manager](https://github.com/Prometheus-X-association/consent-manager/wiki/Tests-definition)
+
+| Suite                      | Test Case                                                |
+|----------------------------|----------------------------------------------------------|
+| Consent Agent Routes Tests |                                                          |
+|                            | should get 401 unauthorized                              |
+|                            | should not get a configuration from non existent profile |
+|                            | should get a configuration from profile                  |
+|                            | should update a configuration from profile               |
+|                            | should get recommendations from profile                  |
+|                            | should get data exchanges recommendations from profile   |
+|                            | should get preferences from profile                      |
+|                            | should handle adding preference to profile               |
+|                            | should get preference by id for profile                  |
+|                            | should handle updating a preference from profile         |
+|                            | should handle delete a preference from profile           |
+|                            | should get a profile from URI                            |
+|                            | should get all profiles                                  |
+|                            | should get a match for a profile                         |
+
 #### Contract
 
 | Suite                               | Test Case                                                             |
 |-------------------------------------|-----------------------------------------------------------------------|
-| Contract Agent Test Cases           |                                                                       | | |
+| Contract Agent Test Cases           |                                                                       |
 |                                     | should verify the flow for creating a contract and updating profiles  |
 |                                     | should delete the previously created contract successfully            |
 | Negotiation Service Test Cases      |                                                                       |
@@ -1368,6 +1388,22 @@ Integration tests will focus on validating the interaction between different com
 |                                     | should handle adding configurations to profile                        |
 |                                     | should handle updating configurations for profile                     |
 |                                     | should handle deleting configurations from profile                    |
+
+#### [Contract-manager](https://github.com/Prometheus-X-association/contract-manager/wiki/Tests-definition)
+
+| Suite                                  | Test Case                                           |
+|----------------------------------------|-----------------------------------------------------|
+| contract agent                         |                                                     |
+|                                        | should update profiles after contract creation      |
+|                                        | should update profiles after contract updates       |
+| Contract Negotiation Integration Tests |                                                     |
+|                                        | should retrieve the cookie after pinging the server |
+|                                        | should create a new contract and update profile     |
+|                                        | should test policy acceptance                       |
+|                                        | should test service acceptance                      |
+|                                        | should test contract acceptance                     |
+|                                        | should test contract negotiation                    |
+
 ## Partnerships & Roles
 
 ### Visions
