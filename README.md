@@ -168,17 +168,37 @@ The agent logs operations, errors, and warnings to facilitate troubleshooting an
 
 The testing strategy includes unit tests, integration tests, and UI tests to ensure the correctness and reliability of functionalities.
 
-### Generate Test Reports for Contract Agent
+### Contract Agent
+
+Before running the contract agent test you will need to run local mongodb database and then running the seed command.
+
+```bash
+pnpm seed
+```
+
+```bash
+pnpm test-cca-contract
+```
+
+### Consent Agent
+For the consent agent test, mongodb is mocked so no local database is required to run the following command:
+```bash
+pnpm test-cca-consent
+```
+
+## Generate Test Reports Independently by Agent
+
+### Contract Agent
 ```bash
 pnpm report-cca-contract
 ```
 
-### Generate Test Reports for Consent Agent
+### Consent Agent
 ```bash
 pnpm report-cca-consent
 ```
 
-### Run Full Test Suite
+## Run Full Test Suite
 ```bash
 pnpm test
 ```
