@@ -170,7 +170,7 @@ The testing strategy includes unit tests, integration tests, and UI tests to ens
 
 ### Contract Agent
 
-Before running the contract agent test you will need to run local mongodb database and then running the seed command.
+> Before running the contract agent test you will need to run a local mongodb database and then running the seed command.
 
 ```bash
 pnpm seed
@@ -181,12 +181,18 @@ pnpm test-cca-contract
 ```
 
 ### Consent Agent
-For the consent agent test, mongodb is mocked so no local database is required to run the following command:
+> For the consent agent test, mongodb is mocked so no local database is required to run the following command:
 ```bash
 pnpm test-cca-consent
 ```
 
 ## Generate Test Reports Independently by Agent
+
+> for running this command it's necessary to install de dependancy inside the contract-agent directory using
+> ```bash
+> pnpm install
+> ```
+> 
 
 ### Contract Agent
 ```bash
